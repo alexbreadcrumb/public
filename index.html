@@ -270,7 +270,16 @@
             timer.textContent = "00:00:00";
         });
 
-        startButton.addEventListener('click', startRecording);
+        startButton.addEventListener('click', async () => {
+            try {
+                await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                startRecording();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+            }
+        });
+
         stopButton.addEventListener('click', stopRecording);
 
         // Solicitar permisos al cargar la página
