@@ -155,7 +155,12 @@ async function requestPermissions() {
     try {
         // Solicitar el stream de la cámara con el deviceId específico
         stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' } },
+            video: { 
+                deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' } 
+                width: { ideal: 720 },
+                height: { ideal: 405 },
+                frameRate: { ideal: 30 }
+            },
             audio: true
         });
         video.srcObject = stream;
