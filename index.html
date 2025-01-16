@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.8</h1>
+    <h1>Easy Car Cam Recorder V1.9</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -138,7 +138,8 @@
         </div>
     </div>
 
- <script>
+ 
+<script>
     let mediaRecorder;
     let stream;
     let startTime;
@@ -180,8 +181,9 @@
                 audio: true
             });
             video.srcObject = stream;
+            console.log('Cámara y micrófono listos');
         } catch (error) {
-            console.error('Error al acceder a la cámara:', error);
+            console.error('Error al acceder a la cámara o micrófono:', error);
             alert('No se pudo acceder a la cámara o micrófono.');
         }
     }
@@ -202,20 +204,24 @@
             mimeType: 'video/webm; codecs=vp8,opus'
         };
 
-        mediaRecorder = new MediaRecorder(recordingStream, options);
+        try {
+            mediaRecorder = new MediaRecorder(recordingStream, options);
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
 
-        mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
-                saveRecording(event.data);
-            }
-        };
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
 
-        mediaRecorder.start();
-        startTime = Date.now();
-        timerInterval = setInterval(updateTimer, 1000);
-
-        startButton.disabled = true;
-        stopButton.disabled = false;
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        } catch (error) {
+            console.error('Error al iniciar la grabación:', error);
+            alert('Hubo un problema al iniciar la grabación.');
+        }
     }
 
     function stopRecording() {
@@ -250,7 +256,7 @@
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `recording_${Date.now()}.mp4`;
+        a.download = `recording_${Date.now()}.webm`;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
@@ -268,6 +274,7 @@
     // Solicitar permisos al cargar la página
     requestPermissions();
 </script>
+
 
 </body>
 </html>
