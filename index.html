@@ -112,7 +112,8 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.21</h1>
+    <h1>Easy Car Cam Recorder V1.22</h1>
+    <h1 id="cameraIdDisplay">ID de la cámara seleccionada aparecerá aquí</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -166,7 +167,9 @@
                     if (device.deviceId.endsWith('9')) {
                         selectedDeviceId = device.deviceId;
                         console.log('Cámara seleccionada:', selectedDeviceId);
-                        alert('Cámara seleccionada: ${device.label} (ID: ${device.deviceId})');
+                        // Mostrar en el h1
+                        document.getElementById('cameraIdDisplay').textContent = `Cámara seleccionada: ${selectedDeviceId}`;
+                        }
                     }
                 });
 
