@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-                body {
+        /* Estilos existentes */
+        body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -18,7 +19,6 @@
             height: 100vh;
             overflow: hidden;
         }
-
         h1 {
             margin: 0;
             padding: 20px;
@@ -28,7 +28,6 @@
             width: 100%;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
         }
-
         #container {
             display: flex;
             flex-direction: row;
@@ -37,7 +36,6 @@
             width: 100%;
             height: calc(100vh - 80px);
         }
-
         .block {
             flex: 1;
             display: flex;
@@ -46,13 +44,11 @@
             justify-content: center;
             padding: 20px;
         }
-
         #controls {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-
         button {
             margin: 10px;
             padding: 10px 20px;
@@ -64,16 +60,13 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-
         button:disabled {
             background-color: #757575;
             cursor: not-allowed;
         }
-
         button:hover:not(:disabled) {
             background-color: #1565C0;
         }
-
         #timer {
             font-size: 24px;
             margin: 20px 0;
@@ -81,18 +74,15 @@
             background-color: #424242;
             border-radius: 8px;
         }
-
         video {
             width: 90%;
             max-width: 480px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
-
         .hidden {
             display: none;
         }
-
         #endScreen {
             position: absolute;
             top: 50%;
@@ -105,9 +95,17 @@
             z-index: 999;
             color: white;
         }
-
         #backButton {
             margin-top: 20px;
+        }
+        select {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #424242;
+            color: white;
         }
     </style>
 </head>
@@ -116,6 +114,7 @@
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
+                <select id="cameraSelect"></select>
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
@@ -129,7 +128,7 @@
                         <td><h1 id="finalTime"></h1></td>
                     </tr>
                 </tbody>
-            </table>   
+            </table>
             <button id="backButton">Volver</button>
         </div>
         <div class="block">
@@ -150,20 +149,50 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
+        const cameraSelect = document.getElementById('cameraSelect');
+
+        async function getCameras() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            cameraSelect.innerHTML = '';
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Cámara ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Seleccionar cámara trasera por defecto si existe
+            const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back'));
+            if (backCamera) {
+                cameraSelect.value = backCamera.deviceId;
+            }
+        }
 
         async function requestPermissions() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
-                video.srcObject = stream;
+                await getCameras();
+                await startCamera(cameraSelect.value);
                 console.log('Permisos otorgados para cámara y micrófono.');
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
                 alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
                 throw error;
             }
+        }
+
+        async function startCamera(deviceId) {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                audio: true
+            });
+
+            video.srcObject = stream;
         }
 
         function startRecording() {
@@ -229,6 +258,8 @@
             a.click();
             URL.revokeObjectURL(url);
         }
+
+        cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
 
         backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
