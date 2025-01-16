@@ -219,9 +219,10 @@
             startButton.disabled = true;
             stopButton.disabled = false;
         } catch (error) {
-            console.error('Error al iniciar la grabación:', error);
-            alert('Hubo un problema al iniciar la grabación.');
-        }
+    console.error('Error al iniciar la grabación:', error);
+    alert('Hubo un problema al iniciar la grabación. Revisa la consola para más detalles.');
+}
+
     }
 
     function stopRecording() {
