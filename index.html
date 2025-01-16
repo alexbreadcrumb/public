@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-        body {
+                body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -18,6 +18,7 @@
             height: 100vh;
             overflow: hidden;
         }
+
         h1 {
             margin: 0;
             padding: 20px;
@@ -27,6 +28,7 @@
             width: 100%;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
         }
+
         #container {
             display: flex;
             flex-direction: row;
@@ -35,6 +37,7 @@
             width: 100%;
             height: calc(100vh - 80px);
         }
+
         .block {
             flex: 1;
             display: flex;
@@ -43,11 +46,13 @@
             justify-content: center;
             padding: 20px;
         }
+
         #controls {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+
         button {
             margin: 10px;
             padding: 10px 20px;
@@ -59,13 +64,16 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         button:disabled {
             background-color: #757575;
             cursor: not-allowed;
         }
+
         button:hover:not(:disabled) {
             background-color: #1565C0;
         }
+
         #timer {
             font-size: 24px;
             margin: 20px 0;
@@ -73,15 +81,18 @@
             background-color: #424242;
             border-radius: 8px;
         }
+
         video {
             width: 90%;
             max-width: 480px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
+
         .hidden {
             display: none;
         }
+
         #endScreen {
             position: absolute;
             top: 50%;
@@ -94,13 +105,14 @@
             z-index: 999;
             color: white;
         }
+
         #backButton {
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.3</h1>
+    <h1>Easy Car Cam Recorder V1.0</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -126,65 +138,44 @@
     </div>
 
     <script>
-    let mediaRecorder;
-    let stream;
-    let startTime;
-    let timerInterval;
-    let backCameraId = null;
+        let mediaRecorder;
+        let stream;
+        let startTime;
+        let timerInterval;
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const timer = document.getElementById('timer');
+        const recorderScreen = document.getElementById('recorderScreen');
+        const endScreen = document.getElementById('endScreen');
+        const finalTime = document.getElementById('finalTime');
+        const backButton = document.getElementById('backButton');
 
-    const video = document.getElementById('video');
-    const startButton = document.getElementById('startButton');
-    const stopButton = document.getElementById('stopButton');
-    const timer = document.getElementById('timer');
-    const recorderScreen = document.getElementById('recorderScreen');
-    const endScreen = document.getElementById('endScreen');
-    const finalTime = document.getElementById('finalTime');
-    const backButton = document.getElementById('backButton');
-
-    async function detectCameras() {
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-            videoDevices.forEach(device => {
-                if (device.label.toLowerCase().includes('back')) {
-                    backCameraId = device.deviceId;
-                }
-            });
-
-            if (backCameraId) {
-                console.log('Cámara trasera detectada.');
+        async function requestPermissions() {
+            try {
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: backCameraId } },
+                    video: true,
                     audio: true
                 });
                 video.srcObject = stream;
-            } else {
-                console.warn('No se encontró cámara trasera, usando predeterminada.');
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                video.srcObject = stream;
+                console.log('Permisos otorgados para cámara y micrófono.');
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+                throw error;
             }
-        } catch (error) {
-            console.error('Error al detectar cámaras:', error);
-            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
         }
-    }
 
-    async function startRecording() {
-        try {
+        function startRecording() {
             if (!stream) {
-                if (backCameraId) {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: { deviceId: { exact: backCameraId } },
-                        audio: true
-                    });
-                } else {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                }
-                video.srcObject = stream;
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
             }
 
-            const options = { mimeType: 'video/webm; codecs=vp8' };
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
+
             mediaRecorder = new MediaRecorder(stream, options);
 
             mediaRecorder.ondataavailable = event => {
@@ -199,61 +190,57 @@
 
             startButton.disabled = true;
             stopButton.disabled = false;
-        } catch (error) {
-            console.error('Error al iniciar la grabación:', error);
-        }
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
         }
 
-        clearInterval(timerInterval);
-        startButton.disabled = false;
-        stopButton.disabled = true;
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
 
-        const elapsedTime = new Date(Date.now() - startTime);
-        const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-        const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            clearInterval(timerInterval);
+            startButton.disabled = false;
+            stopButton.disabled = true;
 
-        finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
-        recorderScreen.classList.add('hidden');
-        endScreen.classList.remove('hidden');
-    }
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
 
-    function updateTimer() {
-        const elapsedTime = new Date(Date.now() - startTime);
-        const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-        const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-        timer.textContent = `${hours}:${minutes}:${seconds}`;
-    }
+            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
+            recorderScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
 
-    function saveRecording(blob) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `recording_${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        URL.revokeObjectURL(url);
-    }
+        function updateTimer() {
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        }
 
-    backButton.addEventListener('click', () => {
-        endScreen.classList.add('hidden');
-        recorderScreen.classList.remove('hidden');
-        timer.textContent = "00:00:00";
-    });
+        function saveRecording(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `recording_${Date.now()}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
-    startButton.addEventListener('click', startRecording);
-    stopButton.addEventListener('click', stopRecording);
+        backButton.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
+        });
 
-    // Detectar cámaras al cargar la página
-    detectCameras();
-</script>
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
 
+        // Solicitar permisos al cargar la página
+        requestPermissions();
+    </script>
 </body>
 </html>
