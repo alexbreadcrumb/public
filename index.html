@@ -112,15 +112,15 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.6</h1>
+    <h1>Easy Car Cam Recorder V1.7</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
-<div id="controls">
-    <div id="timer">00:00:00</div>
-    <button id="startButton">Iniciar</button>
-    <button id="stopButton" disabled>Terminar</button>
-    <button id="muteButton">Silenciar micrófono</button>
-</div>
+            <div id="controls">
+                <div id="timer">00:00:00</div>
+                <button id="startButton">Iniciar</button>
+                <button id="stopButton" disabled>Terminar</button>
+                <button id="muteButton">Silenciar micrófono</button>
+            </div>
         </div>
         <div id="endScreen" class="hidden">
             <table>
@@ -130,7 +130,7 @@
                         <td><h1 id="finalTime"></h1></td>
                     </tr>
                 </tbody>
-            </table>   
+            </table>
             <button id="backButton">Volver</button>
         </div>
         <div class="block">
@@ -153,78 +153,72 @@
         const backButton = document.getElementById('backButton');
         const muteButton = document.getElementById('muteButton');
         let isMuted = false;
-        let originalStream = null;
+        
+        muteButton.addEventListener('click', () => {
+            if (!stream) return;
 
-muteButton.addEventListener('click', () => {
-    if (!stream) return;
+            isMuted = !isMuted;
 
-    isMuted = !isMuted;
-
-    if (isMuted) {
-        // Detener las pistas de audio
-        stream.getAudioTracks().forEach(track => track.enabled = false);
-        muteButton.textContent = 'Activar micrófono';
-    } else {
-        // Reactivar las pistas de audio
-        stream.getAudioTracks().forEach(track => track.enabled = true);
-        muteButton.textContent = 'Silenciar micrófono';
-    }
-});
-
-
-
-async function requestPermissions() {
-    try {
-        // Solicitar el stream de la cámara con el deviceId específico
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' }, 
-                width: { ideal: 720 },
-                height: { ideal: 405 },
-                frameRate: { ideal: 30 }
-            },
-            audio: true
+            if (isMuted) {
+                // Detener las pistas de audio
+                stream.getAudioTracks().forEach(track => track.enabled = false);
+                muteButton.textContent = 'Activar micrófono';
+            } else {
+                // Reactivar las pistas de audio
+                stream.getAudioTracks().forEach(track => track.enabled = true);
+                muteButton.textContent = 'Silenciar micrófono';
+            }
         });
-        video.srcObject = stream;
-        console.log('Usando la cámara con el ID especificado.');
-    } catch (error) {
-        console.error('Error al acceder a la cámara con el ID especificado:', error);
-        alert('No se pudo acceder a la cámara especificada. Verifica el ID o los permisos.');
-    }
-}
 
-      // Ajustar el stream al iniciar la grabación
-function startRecording() {
-    if (!stream) {
-        alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-        return;
-    }
-
-    // Crear un nuevo stream con solo video si está muteado
-    const tracks = isMuted
-        ? stream.getVideoTracks()
-        : [...stream.getVideoTracks(), ...stream.getAudioTracks()];
-    const recordingStream = new MediaStream(tracks);
-
-    const options = {
-        mimeType: 'video/webm; codecs=vp8,opus'
-    };
-
-    mediaRecorder = new MediaRecorder(recordingStream, options);
-
-    mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) {
-            saveRecording(event.data);
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' }, 
+                        width: { ideal: 720 },
+                        height: { ideal: 405 },
+                        frameRate: { ideal: 30 }
+                    },
+                    audio: true
+                });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al acceder a la cámara:', error);
+                alert('No se pudo acceder a la cámara o micrófono.');
+            }
         }
-    };
 
-    mediaRecorder.start();
-    startTime = Date.now();
-    timerInterval = setInterval(updateTimer, 1000);
+        function startRecording() {
+            if (!stream) {
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
+            }
 
-    startButton.disabled = true;
-    stopButton.disabled = false;
-}
+            const tracks = isMuted
+                ? stream.getVideoTracks()  // Solo video si está muteado
+                : [...stream.getVideoTracks(), ...stream.getAudioTracks()];  // Video y audio si no está muteado
+
+            const recordingStream = new MediaStream(tracks);
+
+            const options = {
+                mimeType: 'video/webm; codecs=vp8,opus'
+            };
+
+            mediaRecorder = new MediaRecorder(recordingStream, options);
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        }
 
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
