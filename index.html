@@ -27,10 +27,6 @@
             text-align: center;
             width: 100%;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
         }
         #container {
             display: flex;
@@ -111,23 +107,16 @@
             background-color: #424242;
             color: white;
         }
-        #footer {
-            position: absolute;
-            bottom: 10px;
-            font-size: 14px;
-            color: #757575;
-        }
     </style>
 </head>
 <body>
     <h1>
         Easy Car Cam Recorder
-        <span id="version">Versión: 1.1</span> <!-- Número de versión junto al título -->
+        <span id="version">Versión: 1.2</span> <!-- Número de versión actualizado -->
     </h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
-                <select id="cameraSelect"></select>
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
@@ -149,10 +138,6 @@
         </div>
     </div>
 
-    <div id="footer">
-        <p>Versión: 1.2</p> <!-- Actualiza el número de versión cuando se haga una modificación -->
-    </div>
-
     <script>
         let mediaRecorder;
         let stream;
@@ -166,39 +151,26 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-        const cameraSelect = document.getElementById('cameraSelect');
 
         async function getCameras() {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            cameraSelect.innerHTML = '';
-            videoDevices.forEach((device, index) => {
-                const option = document.createElement('option');
-                option.value = device.deviceId;
-                option.textContent = device.label || `Cámara ${index + 1}`;
-                cameraSelect.appendChild(option);
-            });
-
-            // Depuración: muestra todas las cámaras disponibles
-            console.log('Cámaras disponibles:', videoDevices);
-
-            // Intentar seleccionar la cámara trasera (más "rear", "back")
+            // Intentamos encontrar la cámara trasera (back/rear)
             const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+
             if (backCamera) {
-                cameraSelect.value = backCamera.deviceId;
-                console.log('Cámara trasera seleccionada:', backCamera);
+                return backCamera.deviceId;
             } else {
-                // Si no se encuentra la cámara trasera, se elige la primera cámara
-                cameraSelect.value = videoDevices[0].deviceId;
-                console.log('Cámara delantera seleccionada como predeterminada.');
+                alert('No se encontró cámara trasera');
+                throw new Error('No se encontró cámara trasera');
             }
         }
 
         async function requestPermissions() {
             try {
-                await getCameras();
-                await startCamera(cameraSelect.value);
+                const cameraDeviceId = await getCameras();
+                await startCamera(cameraDeviceId);
                 console.log('Permisos otorgados para cámara y micrófono.');
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -283,8 +255,6 @@
             a.click();
             URL.revokeObjectURL(url);
         }
-
-        cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
 
         backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
