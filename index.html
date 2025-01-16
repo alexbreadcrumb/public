@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.23</h1>
+    <h1>Easy Car Cam Recorder V1.24</h1>
     <p id="cameraIdDisplay">ID </p>
     <div id="container">
         <div id="recorderScreen" class="block">
@@ -167,8 +167,6 @@
                     if (device.deviceId.endsWith('9')) {
                         selectedDeviceId = device.deviceId;
                         console.log('Cámara seleccionada:', selectedDeviceId);
-                        // Mostrar en el h1
-                        document.getElementById('cameraIdDisplay').textContent = 'ID: ${selectedDeviceId}';
                         }
                     }
                 });
@@ -251,6 +249,7 @@
             const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
             const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
             timer.textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('cameraIdDisplay').textContent = `ID: ${selectedDeviceId}`;
         }
 
         function saveRecording(blob) {
