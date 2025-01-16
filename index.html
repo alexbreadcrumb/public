@@ -27,6 +27,10 @@
             text-align: center;
             width: 100%;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
         }
         #container {
             display: flex;
@@ -116,7 +120,10 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder</h1>
+    <h1>
+        Easy Car Cam Recorder
+        <span id="version">Versión: 1.1</span> <!-- Número de versión junto al título -->
+    </h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -173,13 +180,18 @@
                 cameraSelect.appendChild(option);
             });
 
-            // Seleccionar cámara trasera por defecto si existe
+            // Depuración: muestra todas las cámaras disponibles
+            console.log('Cámaras disponibles:', videoDevices);
+
+            // Intentar seleccionar la cámara trasera (más "rear", "back")
             const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
             if (backCamera) {
                 cameraSelect.value = backCamera.deviceId;
+                console.log('Cámara trasera seleccionada:', backCamera);
             } else {
-                // Si no encuentra la cámara trasera, se elige la primera disponible
+                // Si no se encuentra la cámara trasera, se elige la primera cámara
                 cameraSelect.value = videoDevices[0].deviceId;
+                console.log('Cámara delantera seleccionada como predeterminada.');
             }
         }
 
