@@ -112,8 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.25</h1>
-    <p id="cameraIdDisplay">ID </p>
+    <h1>Easy Car Cam Recorder V1.26</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -167,7 +166,7 @@ videoDevices.forEach(device => {
     if (device.deviceId.endsWith('9')) {
         selectedDeviceId = device.deviceId;
         console.log('Cámara seleccionada:', selectedDeviceId);
-        document.getElementById('cameraIdDisplay').textContent = `Cámara seleccionada: ${selectedDeviceId}`;
+        alert(`Cámara seleccionada: ${selectedDeviceId}`);
     }
 });
                 if (videoDevices.length === 0) {
@@ -190,6 +189,7 @@ videoDevices.forEach(device => {
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 console.log('Permisos otorgados para cámara y micrófono.');
+                alert(`Cámara seleccionada: ${selectedDeviceId}`);
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
                 alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
@@ -248,6 +248,7 @@ videoDevices.forEach(device => {
             const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
             const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
             timer.textContent = `${hours}:${minutes}:${seconds}`;
+            alert(`Cámara seleccionada: ${selectedDeviceId}`);
         }
 
         function saveRecording(blob) {
