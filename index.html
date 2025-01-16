@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.29</h1>
+    <h1>Easy Car Cam Recorder V1.30</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -142,7 +142,6 @@
         let stream;
         let startTime;
         let timerInterval;
-        let selectedDeviceId = null;
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -152,46 +151,22 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-        async function getCameras() {
+        async function requestPermissions() {
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
                 if (videoDevices.length === 0) {
                     alert('No se encontraron cámaras.');
                     return;
                 }
 
-                // Aquí seleccionamos la cámara trasera si existe
-                videoDevices.forEach(device => {
-                    if (device.deviceId && device.deviceId.includes('D952575C9')) {
-                        selectedDeviceId = device.deviceId;
-                        console.log('Cámara seleccionada:', selectedDeviceId);
-                        alert(`Cámara seleccionada: ${selectedDeviceId}`);
-                    }
-                });
+                const selectedDevice = videoDevices[0];  // Se selecciona la primera cámara disponible
+                alert('ID de la cámara utilizada: ' + selectedDevice.deviceId);
 
-                if (!selectedDeviceId) {
-                    alert('No se pudo seleccionar la cámara trasera.');
-                }
-            } catch (error) {
-                console.error('Error al obtener las cámaras:', error);
-            }
-        }
-
-        async function requestPermissions() {
-            if (!selectedDeviceId) {
-                alert('No se ha seleccionado una cámara válida.');
-                return;
-            }
-
-            try {
-                const constraints = {
-                    video: { deviceId: selectedDeviceId },
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: selectedDevice.deviceId },
                     audio: true
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                });
                 video.srcObject = stream;
                 console.log('Permisos otorgados para cámara y micrófono.');
             } catch (error) {
@@ -274,10 +249,8 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
-        // Solicitar permisos y obtener la cámara correcta
-        getCameras().then(() => {
-            requestPermissions();
-        });
+        // Solicitar permisos al cargar la página
+        requestPermissions();
     </script>
 </body>
 </html>
