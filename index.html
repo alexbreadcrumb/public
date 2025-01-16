@@ -112,8 +112,8 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.22</h1>
-    <h1 id="cameraIdDisplay">ID de la cámara seleccionada aparecerá aquí</h1>
+    <h1>Easy Car Cam Recorder V1.23</h1>
+    <p id="cameraIdDisplay">ID </p>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -161,14 +161,14 @@
 
                 videoDevices.forEach(device => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${device.label} (ID: ${device.deviceId})`;
+                    listItem.textContent = '${device.label} (ID: ${device.deviceId})';
                     cameraList.appendChild(listItem);
 
                     if (device.deviceId.endsWith('9')) {
                         selectedDeviceId = device.deviceId;
                         console.log('Cámara seleccionada:', selectedDeviceId);
                         // Mostrar en el h1
-                        document.getElementById('cameraIdDisplay').textContent = `Cámara seleccionada: ${selectedDeviceId}`;
+                        document.getElementById('cameraIdDisplay').textContent = 'ID: ${selectedDeviceId}';
                         }
                     }
                 });
