@@ -112,7 +112,7 @@
 <body>
     <h1>
         Easy Car Cam Recorder
-        <span id="version">Versión: 1.4</span> <!-- Número de versión actualizado -->
+        <span id="version">Versión: 1.5</span> <!-- Número de versión actualizado -->
     </h1>
     <div id="container">
         <div id="recorderScreen" class="block">
@@ -120,6 +120,7 @@
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
+                <select id="cameraSelect"></select> <!-- Selector de cámara -->
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -151,27 +152,23 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
+        const cameraSelect = document.getElementById('cameraSelect');
 
         // Función para obtener las cámaras disponibles
         async function getCameras() {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-            // Intentamos encontrar la cámara trasera
-            const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-
-            if (backCamera) {
-                return backCamera.deviceId;
-            } else {
-                alert('No se encontró cámara trasera');
-                throw new Error('No se encontró cámara trasera');
-            }
+            const options = videoDevices.map(device => {
+                return `<option value="${device.deviceId}">${device.label}</option>`;
+            });
+            cameraSelect.innerHTML = options.join('');
         }
 
         // Solicitar permisos para cámara y micrófono
         async function requestPermissions() {
             try {
-                const cameraDeviceId = await getCameras();
+                await getCameras();
+                const cameraDeviceId = cameraSelect.value || (await getCameras())[0].deviceId;
                 await startCamera(cameraDeviceId);
                 console.log('Permisos otorgados para cámara y micrófono.');
             } catch (error) {
@@ -188,7 +185,7 @@
             }
 
             stream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                video: { deviceId: { exact: deviceId } },
                 audio: true
             });
 
