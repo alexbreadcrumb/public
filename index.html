@@ -5,11 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder V1.2</title>
     <style>
-        /* Estilos aquí */
+               body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #212121;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 20px;
+            background-color: #1E88E5;
+            color: white;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: calc(100vh - 80px);
+        }
+
+        .block {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1E88E5;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #757575;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1565C0;
+        }
+
+        #timer {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #424242;
+            border-radius: 8px;
+        }
+
+        video {
+            width: 90%;
+            max-width: 480px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #endScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            z-index: 999;
+            color: white;
+        }
+
+        #backButton {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.2</h1>
+    <h1>Easy Car Cam Recorder V1.4</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
