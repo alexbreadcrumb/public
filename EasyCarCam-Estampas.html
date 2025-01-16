@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Car Cam Recorder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #212121;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 20px;
+            background-color: #1E88E5;
+            color: white;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: calc(100vh - 80px);
+        }
+
+        .block {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1E88E5;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #757575;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1565C0;
+        }
+
+        #timer {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #424242;
+            border-radius: 8px;
+        }
+
+        video {
+            width: 90%;
+            max-width: 480px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #endScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            z-index: 999;
+            color: white;
+        }
+
+        #backButton {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Easy Car Cam Recorder</h1>
+    <div id="container">
+        <div id="recorderScreen" class="block">
+            <div id="controls">
+                <div id="timer">00:00:00</div>
+                <button id="startButton">Iniciar</button>
+                <button id="stopButton" disabled>Terminar</button>
+            </div>
+        </div>
+        <div id="endScreen" class="hidden">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><h1>Viaje terminado!</h1></td>
+                        <td><h1 id="finalTime"></h1></td>
+                    </tr>
+                </tbody>
+            </table>   
+            <button id="backButton">Volver</button>
+        </div>
+        <div class="block">
+            <video id="video" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let startTime;
+        let timerInterval;
+        let recordingFolder;
+        let chunkCounter = 0;
+        let stream;
+        let recordingTimer;
+
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const timer = document.getElementById('timer');
+        const recorderScreen = document.getElementById('recorderScreen');
+        const endScreen = document.getElementById('endScreen');
+        const finalTime = document.getElementById('finalTime');
+        const backButton = document.getElementById('backButton');
+
+        let canvas, canvasStream, canvasVideoTrack;
+        let startDateTime;
+
+        function updateTimer() {
+            const now = new Date();
+            const elapsedTime = new Date(now - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function getFormattedDate() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+        }
+
+        async function getCameraStream() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                if (videoDevices.length === 0) throw new Error('No se encontraron cámaras disponibles.');
+
+                let backCamera = videoDevices[0];
+                for (let device of videoDevices) {
+                    if (device.label.toLowerCase().includes('back')) {
+                        backCamera = device;
+                        break;
+                    }
+                }
+
+                const constraints = {
+                    video: {
+                        deviceId: backCamera.deviceId,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 60 }
+                    }
+                };
+
+                return await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (error) {
+                console.error('Error al obtener el flujo de la cámara:', error);
+                alert('No se pudo acceder a la cámara. Verifique los permisos o intente nuevamente.');
+                throw error;
+            }
+        }
+
+        async function startRecording() {
+            try {
+                stream = await getCameraStream();
+                video.srcObject = stream;
+
+                // Crear canvas para combinar el video y el texto
+                canvas = document.createElement('canvas');
+                canvas.width = 1280;  // Ancho del video
+                canvas.height = 720;  // Alto del video
+
+                // Obtener el track de video del canvas
+                const canvasContext = canvas.getContext('2d');
+                canvasStream = canvas.captureStream(30); // 30 fps
+
+                // Crear el track de video a partir del canvas
+                canvasVideoTrack = canvasStream.getVideoTracks()[0];
+
+                // Combinar el video original con el canvas (superponer el texto)
+                const combinedStream = new MediaStream();
+                combinedStream.addTrack(stream.getVideoTracks()[0]);
+                combinedStream.addTrack(canvasVideoTrack);
+
+                // Reemplazar el video con el flujo combinado
+                const combinedVideo = document.createElement('video');
+                combinedVideo.srcObject = combinedStream;
+                combinedVideo.play();
+
+                // Iniciar la grabación
+                recordingFolder = getFormattedDate();
+                startTime = new Date();
+                startDateTime = startTime.toLocaleString(); // Fecha y hora de inicio
+                chunkCounter = 0;
+
+                startNewRecorder();
+
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                timerInterval = setInterval(updateTimer, 1000);
+
+                recordingTimer = setInterval(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 900000); // 15 minutos
+
+                // Iniciar el dibujo del texto sobre el canvas
+                requestAnimationFrame(drawOnCanvas);
+            } catch (error) {
+                console.error('Error al iniciar la grabación:', error);
+            }
+        }
+
+        function startNewRecorder() {
+            mediaRecorder = new MediaRecorder(canvasStream, {
+                mimeType: 'video/webm; codecs=vp8',
+                videoBitsPerSecond: 2500000
+            });
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveChunk(event.data);
+                    chunkCounter++;
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                console.log('MediaRecorder detenido. Iniciando nueva grabación.');
+                if (startButton.disabled) {
+                    startNewRecorder();
+                    mediaRecorder.start();
+                }
+            };
+
+            mediaRecorder.start();
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            clearInterval(timerInterval);
+            clearInterval(recordingTimer);
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            stream.getTracks().forEach(track => track.stop());
+
+            const elapsedTime = new Date(new Date() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            const totalDuration = `${hours}:${minutes}:${seconds}`;
+
+            saveTxt(totalDuration);
+            showEndScreen(totalDuration);
+        }
+
+        function saveChunk(blob) {
+            const fileName = `${recordingFolder}_part_${chunkCounter + 1}.webm`;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            console.log(`Fragmento guardado: ${fileName}`);
+        }
+
+        function saveTxt(totalDuration) {
+            const fileName = `${recordingFolder}_Total_${totalDuration}.txt`;
+            const blob = new Blob([''], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            console.log(`Archivo TXT guardado: ${fileName}`);
+        }
+
+        function showEndScreen(totalDuration) {
+            recorderScreen.classList.add('hidden');
+            finalTime.textContent = `Tiempo total: ${totalDuration}`;
+            endScreen.classList.remove('hidden');
+        }
+
+        backButton.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
+        });
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        // Dibuja el video, el texto "EasyCarCam" y la fecha y hora en la esquina inferior derecha
+        function drawOnCanvas() {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Dibujar el texto "EasyCarCam"
+            ctx.font = '48px Arial';
+            ctx.fillStyle = 'white';
+            ctx.fillText('EasyCarCam', 20, 50);
+
+            // Dibujar la fecha y hora de inicio en la esquina inferior derecha
+            ctx.font = '24px Arial';
+            const dateTimeText = `Inicio: ${startDateTime}`;
+            const textWidth = ctx.measureText(dateTimeText).width;
+            ctx.fillText(dateTimeText, canvas.width - textWidth - 20, canvas.height - 20);
+
+            requestAnimationFrame(drawOnCanvas); // Continuar dibujando en cada frame
+        }
+    </script>
+</body>
+</html>
