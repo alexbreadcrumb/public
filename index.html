@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Car Cam Recorder V1.2</title>
+    <title>Easy Car Cam Recorder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -97,24 +97,16 @@
         #backButton {
             margin-top: 20px;
         }
-        #cameraSelect {
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #424242;
-            border-radius: 4px;
-            color: white;
-        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.2</h1>
+    <h1>Easy Car Cam Recorder V1.3</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-                <select id="cameraSelect"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -146,7 +138,6 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-        const cameraSelect = document.getElementById('cameraSelect');
         let currentStream;
 
         async function getCameras() {
@@ -154,18 +145,16 @@
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-                videoDevices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.textContent = device.label || `Cámara ${cameraSelect.length + 1}`;
-                    cameraSelect.appendChild(option);
-                });
+                // Buscar la cámara trasera
+                const rearCamera = videoDevices.find(device => device.label.toLowerCase().includes('back'));
 
-                if (videoDevices.length === 0) {
-                    alert('No se encontraron cámaras disponibles.');
-                } else {
-                    startCamera(videoDevices[0].deviceId);
+                if (!rearCamera) {
+                    alert('No se encontró cámara trasera.');
+                    return;
                 }
+
+                // Iniciar la cámara trasera
+                startCamera(rearCamera.deviceId);
             } catch (error) {
                 console.error('Error al obtener las cámaras:', error);
             }
@@ -184,12 +173,9 @@
             video.srcObject = stream;
         }
 
-        cameraSelect.addEventListener('change', (event) => {
-            startCamera(event.target.value);
-        });
-
         async function requestPermissions() {
             try {
+                // Solicitar permisos para la cámara y micrófono
                 await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 getCameras();
                 console.log('Permisos otorgados para cámara y micrófono.');
@@ -270,16 +256,17 @@
             timer.textContent = "00:00:00";
         });
 
-startButton.addEventListener('click', async () => {
-    try {
-        // Solicita permisos para la cámara y micrófono solo cuando se hace clic en "Iniciar"
-        await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: cameraSelect.value } }, audio: true });
-        startRecording();
-    } catch (error) {
-        console.error('Error al solicitar permisos:', error);
-        alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-    }
-});
+        startButton.addEventListener('click', async () => {
+            try {
+                // Solicitar permisos para la cámara y micrófono al hacer clic en "Iniciar"
+                await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                getCameras();
+                startRecording();  // Iniciar la grabación
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+            }
+        });
 
         stopButton.addEventListener('click', stopRecording);
 
