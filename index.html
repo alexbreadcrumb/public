@@ -107,6 +107,12 @@
             background-color: #424242;
             color: white;
         }
+        #footer {
+            position: absolute;
+            bottom: 10px;
+            font-size: 14px;
+            color: #757575;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +140,10 @@
         <div class="block">
             <video id="video" autoplay playsinline></video>
         </div>
+    </div>
+
+    <div id="footer">
+        <p>Versión: 1.1</p> <!-- Actualiza el número de versión cuando se haga una modificación -->
     </div>
 
     <script>
@@ -164,9 +174,12 @@
             });
 
             // Seleccionar cámara trasera por defecto si existe
-            const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back'));
+            const backCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
             if (backCamera) {
                 cameraSelect.value = backCamera.deviceId;
+            } else {
+                // Si no encuentra la cámara trasera, se elige la primera disponible
+                cameraSelect.value = videoDevices[0].deviceId;
             }
         }
 
