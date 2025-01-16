@@ -112,12 +112,12 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.12</h1>
+    <h1>Easy Car Cam Recorder 1.15</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
-                <button id="startButton">Iniciar</button>
+                <button id="startButton" disabled>Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
             </div>
         </div>
@@ -127,15 +127,13 @@
             <button id="backButton">Volver</button>
         </div>
         <div class="block">
+            <ul id="cameraList"></ul>
             <video id="video" autoplay playsinline></video>
         </div>
     </div>
 
     <script>
-        let mediaRecorder;
-        let stream;
-        let startTime;
-        let timerInterval;
+        const cameraList = document.getElementById('cameraList');
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -145,80 +143,77 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-        async function requestPermissions() {
-            try {
-                // Buscar la cámara trasera por deviceId
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoInput = devices.find(
-                    (device) =>
-                        device.kind === 'videoinput' &&
-                        device.deviceId.endsWith('D952575C9')
-                );
+        let mediaRecorder;
+        let stream;
+        let startTime;
+        let timerInterval;
+        let rearCameraDeviceId = null;
 
-                if (!videoInput) {
-                    throw new Error('No se encontró la cámara trasera.');
+        async function getVideoDevices() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            videoDevices.forEach(device => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${device.label} (ID: ${device.deviceId})`;
+                cameraList.appendChild(listItem);
+
+                // Detectar cámara trasera
+                if (device.deviceId.endsWith('D952575C9')) { // Ajusta el ID a tus necesidades
+                    rearCameraDeviceId = device.deviceId;
+                    startButton.disabled = false;
                 }
+            });
+        }
 
-                // Configurar acceso con el deviceId específico
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: videoInput.deviceId } },
-                    audio: true,
-                });
-
-                video.srcObject = stream;
-                console.log('Permisos otorgados para cámara trasera y micrófono.');
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Hubo un problema al acceder a la cámara trasera.');
-                throw error;
+        async function startRearCamera() {
+            if (!rearCameraDeviceId) {
+                alert('No se encontró una cámara trasera.');
+                return;
             }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: rearCameraDeviceId } },
+                audio: true
+            });
+            video.srcObject = stream;
+            console.log('Cámara trasera activa.');
         }
 
         function startRecording() {
             if (!stream) {
-                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                alert('No hay permisos para la cámara.');
                 return;
             }
-
-            const options = { mimeType: 'video/webm; codecs=vp8' };
-            mediaRecorder = new MediaRecorder(stream, options);
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    saveRecording(event.data);
-                }
-            };
-
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
             mediaRecorder.start();
+
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 1000);
 
             startButton.disabled = true;
             stopButton.disabled = false;
+
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) saveRecording(e.data);
+            };
         }
 
         function stopRecording() {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
             clearInterval(timerInterval);
-            startButton.disabled = false;
-            stopButton.disabled = true;
 
             const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
-
-            recorderScreen.classList.add('hidden');
+            finalTime.textContent = `Duración: ${elapsedTime.toISOString().substr(11, 8)}`;
             endScreen.classList.remove('hidden');
+            recorderScreen.classList.add('hidden');
         }
 
         function updateTimer() {
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
+            const elapsed = new Date(Date.now() - startTime);
+            timer.textContent = elapsed.toISOString().substr(11, 8);
         }
 
         function saveRecording(blob) {
@@ -226,7 +221,7 @@
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = `recording_${Date.now()}.webm`;
+            a.download = `recording_${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
@@ -241,8 +236,8 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
-        // Solicitar permisos al cargar la página
-        requestPermissions();
+        // Listar cámaras al cargar la página
+        getVideoDevices();
     </script>
 </body>
 </html>
