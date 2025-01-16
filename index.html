@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.26</h1>
+    <h1>Easy Car Cam Recorder V1.27</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -163,7 +163,7 @@ videoDevices.forEach(device => {
     listItem.textContent = `${device.label} (ID: ${device.deviceId})`;
     cameraList.appendChild(listItem);
 
-    if (device.deviceId.endsWith('9')) {
+    if (device.deviceId.includes('D952575C9')) {
         selectedDeviceId = device.deviceId;
         console.log('Cámara seleccionada:', selectedDeviceId);
         alert(`Cámara seleccionada: ${selectedDeviceId}`);
