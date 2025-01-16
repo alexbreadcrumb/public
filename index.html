@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-   <style>
                 body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -113,14 +112,13 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.1</h1>
+    <h1>Easy Car Cam Recorder</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-                <ul id="cameraList"></ul>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -152,41 +150,21 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-        const cameraList = document.getElementById('cameraList');
 
-        async function getCameras() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-                cameraList.innerHTML = ''; // Limpiar lista previa
-                videoDevices.forEach(device => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${device.label} (ID: ${device.deviceId})`;
-                    cameraList.appendChild(listItem);
-                });
-
-                if (videoDevices.length === 0) {
-                    const noCameraMessage = document.createElement('li');
-                    noCameraMessage.textContent = 'No se encontraron cámaras.';
-                    cameraList.appendChild(noCameraMessage);
-                }
-            } catch (error) {
-                console.error('Error al obtener las cámaras:', error);
-            }
-        }
-
-        async function requestPermissionsAndListCameras() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                video.srcObject = stream;
-                console.log('Permisos otorgados para cámara y micrófono.');
-                await getCameras();
-            } catch (error) {
-                console.error('Error al solicitar permisos o listar cámaras:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-            }
-        }
+async function requestPermissions() {
+    try {
+        // Solicitar el stream de la cámara con el deviceId específico
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' } },
+            audio: true
+        });
+        video.srcObject = stream;
+        console.log('Usando la cámara con el ID especificado.');
+    } catch (error) {
+        console.error('Error al acceder a la cámara con el ID especificado:', error);
+        alert('No se pudo acceder a la cámara especificada. Verifica el ID o los permisos.');
+    }
+}
 
         function startRecording() {
             if (!stream) {
@@ -194,7 +172,10 @@
                 return;
             }
 
-            const options = { mimeType: 'video/webm; codecs=vp8' };
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
+
             mediaRecorder = new MediaRecorder(stream, options);
 
             mediaRecorder.ondataavailable = event => {
@@ -243,7 +224,7 @@
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = `recording_${Date.now()}.webm`;
+            a.download = `recording_${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
@@ -255,8 +236,11 @@
             timer.textContent = "00:00:00";
         });
 
-        startButton.addEventListener('click', requestPermissionsAndListCameras);
+        startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
+
+        // Solicitar permisos al cargar la página
+        requestPermissions();
     </script>
 </body>
 </html>
