@@ -151,24 +151,26 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-
         const muteButton = document.getElementById('muteButton');
-let isMuted = false;
+        let isMuted = false;
+        let originalStream = null;
 
 muteButton.addEventListener('click', () => {
     if (!stream) return;
 
-    // Alternar el estado de mute
     isMuted = !isMuted;
 
-    // Cambiar el estado del audio en las pistas
-    stream.getAudioTracks().forEach(track => {
-        track.enabled = !isMuted;
-    });
-
-    // Actualizar el texto del botón
-    muteButton.textContent = isMuted ? 'Activar micrófono' : 'Silenciar micrófono';
+    if (isMuted) {
+        // Detener las pistas de audio
+        stream.getAudioTracks().forEach(track => track.enabled = false);
+        muteButton.textContent = 'Activar micrófono';
+    } else {
+        // Reactivar las pistas de audio
+        stream.getAudioTracks().forEach(track => track.enabled = true);
+        muteButton.textContent = 'Silenciar micrófono';
+    }
 });
+
 
 
 async function requestPermissions() {
@@ -191,31 +193,38 @@ async function requestPermissions() {
     }
 }
 
-        function startRecording() {
-            if (!stream) {
-                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-                return;
-            }
+      // Ajustar el stream al iniciar la grabación
+function startRecording() {
+    if (!stream) {
+        alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+        return;
+    }
 
-            const options = {
-                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
-            };
+    // Crear un nuevo stream con solo video si está muteado
+    const tracks = isMuted
+        ? stream.getVideoTracks()
+        : [...stream.getVideoTracks(), ...stream.getAudioTracks()];
+    const recordingStream = new MediaStream(tracks);
 
-            mediaRecorder = new MediaRecorder(stream, options);
+    const options = {
+        mimeType: 'video/webm; codecs=vp8,opus'
+    };
 
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    saveRecording(event.data);
-                }
-            };
+    mediaRecorder = new MediaRecorder(recordingStream, options);
 
-            mediaRecorder.start();
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
-
-            startButton.disabled = true;
-            stopButton.disabled = false;
+    mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+            saveRecording(event.data);
         }
+    };
+
+    mediaRecorder.start();
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+}
 
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
