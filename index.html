@@ -249,7 +249,6 @@
             const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
             const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
             timer.textContent = `${hours}:${minutes}:${seconds}`;
-            document.getElementById('cameraIdDisplay').textContent = `ID: ${selectedDeviceId}`;
         }
 
         function saveRecording(blob) {
