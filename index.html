@@ -112,14 +112,15 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder</h1>
+    <h1>Easy Car Cam Recorder V1.0</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
-            <div id="controls">
-                <div id="timer">00:00:00</div>
-                <button id="startButton">Iniciar</button>
-                <button id="stopButton" disabled>Terminar</button>
-            </div>
+<div id="controls">
+    <div id="timer">00:00:00</div>
+    <button id="startButton">Iniciar</button>
+    <button id="stopButton" disabled>Terminar</button>
+    <button id="muteButton">Silenciar micrófono</button>
+</div>
         </div>
         <div id="endScreen" class="hidden">
             <table>
@@ -151,12 +152,31 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
+        const muteButton = document.getElementById('muteButton');
+let isMuted = false;
+
+muteButton.addEventListener('click', () => {
+    if (!stream) return;
+
+    // Alternar el estado de mute
+    isMuted = !isMuted;
+
+    // Cambiar el estado del audio en las pistas
+    stream.getAudioTracks().forEach(track => {
+        track.enabled = !isMuted;
+    });
+
+    // Actualizar el texto del botón
+    muteButton.textContent = isMuted ? 'Activar micrófono' : 'Silenciar micrófono';
+});
+
+
 async function requestPermissions() {
     try {
         // Solicitar el stream de la cámara con el deviceId específico
         stream = await navigator.mediaDevices.getUserMedia({
             video: { 
-                deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' } 
+                deviceId: { exact: '14184F5A80EF647C0FF7655C5A4B336D952575C9' }, 
                 width: { ideal: 720 },
                 height: { ideal: 405 },
                 frameRate: { ideal: 30 }
