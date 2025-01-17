@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-        /* Estilos principales */
+        /* Estilos mantenidos del código original */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -113,19 +113,34 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.37</h1>
+    <h1>Easy Car Cam Recorder V1.38</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
-                <div id="timer" aria-label="Temporizador">00:00:00</div>
+                <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
                 <label for="cameraSelect">Selecciona una cámara:</label>
-                <select id="cameraSelect" onchange="updateCamera()" aria-label="Selector de cámara"></select>
+                <select id="cameraSelect" onchange="updateCamera()"></select>
+
+                <label for="resolutionSelect">Resolución:</label>
+                <select id="resolutionSelect">
+                    <option value="320x240">320x240</option>
+                    <option value="640x480" selected>640x480</option>
+                    <option value="1280x720">1280x720</option>
+                    <option value="1920x1080">1920x1080</option>
+                </select>
+
+                <label for="fpsSelect">FPS:</label>
+                <select id="fpsSelect">
+                    <option value="15">15</option>
+                    <option value="30" selected>30</option>
+                    <option value="60">60</option>
+                </select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
-            <h1>¡Viaje terminado!</h1>
+            <h1>Viaje terminado!</h1>
             <h1 id="finalTime"></h1>
             <button id="backButton">Volver</button>
         </div>
@@ -148,13 +163,8 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-        /**
-         * Solicita permisos de cámara y micrófono, y configura la lista de cámaras disponibles.
-         */
         async function requestPermissions() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -173,6 +183,7 @@
                     cameraSelect.appendChild(option);
                 });
 
+                // Configurar la primera cámara como predeterminada
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -180,19 +191,27 @@
             }
         }
 
-        /**
-         * Actualiza la cámara seleccionada.
-         */
         async function updateCamera() {
             try {
-                const selectedCameraId = document.getElementById('cameraSelect').value;
+                const cameraSelect = document.getElementById('cameraSelect');
+                const resolutionSelect = document.getElementById('resolutionSelect');
+                const fpsSelect = document.getElementById('fpsSelect');
+
+                const selectedCameraId = cameraSelect.value;
+                const [width, height] = resolutionSelect.value.split('x').map(Number);
+                const frameRate = parseInt(fpsSelect.value, 10);
 
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
 
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedCameraId } },
+                    video: {
+                        deviceId: { exact: selectedCameraId },
+                        width: { exact: width },
+                        height: { exact: height },
+                        frameRate: { exact: frameRate }
+                    },
                     audio: true,
                 });
 
@@ -203,16 +222,18 @@
             }
         }
 
-        /**
-         * Inicia la grabación del video.
-         */
+        // Mantener la funcionalidad existente para grabar, detener y mostrar la pantalla final
         function startRecording() {
             if (!stream) {
                 alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
                 return;
             }
 
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
+
+            mediaRecorder = new MediaRecorder(stream, options);
 
             mediaRecorder.ondataavailable = event => {
                 if (event.data.size > 0) {
@@ -228,9 +249,6 @@
             stopButton.disabled = false;
         }
 
-        /**
-         * Detiene la grabación del video.
-         */
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
@@ -240,13 +258,6 @@
             startButton.disabled = false;
             stopButton.disabled = true;
 
-            displayEndScreen();
-        }
-
-        /**
-         * Muestra la pantalla de finalización con el tiempo total.
-         */
-        function displayEndScreen() {
             const elapsedTime = new Date(Date.now() - startTime);
             const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
             const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
@@ -257,9 +268,6 @@
             endScreen.classList.remove('hidden');
         }
 
-        /**
-         * Actualiza el temporizador.
-         */
         function updateTimer() {
             const elapsedTime = new Date(Date.now() - startTime);
             const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
@@ -268,15 +276,12 @@
             timer.textContent = `${hours}:${minutes}:${seconds}`;
         }
 
-        /**
-         * Guarda la grabación como un archivo local.
-         */
         function saveRecording(blob) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = `recording_${Date.now()}.webm`;
+            a.download = `recording_${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
@@ -291,12 +296,8 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
-        // Verifica soporte del navegador
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert('Tu navegador no soporta la grabación de video. Por favor, actualízalo.');
-        } else {
-            requestPermissions();
-        }
+        // Solicitar permisos al cargar la página
+        requestPermissions();
     </script>
 </body>
 </html>
