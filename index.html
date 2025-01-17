@@ -148,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.45</h1>
+    <h1>Easy Car Cam Recorder V1.46</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
@@ -158,16 +158,17 @@
                     <label for="cameraSelect">Cam:</label>
                     <select id="cameraSelect" onchange="updateCamera()"></select>
                     <label for="resolutionSelect">Resolución:</label>
-                    <select id="resolutionSelect">
+                    <select id="resolutionSelect" onchange="updateCamera()">
                         <option value="426x240">426x240</option>
                         <option value="640x360">640x360</option>
                         <option value="720x405">720x405</option>
                         <option value="1080x720">1080x720</option>
                         <option value="1920x1080">1920x1080</option>
+                        <option value="3840x2160">3840x2160 (4K)</option>
                     </select>
 
                     <label for="fpsSelect">FPS:</label>
-                    <select id="fpsSelect">
+                    <select id="fpsSelect" onchange="updateCamera()">
                         <option value="25">25</option>
                         <option value="30" selected>30</option>
                         <option value="60">60</option>
@@ -242,45 +243,39 @@
             }
         }
 
-async function updateCamera() {
-    try {
-        const cameraSelect = document.getElementById('cameraSelect');
-        const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
-        const fpsSelect = document.getElementById('fpsSelect').value;
-        const selectedCameraId = cameraSelect.value;
+        async function updateCamera() {
+            try {
+                const cameraSelect = document.getElementById('cameraSelect');
+                const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
+                const fpsSelect = document.getElementById('fpsSelect').value;
+                const selectedCameraId = cameraSelect.value;
 
-        // Aseguramos que la resolución y FPS se convierten correctamente
-        const width = parseInt(resolutionSelect[0]);
-        const height = parseInt(resolutionSelect[1]);
-        const frameRate = parseInt(fpsSelect);
+                const width = parseInt(resolutionSelect[0]);
+                const height = parseInt(resolutionSelect[1]);
+                const frameRate = parseInt(fpsSelect);
 
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: {
+                        deviceId: { exact: selectedCameraId },
+                        width: { ideal: width },
+                        height: { ideal: height },
+                        frameRate: { ideal: frameRate }
+                    },
+                    audio: true
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+            } catch (error) {
+                console.error('Error al cambiar la cámara:', error);
+                alert('No se pudo cambiar a la cámara seleccionada.');
+            }
         }
-
-        // Intentamos obtener el stream con la resolución y FPS seleccionados
-        const constraints = {
-            video: {
-                deviceId: { exact: selectedCameraId },
-                width: { ideal: width }, // Ideal en lugar de exacto
-                height: { ideal: height }, // Ideal para la altura también
-                frameRate: { ideal: frameRate } // Ideal para FPS
-            },
-            audio: true
-        };
-
-        // Intentamos acceder al stream con las nuevas configuraciones
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        video.srcObject = stream;
-
-    } catch (error) {
-        console.error('Error al cambiar la cámara:', error);
-        alert('No se pudo cambiar a la cámara seleccionada.');
-    }
-}
-
-
 
         function startRecording() {
             if (!stream) {
@@ -307,44 +302,48 @@ async function updateCamera() {
             startButton.disabled = true;
             stopButton.disabled = false;
 
-            // Cierra el menú sandwich al iniciar la grabación
             sandwichMenu.classList.remove('open');
         }
 
         function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-
+            mediaRecorder.stop();
             clearInterval(timerInterval);
+            video.srcObject = null;
+
             startButton.disabled = false;
             stopButton.disabled = true;
 
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            const elapsed = Date.now() - startTime;
+            const duration = formatTime(elapsed);
+            finalTime.textContent = duration;
 
-            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
             recorderScreen.classList.add('hidden');
             endScreen.classList.remove('hidden');
         }
 
-        function updateTimer() {
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        function formatTime(milliseconds) {
+            const seconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${padZero(hours)}:${padZero(minutes)}:${padZero(secs)}`;
         }
 
-        function saveRecording(blob) {
+        function padZero(number) {
+            return number < 10 ? '0' + number : number;
+        }
+
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            timer.textContent = formatTime(elapsed);
+        }
+
+        function saveRecording(data) {
+            const blob = new Blob([data], { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.style.display = 'none';
             a.href = url;
-            a.download = `recording_${Date.now()}.mp4`;
-            document.body.appendChild(a);
+            a.download = 'recording.mp4';
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -356,13 +355,13 @@ async function updateCamera() {
         backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
             recorderScreen.classList.remove('hidden');
-            timer.textContent = "00:00:00";
         });
+
+        // Iniciar la solicitud de permisos de cámara al cargar la página
+        window.onload = requestPermissions;
 
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
-
-        requestPermissions();
     </script>
 </body>
 </html>
