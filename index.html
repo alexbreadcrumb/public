@@ -112,13 +112,15 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.31</h1>
+    <h1>Easy Car Cam Recorder V1.32</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
+    <label for="cameraSelect">Selecciona una cámara:</label>
+    <select id="cameraSelect"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -151,7 +153,7 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-async function requestPermissions() {
+    async function requestPermissions() {
         try {
             // Solicitar acceso a cámara y micrófono
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -165,13 +167,26 @@ async function requestPermissions() {
                 return;
             }
 
-            // Seleccionar la primera cámara disponible
-            const selectedDevice = videoDevices[0];
-            alert('ID de la cámara utilizada: ' + selectedDevice.deviceId);
+            // Poblar el select list con las cámaras detectadas
+            const cameraSelect = document.getElementById('cameraSelect');
+            cameraSelect.innerHTML = ''; // Limpiar opciones previas
 
-            // Configurar el video
-            video.srcObject = stream;
-            console.log('Permisos otorgados para cámara y micrófono.');
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Cámara ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Configurar el video con la primera cámara por defecto
+            const firstCameraId = videoDevices[0].deviceId;
+            const firstCameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: firstCameraId } },
+                audio: true,
+            });
+            video.srcObject = firstCameraStream;
+
+            console.log('Permisos otorgados y cámaras cargadas.');
         } catch (error) {
             console.error('Error al solicitar permisos:', error);
             alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
