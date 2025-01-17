@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Car Cam Recorder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #212121;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 20px;
+            background-color: #1E88E5;
+            color: white;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: calc(100vh - 80px);
+        }
+
+        .block {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1E88E5;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #757575;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1565C0;
+        }
+
+        #timer {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #424242;
+            border-radius: 8px;
+        }
+
+        video {
+            width: 90%;
+            max-width: 480px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #endScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            z-index: 999;
+            color: white;
+        }
+
+        #backButton {
+            margin-top: 20px;
+        }
+
+        /* Menu sandwich */
+        #menuButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        #menu {
+            display: none;
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background-color: #424242;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+        }
+
+        #menu select {
+            background-color: #212121;
+            color: white;
+            border: 1px solid #1E88E5;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #menu label {
+            display: block;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Easy Car Cam Recorder V1.59</h1>
+    <button id="menuButton">&#9776;</button>
+    <div id="menu">
+        <div>
+            <label for="cameraSelect">Selecciona una cámara:</label>
+            <select id="cameraSelect" onchange="updateCamera()"></select>
+        </div>
+        <div>
+            <label for="resolutionSelect">Selecciona una resolución:</label>
+            <select id="resolutionSelect" onchange="updateResolution()">
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+            </select>
+        </div>
+    </div>
+    <div id="container">
+        <div id="recorderScreen" class="block">
+            <div id="controls">
+                <div id="timer">00:00:00</div>
+                <button id="startButton">Iniciar</button>
+                <button id="stopButton" disabled>Terminar</button>
+            </div>
+        </div>
+        <div id="endScreen" class="hidden">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><h1>Viaje terminado!</h1></td>
+                        <td><h1 id="finalTime"></h1></td>
+                    </tr>
+                </tbody>
+            </table>   
+            <button id="backButton">Volver</button>
+        </div>
+        <div class="block">
+            <video id="video" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let stream;
+        let startTime;
+        let timerInterval;
+        let currentResolution = '480p'; // Variable para recordar la resolución actual
+        let currentCameraId; // Variable para almacenar la cámara seleccionada
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const timer = document.getElementById('timer');
+        const recorderScreen = document.getElementById('recorderScreen');
+        const endScreen = document.getElementById('endScreen');
+        const finalTime = document.getElementById('finalTime');
+        const backButton = document.getElementById('backButton');
+
+        // Menú Sandwich
+        const menuButton = document.getElementById('menuButton');
+        const menu = document.getElementById('menu');
+
+        menuButton.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                if (videoDevices.length === 0) {
+                    alert('No se encontraron cámaras.');
+                    return;
+                }
+
+                const cameraSelect = document.getElementById('cameraSelect');
+                cameraSelect.innerHTML = '';
+
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Cámara ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                // Configurar la primera cámara como predeterminada
+                currentCameraId = videoDevices[0].deviceId;
+                updateCamera();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+            }
+        }
+
+        async function updateCamera() {
+            try {
+                const cameraSelect = document.getElementById('cameraSelect');
+                currentCameraId = cameraSelect.value;
+
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                // Reemplazamos solo la cámara sin cambiar la resolución
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
+                    audio: true,
+                });
+
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al cambiar la cámara:', error);
+                alert('No se pudo cambiar a la cámara seleccionada.');
+            }
+        }
+
+        function getResolutionWidth(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 854;
+                case '720p':
+                    return 1280;
+                case '1080p':
+                    return 1920;
+                default:
+                    return 854;
+            }
+        }
+
+        function getResolutionHeight(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 480;
+                case '720p':
+                    return 720;
+                case '1080p':
+                    return 1080;
+                default:
+                    return 480;
+            }
+        }
+
+        function startRecording() {
+            if (!stream) {
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
+            }
+
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
+
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+
+            clearInterval(timerInterval);
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
+            recorderScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        function updateTimer() {
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function saveRecording(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `recording_${Date.now()}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        backButton.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
+        });
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        // Solicitar permisos al cargar la página
+        requestPermissions();
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            currentResolution = resolutionSelect.value;
+
+            // Reconfigurar solo la resolución sin cambiar la cámara
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
+                audio: true
+            }).then(newStream => {
+                stream = newStream;
+                video.srcObject = stream;
+            });
+        }
+    </script>
+</body>
+</html>
