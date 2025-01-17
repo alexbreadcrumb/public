@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+    <! -- VERSIÓN VIGENTE: 1.64 --> 
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
@@ -146,11 +147,10 @@
             display: block;
             color: white;
         }
-
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.61</h1>
+    <h1>Easy Car Cam Recorder V1.64</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -357,11 +357,20 @@
         }
 
         function saveRecording(blob) {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.mp4`;
+
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = `recording_${Date.now()}.mp4`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
@@ -382,14 +391,13 @@
         function updateResolution() {
             const resolutionSelect = document.getElementById('resolutionSelect');
             currentResolution = resolutionSelect.value;
-            updateCamera();  // Solo cambia la resolución sin alterar la cámara ni el audio
+            updateCamera();
         }
 
         function updateAudio() {
-            includeAudio = document.getElementById('audioSelect').value === 'true';
-            if (stream) {
-                updateCamera();  // Solo cambia el audio sin alterar la cámara ni la resolución
-            }
+            const audioSelect = document.getElementById('audioSelect');
+            includeAudio = audioSelect.value === 'true';
+            updateCamera();
         }
     </script>
 </body>
