@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-    <! -- VERSIÓN VIGENTE: 1.65 --> 
+    <! -- VERSIÓN VIGENTE: 1.64 --> 
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-        /* Tu CSS existente */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -21,20 +20,113 @@
             overflow: hidden;
         }
 
-        video, canvas {
+        h1 {
+            margin: 0;
+            padding: 20px;
+            background-color: #1E88E5;
+            color: white;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: calc(100vh - 80px);
+        }
+
+        .block {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1E88E5;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #757575;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1565C0;
+        }
+
+        #timer {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #424242;
+            border-radius: 8px;
+        }
+
+        video {
             width: 90%;
             max-width: 480px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
+
+        .hidden {
+            display: none;
+        }
+
+        #endScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            z-index: 999;
+            color: white;
+        }
+
+        #backButton {
+            margin-top: 20px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 4px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.66</h1>
-    <button id="menuButton">&#9776;</button>
-    <div id="menu">
-        <!-- Tu menú existente -->
-    </div>
+    <h1>Easy Car Cam Recorder V1.65</h1>
+    <div id="overlay">Obteniendo ubicación...</div>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -43,9 +135,21 @@
                 <button id="stopButton" disabled>Terminar</button>
             </div>
         </div>
+        <div id="endScreen" class="hidden">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <h1>Viaje terminado!</h1>
+                            <h1 id="finalTime"></h1>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>   
+            <button id="backButton">Volver</button>
+        </div>
         <div class="block">
             <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
         </div>
     </div>
 
@@ -54,53 +158,19 @@
         let stream;
         let startTime;
         let timerInterval;
-        let currentResolution = '480p';
-        let currentCameraId;
-        let includeAudio = true; // Variable para controlar si se incluye el audio
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const timer = document.getElementById('timer');
+        const overlay = document.getElementById('overlay');
 
-        let lat = 0;
-        let lon = 0;
-
-        // Obtener geolocalización
-        function updateLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        lat = position.coords.latitude.toFixed(6);
-                        lon = position.coords.longitude.toFixed(6);
-                    },
-                    error => {
-                        console.error('Error al obtener la geolocalización:', error);
-                    }
-                );
-            } else {
-                console.warn('Geolocalización no soportada por el navegador.');
-            }
-        }
-
-        setInterval(updateLocation, 5000); // Actualizar cada 5 segundos
-
-        function drawOverlay() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Dibujar texto de latitud y longitud
-            context.font = '20px Arial';
-            context.fillStyle = 'yellow';
-            context.fillText(`Lat: ${lat}, Lon: ${lon}`, 10, 30);
-
-            // Llamar continuamente a la función mientras se graba
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                requestAnimationFrame(drawOverlay);
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
             }
         }
 
@@ -110,16 +180,7 @@
                 return;
             }
 
-            const options = {
-                mimeType: 'video/webm; codecs=vp8,opus'
-            };
-
-            const mixedStream = new MediaStream([...stream.getVideoTracks()]);
-            const canvasStream = canvas.captureStream(30); // Captura 30 fps desde el canvas
-            mixedStream.addTrack(canvasStream.getVideoTracks()[0]);
-
-            mediaRecorder = new MediaRecorder(mixedStream, options);
-
+            mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = event => {
                 if (event.data.size > 0) {
                     saveRecording(event.data);
@@ -133,7 +194,7 @@
             startButton.disabled = true;
             stopButton.disabled = false;
 
-            drawOverlay();
+            startLocationUpdates();
         }
 
         function stopRecording() {
@@ -144,6 +205,8 @@
             clearInterval(timerInterval);
             startButton.disabled = false;
             stopButton.disabled = true;
+
+            stopLocationUpdates();
         }
 
         function updateTimer() {
@@ -155,39 +218,37 @@
         }
 
         function saveRecording(blob) {
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.webm`;
-
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = filename;
+            a.download = `CarCam_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
         }
 
+        let locationInterval;
+
+        function startLocationUpdates() {
+            locationInterval = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    overlay.textContent = `Lat: ${latitude.toFixed(5)}, Lng: ${longitude.toFixed(5)}`;
+                }, error => {
+                    console.error('Error al obtener ubicación:', error);
+                    overlay.textContent = 'Ubicación no disponible';
+                });
+            }, 5000);
+        }
+
+        function stopLocationUpdates() {
+            clearInterval(locationInterval);
+            overlay.textContent = 'Obteniendo ubicación...';
+        }
+
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
-
-        // Solicitar permisos al cargar la página
-        async function requestPermissions() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                video.srcObject = stream;
-                updateLocation();
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-            }
-        }
 
         requestPermissions();
     </script>
