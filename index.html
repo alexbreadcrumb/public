@@ -122,7 +122,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.55</h1>
+    <h1>Easy Car Cam Recorder V1.56</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -166,84 +166,91 @@
         const cameraSelect = document.getElementById('cameraSelect');
         const cameraList = document.getElementById('cameraList');
 
-    async function requestPermissions() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            if (videoDevices.length === 0) {
-                alert('No se encontraron cámaras.');
-                return;
-            }
+                if (videoDevices.length === 0) {
+                    alert('No se encontraron cámaras.');
+                    return;
+                }
 
-            cameraSelect.innerHTML = '';
-            cameraList.innerHTML = '';
+                cameraSelect.innerHTML = '';
+                cameraList.innerHTML = '';
 
-            videoDevices.forEach((device, index) => {
-                const option = document.createElement('option');
-                option.value = device.deviceId;
-                option.textContent = device.label || `Cámara ${index + 1}`;
-                cameraSelect.appendChild(option);
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Cámara ${index + 1}`;
+                    cameraSelect.appendChild(option);
 
-                // Añadir el detalle de la resolución
-                getCameraCapabilities(device.deviceId).then(capabilities => {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('camera-option');
-                    listItem.textContent = `${device.label || `Cámara ${index + 1}`} - Resolución mínima: ${capabilities.minWidth}x${capabilities.minHeight}, Resolución máxima: ${capabilities.maxWidth}x${capabilities.maxHeight}`;
-                    cameraList.appendChild(listItem);
+                    // Añadir el detalle de la resolución
+                    getCameraCapabilities(device.deviceId).then(capabilities => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('camera-option');
+                        listItem.textContent = `${device.label || `Cámara ${index + 1}`} - Resolución mínima: ${capabilities.minWidth}x${capabilities.minHeight}, Resolución máxima: ${capabilities.maxWidth}x${capabilities.maxHeight}`;
+                        cameraList.appendChild(listItem);
+                    });
                 });
-            });
 
-            // Configurar la primera cámara como predeterminada
-            updateCamera();
-        } catch (error) {
-            console.error('Error al solicitar permisos:', error);
-            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-        }
-    }
-
-    async function getCameraCapabilities(deviceId) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: deviceId } }
-            });
-
-            const track = stream.getVideoTracks()[0];
-            const capabilities = track.getCapabilities();
-
-            return {
-                minWidth: capabilities.width.min,
-                minHeight: capabilities.height.min,
-                maxWidth: capabilities.width.max,
-                maxHeight: capabilities.height.max
-            };
-        } catch (error) {
-            console.error('Error al obtener las capacidades de la cámara:', error);
-            return { minWidth: 0, minHeight: 0, maxWidth: 0, maxHeight: 0 };
-        }
-    }
-
-    async function updateCamera() {
-        try {
-            const selectedCameraId = cameraSelect.value;
-
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                // Configurar la primera cámara como predeterminada
+                updateCamera();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
             }
-
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: selectedCameraId } },
-                audio: true,
-            });
-
-            video.srcObject = stream;
-        } catch (error) {
-            console.error('Error al cambiar la cámara:', error);
-            alert('No se pudo cambiar a la cámara seleccionada.');
         }
-    }
+
+        async function getCameraCapabilities(deviceId) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: deviceId } }
+                });
+
+                const track = stream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+
+                // Calculamos las resoluciones mínimas basadas en la resolución máxima obtenida
+                const maxWidth = capabilities.width.max;
+                const maxHeight = capabilities.height.max;
+
+                const minWidth = Math.min(maxWidth, 640); // Resolución mínima, limitando a un valor razonable
+                const minHeight = Math.min(maxHeight, 360); // Resolución mínima, limitando a un valor razonable
+
+                return {
+                    minWidth: minWidth,
+                    minHeight: minHeight,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight
+                };
+            } catch (error) {
+                console.error('Error al obtener las capacidades de la cámara:', error);
+                return { minWidth: 640, minHeight: 360, maxWidth: 1920, maxHeight: 1080 }; // Valores por defecto
+            }
+        }
+
+        async function updateCamera() {
+            try {
+                const selectedCameraId = cameraSelect.value;
+
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: selectedCameraId } },
+                    audio: true,
+                });
+
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al cambiar la cámara:', error);
+                alert('No se pudo cambiar a la cámara seleccionada.');
+            }
+        }
 
         function startRecording() {
             if (!stream) {
