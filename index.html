@@ -148,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.44</h1>
+    <h1>Easy Car Cam Recorder V1.45</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
@@ -242,7 +242,7 @@
             }
         }
 
-        async function updateCamera() {
+async function updateCamera() {
     try {
         const cameraSelect = document.getElementById('cameraSelect');
         const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
@@ -259,22 +259,27 @@
         }
 
         // Intentamos obtener el stream con la resolución y FPS seleccionados
-        stream = await navigator.mediaDevices.getUserMedia({
+        const constraints = {
             video: {
                 deviceId: { exact: selectedCameraId },
-                width: { ideal: width }, // Ideal en lugar de exacto para una mejor flexibilidad
-                height: { ideal: height }, // Lo mismo para altura
+                width: { ideal: width }, // Ideal en lugar de exacto
+                height: { ideal: height }, // Ideal para la altura también
                 frameRate: { ideal: frameRate } // Ideal para FPS
             },
             audio: true
-        });
+        };
 
+        // Intentamos acceder al stream con las nuevas configuraciones
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
         video.srcObject = stream;
+
     } catch (error) {
         console.error('Error al cambiar la cámara:', error);
         alert('No se pudo cambiar a la cámara seleccionada.');
     }
 }
+
 
 
         function startRecording() {
