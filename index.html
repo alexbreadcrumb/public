@@ -148,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.47</h1>
+    <h1>Easy Car Cam Recorder V1.48</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
@@ -158,17 +158,16 @@
                     <label for="cameraSelect">Cam:</label>
                     <select id="cameraSelect" onchange="updateCamera()"></select>
                     <label for="resolutionSelect">Resolución:</label>
-                    <select id="resolutionSelect" onchange="updateCamera()">
+                    <select id="resolutionSelect">
                         <option value="426x240">426x240</option>
                         <option value="640x360">640x360</option>
                         <option value="720x405">720x405</option>
                         <option value="1080x720">1080x720</option>
                         <option value="1920x1080">1920x1080</option>
-                        <option value="3840x2160">3840x2160 (4K)</option>
                     </select>
 
                     <label for="fpsSelect">FPS:</label>
-                    <select id="fpsSelect" onchange="updateCamera()">
+                    <select id="fpsSelect">
                         <option value="25">25</option>
                         <option value="30" selected>30</option>
                         <option value="60">60</option>
@@ -250,27 +249,21 @@
                 const fpsSelect = document.getElementById('fpsSelect').value;
                 const selectedCameraId = cameraSelect.value;
 
-                const width = parseInt(resolutionSelect[0]);
-                const height = parseInt(resolutionSelect[1]);
-                const frameRate = parseInt(fpsSelect);
-
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
 
-                const constraints = {
+                stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         deviceId: { exact: selectedCameraId },
-                        width: { ideal: width },
-                        height: { ideal: height },
-                        frameRate: { ideal: frameRate }
+                        width: { exact: parseInt(resolutionSelect[0]) },
+                        height: { exact: parseInt(resolutionSelect[1]) },
+                        frameRate: { exact: parseInt(fpsSelect) }
                     },
                     audio: true
-                };
+                });
 
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-
             } catch (error) {
                 console.error('Error al cambiar la cámara:', error);
                 alert('No se pudo cambiar a la cámara seleccionada.');
@@ -278,96 +271,68 @@
         }
 
         function startRecording() {
-    if (!stream) {
-        alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-        return;
-    }
+            if (!stream) {
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
+            }
 
-    const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
-    const fpsSelect = document.getElementById('fpsSelect').value;
-    const width = parseInt(resolutionSelect[0]);
-    const height = parseInt(resolutionSelect[1]);
-    const frameRate = parseInt(fpsSelect);
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
 
-    // Verificar si la resolución y los FPS son soportados
-    const videoTrack = stream.getVideoTracks()[0];
-    const capabilities = videoTrack.getCapabilities();
-    if (capabilities.width && capabilities.height) {
-        if (width > capabilities.width.max || height > capabilities.height.max) {
-            alert('La resolución seleccionada no es soportada por esta cámara.');
-            return;
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            // Cierra el menú sandwich al iniciar la grabación
+            sandwichMenu.classList.remove('open');
         }
-    }
-    if (capabilities.frameRate) {
-        if (frameRate > capabilities.frameRate.max) {
-            alert('La tasa de fotogramas seleccionada no es soportada por esta cámara.');
-            return;
-        }
-    }
-
-    // Crear el MediaRecorder con la resolución y FPS seleccionados
-    const options = {
-        mimeType: 'video/webm; codecs=vp8,opus'  // Usa VP8 como códec para mejorar compatibilidad
-    };
-
-    mediaRecorder = new MediaRecorder(stream, options);
-
-    mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) {
-            saveRecording(event.data);
-        }
-    };
-
-    mediaRecorder.start();
-    startTime = Date.now();
-    timerInterval = setInterval(updateTimer, 1000);
-
-    startButton.disabled = true;
-    stopButton.disabled = false;
-
-    sandwichMenu.classList.remove('open');
-}
-
 
         function stopRecording() {
-            mediaRecorder.stop();
-            clearInterval(timerInterval);
-            video.srcObject = null;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
 
+            clearInterval(timerInterval);
             startButton.disabled = false;
             stopButton.disabled = true;
 
-            const elapsed = Date.now() - startTime;
-            const duration = formatTime(elapsed);
-            finalTime.textContent = duration;
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
 
+            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
             recorderScreen.classList.add('hidden');
             endScreen.classList.remove('hidden');
         }
 
-        function formatTime(milliseconds) {
-            const seconds = Math.floor(milliseconds / 1000);
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            return `${padZero(hours)}:${padZero(minutes)}:${padZero(secs)}`;
-        }
-
-        function padZero(number) {
-            return number < 10 ? '0' + number : number;
-        }
-
         function updateTimer() {
-            const elapsed = Date.now() - startTime;
-            timer.textContent = formatTime(elapsed);
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
         }
 
-        function saveRecording(data) {
-            const blob = new Blob([data], { type: 'video/mp4' });
+        function saveRecording(blob) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = url;
-            a.download = 'recording.mp4';
+            a.download = `recording_${Date.now()}.mp4`;
+            document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -379,13 +344,13 @@
         backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
             recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
         });
-
-        // Iniciar la solicitud de permisos de cámara al cargar la página
-        window.onload = requestPermissions;
 
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
+
+        requestPermissions();
     </script>
 </body>
 </html>
