@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+    <! -- VERSIÓN VIGENTE: 1.65 --> 
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
+        /* Tu CSS existente */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -19,85 +21,20 @@
             overflow: hidden;
         }
 
-        h1 {
-            margin: 0;
-            padding: 20px;
-            background-color: #1E88E5;
-            color: white;
-            text-align: center;
-            width: 100%;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        #container {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: calc(100vh - 80px);
-        }
-
-        .block {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #1E88E5;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:disabled {
-            background-color: #757575;
-            cursor: not-allowed;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #1565C0;
-        }
-
-        #timer {
-            font-size: 24px;
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #424242;
-            border-radius: 8px;
-        }
-
         video, canvas {
             width: 90%;
             max-width: 480px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-            position: absolute;
-        }
-
-        canvas {
-            z-index: 1;
-            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.65</h1>
+    <h1>Easy Car Cam Recorder V1.66</h1>
+    <button id="menuButton">&#9776;</button>
+    <div id="menu">
+        <!-- Tu menú existente -->
+    </div>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -117,61 +54,53 @@
         let stream;
         let startTime;
         let timerInterval;
+        let currentResolution = '480p';
+        let currentCameraId;
+        let includeAudio = true; // Variable para controlar si se incluye el audio
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const timer = document.getElementById('timer');
-        let currentPosition = { lat: null, lon: null };
 
-        // Solicitar permisos para la cámara y configurar el video
-        async function requestPermissions() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                video.srcObject = stream;
+        let lat = 0;
+        let lon = 0;
 
-                video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                });
-
-                watchPosition();
-                drawOverlay();
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-            }
-        }
-
-        function drawOverlay() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar texto de latitud y longitud
-            if (currentPosition.lat !== null && currentPosition.lon !== null) {
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.fillText(`Lat: ${currentPosition.lat.toFixed(5)}`, 10, 30);
-                ctx.fillText(`Lon: ${currentPosition.lon.toFixed(5)}`, 10, 60);
-            }
-
-            requestAnimationFrame(drawOverlay);
-        }
-
-        function watchPosition() {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.watchPosition(
+        // Obtener geolocalización
+        function updateLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
                     position => {
-                        currentPosition.lat = position.coords.latitude;
-                        currentPosition.lon = position.coords.longitude;
+                        lat = position.coords.latitude.toFixed(6);
+                        lon = position.coords.longitude.toFixed(6);
                     },
                     error => {
-                        console.error('Error al obtener la posición:', error);
-                    },
-                    { enableHighAccuracy: true }
+                        console.error('Error al obtener la geolocalización:', error);
+                    }
                 );
             } else {
-                alert('La geolocalización no está soportada en este navegador.');
+                console.warn('Geolocalización no soportada por el navegador.');
+            }
+        }
+
+        setInterval(updateLocation, 5000); // Actualizar cada 5 segundos
+
+        function drawOverlay() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Dibujar texto de latitud y longitud
+            context.font = '20px Arial';
+            context.fillStyle = 'yellow';
+            context.fillText(`Lat: ${lat}, Lon: ${lon}`, 10, 30);
+
+            // Llamar continuamente a la función mientras se graba
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                requestAnimationFrame(drawOverlay);
             }
         }
 
@@ -182,10 +111,14 @@
             }
 
             const options = {
-                mimeType: 'video/webm; codecs=vp8'
+                mimeType: 'video/webm; codecs=vp8,opus'
             };
 
-            mediaRecorder = new MediaRecorder(stream, options);
+            const mixedStream = new MediaStream([...stream.getVideoTracks()]);
+            const canvasStream = canvas.captureStream(30); // Captura 30 fps desde el canvas
+            mixedStream.addTrack(canvasStream.getVideoTracks()[0]);
+
+            mediaRecorder = new MediaRecorder(mixedStream, options);
 
             mediaRecorder.ondataavailable = event => {
                 if (event.data.size > 0) {
@@ -199,6 +132,8 @@
 
             startButton.disabled = true;
             stopButton.disabled = false;
+
+            drawOverlay();
         }
 
         function stopRecording() {
@@ -243,6 +178,17 @@
         stopButton.addEventListener('click', stopRecording);
 
         // Solicitar permisos al cargar la página
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = stream;
+                updateLocation();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+            }
+        }
+
         requestPermissions();
     </script>
 </body>
