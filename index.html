@@ -110,18 +110,41 @@
             margin-top: 20px;
         }
 
-        #config {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        #configMenu {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: none;
+            background-color: #424242;
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+        #configMenu select,
+        #configMenu label {
+            margin: 5px;
+        }
+
+        #menuButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.40</h1>
+    <h1>Easy Car Cam Recorder V1.41</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
-            <div id="config">
+            <button id="menuButton">☰</button>
+            <div id="configMenu">
                 <label for="resolutionSelect">Resolución:</label>
                 <select id="resolutionSelect">
                     <option value="640x360">640x360</option>
@@ -137,13 +160,15 @@
                     <option value="30" selected>30</option>
                     <option value="60">60</option>
                 </select>
+
+                <label for="cameraSelect">Selecciona una cámara:</label>
+                <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
+
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-                <label for="cameraSelect">Selecciona una cámara:</label>
-                <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -175,6 +200,12 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
+        const menuButton = document.getElementById('menuButton');
+        const configMenu = document.getElementById('configMenu');
+
+        menuButton.addEventListener('click', () => {
+            configMenu.style.display = (configMenu.style.display === 'block') ? 'none' : 'block';
+        });
 
         async function requestPermissions() {
             try {
