@@ -146,11 +146,10 @@
             display: block;
             color: white;
         }
-
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.62</h1>
+    <h1>Easy Car Cam Recorder V1.63</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -185,8 +184,10 @@
             <table>
                 <tbody>
                     <tr>
-                        <td><h1>Viaje terminado!</h1></td>
-                        <td><h1 id="finalTime"></h1></td>
+                        <td>
+                            <h1>Viaje terminado!</h1>
+                            <h1 id="finalTime"></h1>
+                        </td>
                     </tr>
                 </tbody>
             </table>   
@@ -355,30 +356,40 @@
         }
 
         function saveRecording(blob) {
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hour = String(now.getHours()).padStart(2, '0');
-            const minute = String(now.getMinutes()).padStart(2, '0');
-            const second = String(now.getSeconds()).padStart(2, '0');
-
-            const filename = `CarCam${day}-${month}-${year}_${hour}-${minute}-${second}.mp4`;
-
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `recording_${Date.now()}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
         }
+
+        backButton.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
+        });
 
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
-        backButton.addEventListener('click', () => {
-            recorderScreen.classList.remove('hidden');
-            endScreen.classList.add('hidden');
-        });
 
+        // Solicitar permisos al cargar la página
         requestPermissions();
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            currentResolution = resolutionSelect.value;
+            updateCamera();  // Solo cambia la resolución sin alterar la cámara ni el audio
+        }
+
+        function updateAudio() {
+            includeAudio = document.getElementById('audioSelect').value === 'true';
+            if (stream) {
+                updateCamera();  // Solo cambia el audio sin alterar la cámara ni la resolución
+            }
+        }
     </script>
 </body>
 </html>
