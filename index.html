@@ -354,35 +354,49 @@
                 timer.textContent = `${hours}:${minutes}:${seconds}`;
             }
 
-            function saveRecording(blob) {
-                // Obtener la ubicación actual
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const now = new Date();
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const year = now.getFullYear();
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const seconds = String(now.getSeconds()).padStart(2, '0');
+function updateAudio() {
+    includeAudio = document.getElementById('audioSelect').value === 'true'; // 'true' o 'false'
 
-                    const filename = `recording_${year}${month}${day}_${hours}${minutes}${seconds}.mp4`;
-                    const file = new File([blob], filename, { type: 'video/mp4' });
+    if (stream) {
+        // Detenemos el track de audio si está presente y lo reconfiguramos
+        const audioTracks = stream.getTracks().filter(track => track.kind === 'audio');
+        audioTracks.forEach(track => track.enabled = includeAudio); // Habilitar o deshabilitar
+    }
+}
 
-                    const videoDetails = {
-                        filename: filename,
-                        lat: lat,
-                        lon: lon
-                    };
+            
+function saveRecording(blob) {
+    // Obtener la ubicación actual
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
 
-                    console.log(videoDetails);
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(file);
-                    a.download = filename;
-                    a.click();
-                });
-            }
+        const filename = `recording_${year}${month}${day}_${hours}${minutes}${seconds}.mp4`;
+        const file = new File([blob], filename, { type: 'video/mp4' });
+
+        const videoDetails = {
+            filename: filename,
+            lat: lat,
+            lon: lon
+        };
+
+        console.log(videoDetails);
+
+        // Crear enlace para descarga
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(file);
+        a.download = filename;
+        a.click(); // Ejecuta la descarga
+    });
+}
+
             backButton.addEventListener('click', () => {
                 endScreen.classList.add('hidden');
                 recorderScreen.classList.remove('hidden');
