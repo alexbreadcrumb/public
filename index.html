@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.32</h1>
+    <h1>Easy Car Cam Recorder V1.33</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -120,7 +120,7 @@
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
     <label for="cameraSelect">Selecciona una cámara:</label>
-    <select id="cameraSelect"></select>
+    <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -155,10 +155,8 @@
 
     async function requestPermissions() {
         try {
-            // Solicitar acceso a cámara y micrófono
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-            // Listar dispositivos de video
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -167,9 +165,8 @@
                 return;
             }
 
-            // Poblar el select list con las cámaras detectadas
             const cameraSelect = document.getElementById('cameraSelect');
-            cameraSelect.innerHTML = ''; // Limpiar opciones previas
+            cameraSelect.innerHTML = '';
 
             videoDevices.forEach((device, index) => {
                 const option = document.createElement('option');
@@ -178,18 +175,32 @@
                 cameraSelect.appendChild(option);
             });
 
-            // Configurar el video con la primera cámara por defecto
-            const firstCameraId = videoDevices[0].deviceId;
-            const firstCameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: firstCameraId } },
-                audio: true,
-            });
-            video.srcObject = firstCameraStream;
-
-            console.log('Permisos otorgados y cámaras cargadas.');
+            // Configurar la primera cámara como predeterminada
+            updateCamera();
         } catch (error) {
             console.error('Error al solicitar permisos:', error);
             alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+        }
+    }
+
+    async function updateCamera() {
+        try {
+            const cameraSelect = document.getElementById('cameraSelect');
+            const selectedCameraId = cameraSelect.value;
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: selectedCameraId } },
+                audio: true,
+            });
+
+            video.srcObject = stream;
+        } catch (error) {
+            console.error('Error al cambiar la cámara:', error);
+            alert('No se pudo cambiar a la cámara seleccionada.');
         }
     }
 
