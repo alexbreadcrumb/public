@@ -110,65 +110,75 @@
             margin-top: 20px;
         }
 
-        #configMenu {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: none;
-            background-color: #424242;
-            padding: 10px;
-            border-radius: 8px;
-            z-index: 1000;
+        #config {
+            margin-bottom: 20px;
         }
 
-        #configMenu select,
-        #configMenu label {
-            margin: 5px;
-        }
-
+        /* Estilos para el menú sandwich */
         #menuButton {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: transparent;
+            font-size: 30px;
+            background-color: transparent;
             border: none;
             color: white;
-            font-size: 24px;
             cursor: pointer;
+        }
+
+        #sandwichMenu {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            background-color: #333;
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
             z-index: 1000;
+        }
+
+        #sandwichMenu label, #sandwichMenu select {
+            margin: 5px 0;
+        }
+
+        #sandwichMenu.open {
+            display: flex;
         }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.41</h1>
+    <h1>Easy Car Cam Recorder V1.42</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
-            <button id="menuButton">☰</button>
-            <div id="configMenu">
-                <label for="resolutionSelect">Resolución:</label>
-                <select id="resolutionSelect">
-                    <option value="640x360">640x360</option>
-                    <option value="426x240">426x240</option>
-                    <option value="720x405">720x405</option>
-                    <option value="1080x720">1080x720</option>
-                    <option value="1920x1080">1920x1080</option>
-                </select>
+            <button id="menuButton" onclick="toggleMenu()">☰</button>
 
-                <label for="fpsSelect">FPS:</label>
-                <select id="fpsSelect">
-                    <option value="25">25</option>
-                    <option value="30" selected>30</option>
-                    <option value="60">60</option>
-                </select>
+            <div id="sandwichMenu" class="hidden">
+                <div id="config">
+                    <label for="resolutionSelect">Resolución:</label>
+                    <select id="resolutionSelect">
+                        <option value="426x240">426x240</option>
+                        <option value="640x360">640x360</option>
+                        <option value="720x405">720x405</option>
+                        <option value="1080x720">1080x720</option>
+                        <option value="1920x1080">1920x1080</option>
+                    </select>
 
-                <label for="cameraSelect">Selecciona una cámara:</label>
-                <select id="cameraSelect" onchange="updateCamera()"></select>
+                    <label for="fpsSelect">FPS:</label>
+                    <select id="fpsSelect">
+                        <option value="25">25</option>
+                        <option value="30" selected>30</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
             </div>
 
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
+                <label for="cameraSelect">Selecciona una cámara:</label>
+                <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -201,11 +211,7 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
         const menuButton = document.getElementById('menuButton');
-        const configMenu = document.getElementById('configMenu');
-
-        menuButton.addEventListener('click', () => {
-            configMenu.style.display = (configMenu.style.display === 'block') ? 'none' : 'block';
-        });
+        const sandwichMenu = document.getElementById('sandwichMenu');
 
         async function requestPermissions() {
             try {
@@ -288,6 +294,9 @@
 
             startButton.disabled = true;
             stopButton.disabled = false;
+
+            // Cierra el menú sandwich al iniciar la grabación
+            sandwichMenu.classList.remove('open');
         }
 
         function stopRecording() {
@@ -326,6 +335,10 @@
             document.body.appendChild(a);
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        function toggleMenu() {
+            sandwichMenu.classList.toggle('open');
         }
 
         backButton.addEventListener('click', () => {
