@@ -148,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.46</h1>
+    <h1>Easy Car Cam Recorder V1.47</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
@@ -278,32 +278,56 @@
         }
 
         function startRecording() {
-            if (!stream) {
-                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-                return;
-            }
+    if (!stream) {
+        alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+        return;
+    }
 
-            const options = {
-                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
-            };
+    const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
+    const fpsSelect = document.getElementById('fpsSelect').value;
+    const width = parseInt(resolutionSelect[0]);
+    const height = parseInt(resolutionSelect[1]);
+    const frameRate = parseInt(fpsSelect);
 
-            mediaRecorder = new MediaRecorder(stream, options);
-
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    saveRecording(event.data);
-                }
-            };
-
-            mediaRecorder.start();
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
-
-            startButton.disabled = true;
-            stopButton.disabled = false;
-
-            sandwichMenu.classList.remove('open');
+    // Verificar si la resolución y los FPS son soportados
+    const videoTrack = stream.getVideoTracks()[0];
+    const capabilities = videoTrack.getCapabilities();
+    if (capabilities.width && capabilities.height) {
+        if (width > capabilities.width.max || height > capabilities.height.max) {
+            alert('La resolución seleccionada no es soportada por esta cámara.');
+            return;
         }
+    }
+    if (capabilities.frameRate) {
+        if (frameRate > capabilities.frameRate.max) {
+            alert('La tasa de fotogramas seleccionada no es soportada por esta cámara.');
+            return;
+        }
+    }
+
+    // Crear el MediaRecorder con la resolución y FPS seleccionados
+    const options = {
+        mimeType: 'video/webm; codecs=vp8,opus'  // Usa VP8 como códec para mejorar compatibilidad
+    };
+
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+            saveRecording(event.data);
+        }
+    };
+
+    mediaRecorder.start();
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+
+    sandwichMenu.classList.remove('open');
+}
+
 
         function stopRecording() {
             mediaRecorder.stop();
