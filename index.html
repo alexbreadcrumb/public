@@ -110,28 +110,68 @@
             margin-top: 20px;
         }
 
-        /* Estilo del menú sandwich */
-        #resolutionSelect {
-            margin: 10px;
+        /* Menu sandwich */
+        #menuButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
         }
+
+        #menu {
+            display: none;
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background-color: #424242;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+        }
+
+        #menu select {
+            background-color: #212121;
+            color: white;
+            border: 1px solid #1E88E5;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #menu label {
+            display: block;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.57</h1>
+    <h1>Easy Car Cam Recorder V1.58</h1>
+    <button id="menuButton">&#9776;</button>
+    <div id="menu">
+        <div>
+            <label for="cameraSelect">Selecciona una cámara:</label>
+            <select id="cameraSelect" onchange="updateCamera()"></select>
+        </div>
+        <div>
+            <label for="resolutionSelect">Selecciona una resolución:</label>
+            <select id="resolutionSelect" onchange="updateResolution()">
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+            </select>
+        </div>
+    </div>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-                <label for="cameraSelect">Selecciona una cámara:</label>
-                <select id="cameraSelect" onchange="updateCamera()"></select>
-                <label for="resolutionSelect">Selecciona la resolución:</label>
-                <select id="resolutionSelect" onchange="updateResolution()">
-                    <option value="480">480p</option>
-                    <option value="720">720p</option>
-                    <option value="1080">1080p</option>
-                </select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -155,7 +195,6 @@
         let stream;
         let startTime;
         let timerInterval;
-        let selectedResolution = '480'; // Default resolution
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -165,9 +204,18 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
+        // Menú Sandwich
+        const menuButton = document.getElementById('menuButton');
+        const menu = document.getElementById('menu');
+
+        menuButton.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
         async function requestPermissions() {
             try {
-                await updateCamera();
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -186,6 +234,7 @@
                     cameraSelect.appendChild(option);
                 });
 
+                // Configurar la primera cámara como predeterminada
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -202,16 +251,8 @@
                     stream.getTracks().forEach(track => track.stop());
                 }
 
-                const resolution = selectedResolution;
-                const width = resolution === '480' ? 640 : (resolution === '720' ? 1280 : 1920);
-                const height = resolution === '480' ? 480 : (resolution === '720' ? 720 : 1080);
-
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        deviceId: { exact: selectedCameraId },
-                        width: { ideal: width },
-                        height: { ideal: height }
-                    },
+                    video: { deviceId: { exact: selectedCameraId } },
                     audio: true,
                 });
 
@@ -220,12 +261,6 @@
                 console.error('Error al cambiar la cámara:', error);
                 alert('No se pudo cambiar a la cámara seleccionada.');
             }
-        }
-
-        function updateResolution() {
-            const resolutionSelect = document.getElementById('resolutionSelect');
-            selectedResolution = resolutionSelect.value;
-            updateCamera();  // Re-initialize camera with new resolution
         }
 
         function startRecording() {
@@ -303,6 +338,38 @@
 
         // Solicitar permisos al cargar la página
         requestPermissions();
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            const selectedResolution = resolutionSelect.value;
+            let videoConstraints;
+
+            switch (selectedResolution) {
+                case '480p':
+                    videoConstraints = { width: 854, height: 480 };
+                    break;
+                case '720p':
+                    videoConstraints = { width: 1280, height: 720 };
+                    break;
+                case '1080p':
+                    videoConstraints = { width: 1920, height: 1080 };
+                    break;
+                default:
+                    videoConstraints = { width: 854, height: 480 };
+            }
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            navigator.mediaDevices.getUserMedia({
+                video: videoConstraints,
+                audio: true
+            }).then(newStream => {
+                stream = newStream;
+                video.srcObject = stream;
+            });
+        }
     </script>
 </body>
 </html>
