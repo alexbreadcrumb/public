@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.34</h1>
+    <h1>Easy Car Cam Recorder V1.35</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -298,7 +298,17 @@
 
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
+        
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await requestPermissions(); // Solicita permisos al cargar
+        await updateCamera(); // Configura la cámara predeterminada tras permisos
+    } catch (error) {
+        console.error('Error al inicializar cámaras:', error);
+    }
+});
 
+        
         // Solicitar permisos al cargar la página
         requestPermissions();
     </script>
