@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-    <! -- VERSIÓN VIGENTE: 1.64 --> 
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
@@ -83,96 +82,22 @@
             border-radius: 8px;
         }
 
-        video {
+        video, canvas {
             width: 90%;
             max-width: 480px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #endScreen {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-radius: 8px;
-            z-index: 999;
-            color: white;
         }
 
-        #backButton {
-            margin-top: 20px;
-        }
-
-        /* Menu sandwich */
-        #menuButton {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background-color: transparent;
-            border: none;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-        }
-
-        #menu {
-            display: none;
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            background-color: #424242;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-            z-index: 999;
-        }
-
-        #menu select {
-            background-color: #212121;
-            color: white;
-            border: 1px solid #1E88E5;
-            padding: 5px;
-            margin-bottom: 10px;
-        }
-
-        #menu label {
-            display: block;
-            color: white;
+        canvas {
+            z-index: 1;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.64</h1>
-    <button id="menuButton">&#9776;</button>
-    <div id="menu">
-        <div>
-            <label for="cameraSelect">Selecciona una cámara:</label>
-            <select id="cameraSelect" onchange="updateCamera()"></select>
-        </div>
-        <div>
-            <label for="resolutionSelect">Selecciona una resolución:</label>
-            <select id="resolutionSelect" onchange="updateResolution()">
-                <option value="480p">480p</option>
-                <option value="720p">720p</option>
-                <option value="1080p">1080p</option>
-            </select>
-        </div>
-        <div>
-            <label for="audioSelect">Incluir audio:</label>
-            <select id="audioSelect" onchange="updateAudio()">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
-        </div>
-    </div>
+    <h1>Easy Car Cam Recorder V1.65</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -181,21 +106,9 @@
                 <button id="stopButton" disabled>Terminar</button>
             </div>
         </div>
-        <div id="endScreen" class="hidden">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>
-                            <h1>Viaje terminado!</h1>
-                            <h1 id="finalTime"></h1>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>   
-            <button id="backButton">Volver</button>
-        </div>
         <div class="block">
             <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
         </div>
     </div>
 
@@ -204,102 +117,61 @@
         let stream;
         let startTime;
         let timerInterval;
-        let currentResolution = '480p';
-        let currentCameraId;
-        let includeAudio = true; // Variable para controlar si se incluye el audio
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const timer = document.getElementById('timer');
-        const recorderScreen = document.getElementById('recorderScreen');
-        const endScreen = document.getElementById('endScreen');
-        const finalTime = document.getElementById('finalTime');
-        const backButton = document.getElementById('backButton');
+        let currentPosition = { lat: null, lon: null };
 
-        // Menú Sandwich
-        const menuButton = document.getElementById('menuButton');
-        const menu = document.getElementById('menu');
-
-        menuButton.addEventListener('click', () => {
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-
+        // Solicitar permisos para la cámara y configurar el video
         async function requestPermissions() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = stream;
 
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-                if (videoDevices.length === 0) {
-                    alert('No se encontraron cámaras.');
-                    return;
-                }
-
-                const cameraSelect = document.getElementById('cameraSelect');
-                cameraSelect.innerHTML = '';
-
-                videoDevices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.textContent = device.label || `Cámara ${index + 1}`;
-                    cameraSelect.appendChild(option);
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
                 });
 
-                // Configurar la primera cámara como predeterminada
-                currentCameraId = videoDevices[0].deviceId;
-                updateCamera();
+                watchPosition();
+                drawOverlay();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
                 alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
             }
         }
 
-        async function updateCamera() {
-            try {
-                const cameraSelect = document.getElementById('cameraSelect');
-                currentCameraId = cameraSelect.value;
+        function drawOverlay() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                // Reemplazamos solo la cámara sin cambiar la resolución ni el audio
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
-                    audio: includeAudio
-                });
-
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error al cambiar la cámara:', error);
-                alert('No se pudo cambiar a la cámara seleccionada.');
+            // Dibujar texto de latitud y longitud
+            if (currentPosition.lat !== null && currentPosition.lon !== null) {
+                ctx.font = '20px Arial';
+                ctx.fillStyle = 'white';
+                ctx.fillText(`Lat: ${currentPosition.lat.toFixed(5)}`, 10, 30);
+                ctx.fillText(`Lon: ${currentPosition.lon.toFixed(5)}`, 10, 60);
             }
+
+            requestAnimationFrame(drawOverlay);
         }
 
-        function getResolutionWidth(resolution) {
-            switch (resolution) {
-                case '480p':
-                    return 854;
-                case '720p':
-                    return 1280;
-                case '1080p':
-                    return 1920;
-                default:
-                    return 854;
-            }
-        }
-
-        function getResolutionHeight(resolution) {
-            switch (resolution) {
-                case '480p':
-                    return 480;
-                case '720p':
-                    return 720;
-                case '1080p':
-                    return 1080;
-                default:
-                    return 480;
+        function watchPosition() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.watchPosition(
+                    position => {
+                        currentPosition.lat = position.coords.latitude;
+                        currentPosition.lon = position.coords.longitude;
+                    },
+                    error => {
+                        console.error('Error al obtener la posición:', error);
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert('La geolocalización no está soportada en este navegador.');
             }
         }
 
@@ -310,7 +182,7 @@
             }
 
             const options = {
-                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+                mimeType: 'video/webm; codecs=vp8'
             };
 
             mediaRecorder = new MediaRecorder(stream, options);
@@ -337,15 +209,6 @@
             clearInterval(timerInterval);
             startButton.disabled = false;
             stopButton.disabled = true;
-
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-
-            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
-            recorderScreen.classList.add('hidden');
-            endScreen.classList.remove('hidden');
         }
 
         function updateTimer() {
@@ -364,7 +227,7 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.mp4`;
+            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.webm`;
 
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -376,29 +239,11 @@
             URL.revokeObjectURL(url);
         }
 
-        backButton.addEventListener('click', () => {
-            endScreen.classList.add('hidden');
-            recorderScreen.classList.remove('hidden');
-            timer.textContent = "00:00:00";
-        });
-
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
         // Solicitar permisos al cargar la página
         requestPermissions();
-
-        function updateResolution() {
-            const resolutionSelect = document.getElementById('resolutionSelect');
-            currentResolution = resolutionSelect.value;
-            updateCamera();
-        }
-
-        function updateAudio() {
-            const audioSelect = document.getElementById('audioSelect');
-            includeAudio = audioSelect.value === 'true';
-            updateCamera();
-        }
     </script>
 </body>
 </html>
