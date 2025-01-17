@@ -109,18 +109,29 @@
         #backButton {
             margin-top: 20px;
         }
+
+        /* Estilo del menú sandwich */
+        #resolutionSelect {
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.33</h1>
+    <h1>Easy Car Cam Recorder V1.57</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-    <label for="cameraSelect">Selecciona una cámara:</label>
-    <select id="cameraSelect" onchange="updateCamera()"></select>
+                <label for="cameraSelect">Selecciona una cámara:</label>
+                <select id="cameraSelect" onchange="updateCamera()"></select>
+                <label for="resolutionSelect">Selecciona la resolución:</label>
+                <select id="resolutionSelect" onchange="updateResolution()">
+                    <option value="480">480p</option>
+                    <option value="720">720p</option>
+                    <option value="1080">1080p</option>
+                </select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -144,6 +155,7 @@
         let stream;
         let startTime;
         let timerInterval;
+        let selectedResolution = '480'; // Default resolution
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -153,56 +165,68 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-    async function requestPermissions() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        async function requestPermissions() {
+            try {
+                await updateCamera();
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                if (videoDevices.length === 0) {
+                    alert('No se encontraron cámaras.');
+                    return;
+                }
 
-            if (videoDevices.length === 0) {
-                alert('No se encontraron cámaras.');
-                return;
+                const cameraSelect = document.getElementById('cameraSelect');
+                cameraSelect.innerHTML = '';
+
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Cámara ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                updateCamera();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
             }
-
-            const cameraSelect = document.getElementById('cameraSelect');
-            cameraSelect.innerHTML = '';
-
-            videoDevices.forEach((device, index) => {
-                const option = document.createElement('option');
-                option.value = device.deviceId;
-                option.textContent = device.label || `Cámara ${index + 1}`;
-                cameraSelect.appendChild(option);
-            });
-
-            // Configurar la primera cámara como predeterminada
-            updateCamera();
-        } catch (error) {
-            console.error('Error al solicitar permisos:', error);
-            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
         }
-    }
 
-    async function updateCamera() {
-        try {
-            const cameraSelect = document.getElementById('cameraSelect');
-            const selectedCameraId = cameraSelect.value;
+        async function updateCamera() {
+            try {
+                const cameraSelect = document.getElementById('cameraSelect');
+                const selectedCameraId = cameraSelect.value;
 
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                const resolution = selectedResolution;
+                const width = resolution === '480' ? 640 : (resolution === '720' ? 1280 : 1920);
+                const height = resolution === '480' ? 480 : (resolution === '720' ? 720 : 1080);
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: { exact: selectedCameraId },
+                        width: { ideal: width },
+                        height: { ideal: height }
+                    },
+                    audio: true,
+                });
+
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al cambiar la cámara:', error);
+                alert('No se pudo cambiar a la cámara seleccionada.');
             }
-
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: selectedCameraId } },
-                audio: true,
-            });
-
-            video.srcObject = stream;
-        } catch (error) {
-            console.error('Error al cambiar la cámara:', error);
-            alert('No se pudo cambiar a la cámara seleccionada.');
         }
-    }
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            selectedResolution = resolutionSelect.value;
+            updateCamera();  // Re-initialize camera with new resolution
+        }
 
         function startRecording() {
             if (!stream) {
