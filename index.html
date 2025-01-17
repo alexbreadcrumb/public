@@ -112,7 +112,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.30</h1>
+    <h1>Easy Car Cam Recorder V1.31</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -151,30 +151,32 @@
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-        async function requestPermissions() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                if (videoDevices.length === 0) {
-                    alert('No se encontraron cámaras.');
-                    return;
-                }
+async function requestPermissions() {
+        try {
+            // Solicitar acceso a cámara y micrófono
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-                const selectedDevice = videoDevices[0];  // Se selecciona la primera cámara disponible
-                alert('ID de la cámara utilizada: ' + selectedDevice.deviceId);
+            // Listar dispositivos de video
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: selectedDevice.deviceId },
-                    audio: true
-                });
-                video.srcObject = stream;
-                console.log('Permisos otorgados para cámara y micrófono.');
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-                throw error;
+            if (videoDevices.length === 0) {
+                alert('No se encontraron cámaras.');
+                return;
             }
+
+            // Seleccionar la primera cámara disponible
+            const selectedDevice = videoDevices[0];
+            alert('ID de la cámara utilizada: ' + selectedDevice.deviceId);
+
+            // Configurar el video
+            video.srcObject = stream;
+            console.log('Permisos otorgados para cámara y micrófono.');
+        } catch (error) {
+            console.error('Error al solicitar permisos:', error);
+            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
         }
+    }
 
         function startRecording() {
             if (!stream) {
