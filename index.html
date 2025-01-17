@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-        /* Estilos mantenidos del código original */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -110,38 +109,50 @@
         #backButton {
             margin-top: 20px;
         }
+
+        #config {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.38</h1>
+    <h1>Easy Car Cam Recorder V1.39</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
+            <div id="config">
+                <label for="resolutionSelect">Resolución:</label>
+                <select id="resolutionSelect">
+                    <option value="640x360">640x360</option>
+                    <option value="426x240">426x240</option>
+                    <option value="720x405">720x405</option>
+                    <option value="1080x720">1080x720</option>
+                    <option value="1920x1080">1920x1080</option>
+                </select>
+
+                <label for="fpsSelect">FPS:</label>
+                <select id="fpsSelect">
+                    <option value="25">25</option>
+                    <option value="30" selected>30</option>
+                    <option value="60">60</option>
+                </select>
+            </div>
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
                 <label for="cameraSelect">Selecciona una cámara:</label>
                 <select id="cameraSelect" onchange="updateCamera()"></select>
-
-                <label for="resolutionSelect">Resolución:</label>
-                <select id="resolutionSelect">
-                    <option value="320x240">320x240</option>
-                    <option value="640x480" selected>640x480</option>
-                    <option value="1280x720">1280x720</option>
-                    <option value="1920x1080">1920x1080</option>
-                </select>
-
-                <label for="fpsSelect">FPS:</label>
-                <select id="fpsSelect">
-                    <option value="15">15</option>
-                    <option value="30" selected>30</option>
-                    <option value="60">60</option>
-                </select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
-            <h1>Viaje terminado!</h1>
-            <h1 id="finalTime"></h1>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><h1>Viaje terminado!</h1></td>
+                        <td><h1 id="finalTime"></h1></td>
+                    </tr>
+                </tbody>
+            </table>
             <button id="backButton">Volver</button>
         </div>
         <div class="block">
@@ -165,6 +176,8 @@
 
         async function requestPermissions() {
             try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -183,7 +196,6 @@
                     cameraSelect.appendChild(option);
                 });
 
-                // Configurar la primera cámara como predeterminada
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -194,12 +206,9 @@
         async function updateCamera() {
             try {
                 const cameraSelect = document.getElementById('cameraSelect');
-                const resolutionSelect = document.getElementById('resolutionSelect');
-                const fpsSelect = document.getElementById('fpsSelect');
-
+                const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
+                const fpsSelect = document.getElementById('fpsSelect').value;
                 const selectedCameraId = cameraSelect.value;
-                const [width, height] = resolutionSelect.value.split('x').map(Number);
-                const frameRate = parseInt(fpsSelect.value, 10);
 
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
@@ -208,11 +217,11 @@
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         deviceId: { exact: selectedCameraId },
-                        width: { exact: width },
-                        height: { exact: height },
-                        frameRate: { exact: frameRate }
+                        width: { exact: parseInt(resolutionSelect[0]) },
+                        height: { exact: parseInt(resolutionSelect[1]) },
+                        frameRate: { exact: parseInt(fpsSelect) }
                     },
-                    audio: true,
+                    audio: true
                 });
 
                 video.srcObject = stream;
@@ -222,7 +231,6 @@
             }
         }
 
-        // Mantener la funcionalidad existente para grabar, detener y mostrar la pantalla final
         function startRecording() {
             if (!stream) {
                 alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
@@ -296,7 +304,6 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
-        // Solicitar permisos al cargar la página
         requestPermissions();
     </script>
 </body>
