@@ -150,7 +150,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.58</h1>
+    <h1>Easy Car Cam Recorder V1.59</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -195,6 +195,8 @@
         let stream;
         let startTime;
         let timerInterval;
+        let currentResolution = '480p'; // Variable para recordar la resolución actual
+        let currentCameraId; // Variable para almacenar la cámara seleccionada
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -235,6 +237,7 @@
                 });
 
                 // Configurar la primera cámara como predeterminada
+                currentCameraId = videoDevices[0].deviceId;
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -245,14 +248,15 @@
         async function updateCamera() {
             try {
                 const cameraSelect = document.getElementById('cameraSelect');
-                const selectedCameraId = cameraSelect.value;
+                currentCameraId = cameraSelect.value;
 
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
 
+                // Reemplazamos solo la cámara sin cambiar la resolución
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedCameraId } },
+                    video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
                     audio: true,
                 });
 
@@ -260,6 +264,32 @@
             } catch (error) {
                 console.error('Error al cambiar la cámara:', error);
                 alert('No se pudo cambiar a la cámara seleccionada.');
+            }
+        }
+
+        function getResolutionWidth(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 854;
+                case '720p':
+                    return 1280;
+                case '1080p':
+                    return 1920;
+                default:
+                    return 854;
+            }
+        }
+
+        function getResolutionHeight(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 480;
+                case '720p':
+                    return 720;
+                case '1080p':
+                    return 1080;
+                default:
+                    return 480;
             }
         }
 
@@ -341,29 +371,15 @@
 
         function updateResolution() {
             const resolutionSelect = document.getElementById('resolutionSelect');
-            const selectedResolution = resolutionSelect.value;
-            let videoConstraints;
+            currentResolution = resolutionSelect.value;
 
-            switch (selectedResolution) {
-                case '480p':
-                    videoConstraints = { width: 854, height: 480 };
-                    break;
-                case '720p':
-                    videoConstraints = { width: 1280, height: 720 };
-                    break;
-                case '1080p':
-                    videoConstraints = { width: 1920, height: 1080 };
-                    break;
-                default:
-                    videoConstraints = { width: 854, height: 480 };
-            }
-
+            // Reconfigurar solo la resolución sin cambiar la cámara
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
 
             navigator.mediaDevices.getUserMedia({
-                video: videoConstraints,
+                video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
                 audio: true
             }).then(newStream => {
                 stream = newStream;
