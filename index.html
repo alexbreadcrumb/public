@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+    <!-- VERSIÓN VIGENTE: 1.64 --> 
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
@@ -82,6 +83,14 @@
             border-radius: 8px;
         }
 
+        #location {
+            font-size: 18px;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #424242;
+            border-radius: 8px;
+        }
+
         video {
             width: 90%;
             max-width: 480px;
@@ -146,25 +155,10 @@
             display: block;
             color: white;
         }
-
-        /* Nuevo bloque para la geolocalización */
-        #geolocation {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #424242;
-            border-radius: 8px;
-            color: white;
-            text-align: center;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        #geolocation p {
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.73</h1>
+    <h1>Easy Car Cam Recorder V1.100</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -191,6 +185,7 @@
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
+                <div id="location">Ubicación: Cargando...</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
             </div>
@@ -212,14 +207,6 @@
             <video id="video" autoplay playsinline></video>
         </div>
     </div>
-
-    <!-- Bloque de geolocalización -->
-    <div id="geolocation" class="hidden">
-        <h3>Tu ubicación geográfica:</h3>
-        <p id="locationStatus">Esperando ubicación...</p>
-        <p id="locationDetails"></p>
-    </div>
-
     <script>
         let mediaRecorder;
         let stream;
@@ -227,131 +214,219 @@
         let timerInterval;
         let currentResolution = '480p';
         let currentCameraId;
-        let includeAudio = true; 
+        let includeAudio = true; // Variable para controlar si se incluye el audio
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const timer = document.getElementById('timer');
+        const locationDisplay = document.getElementById('location');
         const recorderScreen = document.getElementById('recorderScreen');
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
 
-        // Geolocalización
-        const geolocationBlock = document.getElementById('geolocation');
-        const locationStatus = document.getElementById('locationStatus');
-        const locationDetails = document.getElementById('locationDetails');
+        // Menú Sandwich
+        const menuButton = document.getElementById('menuButton');
+        const menu = document.getElementById('menu');
 
-        // Función para obtener la ubicación
-        function getLocation() {
+        menuButton.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        async function requestPermissions() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                await requestLocation();
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                if (videoDevices.length === 0) {
+                    alert('No se encontraron cámaras.');
+                    return;
+                }
+
+                const cameraSelect = document.getElementById('cameraSelect');
+                cameraSelect.innerHTML = '';
+
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Cámara ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                // Configurar la primera cámara como predeterminada
+                currentCameraId = videoDevices[0].deviceId;
+                updateCamera();
+            } catch (error) {
+                console.error('Error al solicitar permisos:', error);
+                alert('Por favor, otorga permisos para usar la cámara, el micrófono y el GPS.');
+            }
+        }
+
+        async function requestLocation() {
             if (navigator.geolocation) {
-                locationStatus.textContent = "Obteniendo ubicación...";
-                navigator.geolocation.getCurrentPosition(
-                    showPosition, 
-                    showError, 
+                navigator.geolocation.watchPosition(
+                    position => {
+                        const { latitude, longitude } = position.coords;
+                        locationDisplay.textContent = `Ubicación: Latitud ${latitude.toFixed(6)}, Longitud ${longitude.toFixed(6)}`;
+                    },
+                    error => {
+                        console.error('Error al obtener la ubicación:', error);
+                        locationDisplay.textContent = 'Ubicación: No disponible';
+                    },
                     { enableHighAccuracy: true }
                 );
             } else {
-                locationStatus.textContent = "La geolocalización no está disponible en tu navegador.";
+                locationDisplay.textContent = 'Ubicación: No soportada por el navegador';
             }
         }
 
-        function showPosition(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            locationStatus.textContent = "Ubicación obtenida:";
-            locationDetails.textContent = `Latitud: ${latitude}° , Longitud: ${longitude}°`;
-            geolocationBlock.classList.remove('hidden');
-        }
+        async function updateCamera() {
+            try {
+                const cameraSelect = document.getElementById('cameraSelect');
+                currentCameraId = cameraSelect.value;
 
-        function showError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    locationStatus.textContent = "El usuario denegó la solicitud de geolocalización.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    locationStatus.textContent = "La información de ubicación no está disponible.";
-                    break;
-                case error.TIMEOUT:
-                    locationStatus.textContent = "La solicitud de geolocalización expiró.";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    locationStatus.textContent = "Se produjo un error desconocido.";
-                    break;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                // Reemplazamos solo la cámara sin cambiar la resolución ni el audio
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
+                    audio: includeAudio
+                });
+
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al cambiar la cámara:', error);
+                alert('No se pudo cambiar a la cámara seleccionada.');
             }
         }
 
-        // Solicitar permisos de geolocalización al cargar la página
-        window.onload = function() {
-            getLocation();
-        };
+        function getResolutionWidth(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 854;
+                case '720p':
+                    return 1280;
+                case '1080p':
+                    return 1920;
+                default:
+                    return 854;
+            }
+        }
 
-        // Empezar grabación
-        startButton.addEventListener('click', startRecording);
+        function getResolutionHeight(resolution) {
+            switch (resolution) {
+                case '480p':
+                    return 480;
+                case '720p':
+                    return 720;
+                case '1080p':
+                    return 1080;
+                default:
+                    return 480;
+            }
+        }
 
         function startRecording() {
-            navigator.mediaDevices.getUserMedia({
-                video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-                audio: includeAudio
-            }).then((userStream) => {
-                stream = userStream;
-                video.srcObject = stream;
+            if (!stream) {
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
+            }
 
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = handleDataAvailable;
-                mediaRecorder.onstop = handleStop;
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
 
-                mediaRecorder.start();
-                startTime = Date.now();
-                timerInterval = setInterval(updateTimer, 1000);
+            mediaRecorder = new MediaRecorder(stream, options);
 
-                startButton.disabled = true;
-                stopButton.disabled = false;
-            });
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
         }
 
-        // Detener grabación
-        stopButton.addEventListener('click', stopRecording);
-
         function stopRecording() {
-            mediaRecorder.stop();
-            stream.getTracks().forEach(track => track.stop());
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+
             clearInterval(timerInterval);
             startButton.disabled = false;
             stopButton.disabled = true;
-        }
 
-        function handleDataAvailable(event) {
-            const videoBlob = event.data;
-            const videoUrl = URL.createObjectURL(videoBlob);
-            const link = document.createElement('a');
-            link.href = videoUrl;
-            link.download = 'recording.webm';
-            link.click();
-        }
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
 
-        function handleStop() {
+            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
+            recorderScreen.classList.add('hidden');
             endScreen.classList.remove('hidden');
-            const elapsed = Date.now() - startTime;
-            const hours = Math.floor(elapsed / 3600000);
-            const minutes = Math.floor((elapsed % 3600000) / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            finalTime.textContent = `${hours}:${minutes}:${seconds}`;
         }
 
         function updateTimer() {
-            const elapsed = Date.now() - startTime;
-            const hours = Math.floor(elapsed / 3600000);
-            const minutes = Math.floor((elapsed % 3600000) / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
             timer.textContent = `${hours}:${minutes}:${seconds}`;
         }
 
-        // Volver a la pantalla principal
-        backButton.addEventListener('click', function() {
+        function saveRecording(blob) {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.mp4`;
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
             recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
         });
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        // Solicitar permisos al cargar la página
+        requestPermissions();
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            currentResolution = resolutionSelect.value;
+            updateCamera();
+        }
+
+        function updateAudio() {
+            const audioSelect = document.getElementById('audioSelect');
+            includeAudio = audioSelect.value === 'true';
+            updateCamera();
+        }
     </script>
 </body>
 </html>
