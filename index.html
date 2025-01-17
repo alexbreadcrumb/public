@@ -150,7 +150,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.59</h1>
+    <h1>Easy Car Cam Recorder V1.60</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -163,6 +163,13 @@
                 <option value="480p">480p</option>
                 <option value="720p">720p</option>
                 <option value="1080p">1080p</option>
+            </select>
+        </div>
+        <div>
+            <label for="audioSelect">Incluir audio:</label>
+            <select id="audioSelect" onchange="updateAudio()">
+                <option value="true">Sí</option>
+                <option value="false">No</option>
             </select>
         </div>
     </div>
@@ -195,8 +202,9 @@
         let stream;
         let startTime;
         let timerInterval;
-        let currentResolution = '480p'; // Variable para recordar la resolución actual
-        let currentCameraId; // Variable para almacenar la cámara seleccionada
+        let currentResolution = '480p';
+        let currentCameraId;
+        let includeAudio = true; // Variable para controlar si se incluye el audio
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -254,10 +262,10 @@
                     stream.getTracks().forEach(track => track.stop());
                 }
 
-                // Reemplazamos solo la cámara sin cambiar la resolución
+                // Reemplazamos solo la cámara sin cambiar la resolución ni el audio
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
-                    audio: true,
+                    audio: includeAudio
                 });
 
                 video.srcObject = stream;
@@ -372,19 +380,14 @@
         function updateResolution() {
             const resolutionSelect = document.getElementById('resolutionSelect');
             currentResolution = resolutionSelect.value;
+            updateCamera();  // Solo cambia la resolución sin alterar la cámara ni el audio
+        }
 
-            // Reconfigurar solo la resolución sin cambiar la cámara
+        function updateAudio() {
+            includeAudio = document.getElementById('audioSelect').value === 'true';
             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                updateCamera();  // Solo cambia el audio sin alterar la cámara ni la resolución
             }
-
-            navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
-                audio: true
-            }).then(newStream => {
-                stream = newStream;
-                video.srcObject = stream;
-            });
         }
     </script>
 </body>
