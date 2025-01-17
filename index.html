@@ -148,13 +148,15 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.42</h1>
+    <h1>Easy Car Cam Recorder V1.43</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
 
             <div id="sandwichMenu" class="hidden">
                 <div id="config">
+                    <label for="cameraSelect">Cam:</label>
+                    <select id="cameraSelect" onchange="updateCamera()"></select>
                     <label for="resolutionSelect">Resolución:</label>
                     <select id="resolutionSelect">
                         <option value="426x240">426x240</option>
@@ -177,8 +179,6 @@
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
-                <label for="cameraSelect">Selecciona una cámara:</label>
-                <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
