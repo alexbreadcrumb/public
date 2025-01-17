@@ -150,7 +150,7 @@
         </style>
     </head>
     <body>
-        <h1>Easy Car Cam Recorder V1.68</h1>
+        <h1>Easy Car Cam Recorder V1.69</h1>
         <button id="menuButton">&#9776;</button>
         <div id="menu">
             <div>
@@ -199,212 +199,164 @@
             </div>
         </div>
         <script>
-            let mediaRecorder;
-            let stream;
-            let startTime;
-            let timerInterval;
-            let currentResolution = '480p';
-            let currentCameraId;
-            let includeAudio = true; // Variable para controlar si se incluye el audio
-            const video = document.getElementById('video');
-            const startButton = document.getElementById('startButton');
-            const stopButton = document.getElementById('stopButton');
-            const timer = document.getElementById('timer');
-            const recorderScreen = document.getElementById('recorderScreen');
-            const endScreen = document.getElementById('endScreen');
-            const finalTime = document.getElementById('finalTime');
-            const backButton = document.getElementById('backButton');
+    let mediaRecorder;
+    let stream;
+    let startTime;
+    let timerInterval;
+    let currentResolution = '480p';
+    let currentCameraId;
+    let includeAudio = true; // Variable para controlar si se incluye el audio
+    let latitude, longitude; // Variables para latitud y longitud
+    const video = document.getElementById('video');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const timer = document.getElementById('timer');
+    const recorderScreen = document.getElementById('recorderScreen');
+    const endScreen = document.getElementById('endScreen');
+    const finalTime = document.getElementById('finalTime');
+    const backButton = document.getElementById('backButton');
 
-            // Menú Sandwich
-            const menuButton = document.getElementById('menuButton');
-            const menu = document.getElementById('menu');
+    // Solicitar permisos y obtener geolocalización
+    async function requestPermissions() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-            menuButton.addEventListener('click', () => {
-                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            if (videoDevices.length === 0) {
+                alert('No se encontraron cámaras.');
+                return;
+            }
+
+            const cameraSelect = document.getElementById('cameraSelect');
+            cameraSelect.innerHTML = '';
+
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Cámara ${index + 1}`;
+                cameraSelect.appendChild(option);
             });
 
-            async function requestPermissions() {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            // Configurar la primera cámara como predeterminada
+            currentCameraId = videoDevices[0].deviceId;
+            updateCamera();
 
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            // Obtener geolocalización
+            navigator.geolocation.getCurrentPosition(position => {
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+                console.log(`Latitud: ${latitude}, Longitud: ${longitude}`);
+            }, error => {
+                console.error('Error al obtener geolocalización:', error);
+                alert('No se pudo obtener la ubicación.');
+            });
 
-                    if (videoDevices.length === 0) {
-                        alert('No se encontraron cámaras.');
-                        return;
-                    }
-
-                    const cameraSelect = document.getElementById('cameraSelect');
-                    cameraSelect.innerHTML = '';
-
-                    videoDevices.forEach((device, index) => {
-                        const option = document.createElement('option');
-                        option.value = device.deviceId;
-                        option.textContent = device.label || `Cámara ${index + 1}`;
-                        cameraSelect.appendChild(option);
-                    });
-
-                    // Configurar la primera cámara como predeterminada
-                    currentCameraId = videoDevices[0].deviceId;
-                    updateCamera();
-                } catch (error) {
-                    console.error('Error al solicitar permisos:', error);
-                    alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-                }
-            }
-
-            async function updateCamera() {
-                try {
-                    const cameraSelect = document.getElementById('cameraSelect');
-                    currentCameraId = cameraSelect.value;
-
-                    if (stream) {
-                        stream.getTracks().forEach(track => track.stop());
-                    }
-
-                    // Reemplazamos solo la cámara sin cambiar la resolución ni el audio
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
-                        audio: includeAudio
-                    });
-
-                    video.srcObject = stream;
-                } catch (error) {
-                    console.error('Error al cambiar la cámara:', error);
-                    alert('No se pudo cambiar a la cámara seleccionada.');
-                }
-            }
-
-            function getResolutionWidth(resolution) {
-                switch (resolution) {
-                    case '480p':
-                        return 854;
-                    case '720p':
-                        return 1280;
-                    case '1080p':
-                        return 1920;
-                    default:
-                        return 854;
-                }
-            }
-
-            function getResolutionHeight(resolution) {
-                switch (resolution) {
-                    case '480p':
-                        return 480;
-                    case '720p':
-                        return 720;
-                    case '1080p':
-                        return 1080;
-                    default:
-                        return 480;
-                }
-            }
-            function startRecording() {
-                if (!stream) {
-                    alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-                    return;
-                }
-
-                const options = {
-                    mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
-                };
-
-                mediaRecorder = new MediaRecorder(stream, options);
-
-                mediaRecorder.ondataavailable = event => {
-                    if (event.data.size > 0) {
-                        saveRecording(event.data);
-                    }
-                };
-
-                mediaRecorder.start();
-                startTime = Date.now();
-                timerInterval = setInterval(updateTimer, 1000);
-
-                startButton.disabled = true;
-                stopButton.disabled = false;
-            }
-
-            function stopRecording() {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-
-                clearInterval(timerInterval);
-                startButton.disabled = false;
-                stopButton.disabled = true;
-
-                const elapsedTime = new Date(Date.now() - startTime);
-                const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-                const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-                const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-
-                finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
-                recorderScreen.classList.add('hidden');
-                endScreen.classList.remove('hidden');
-            }
-
-            function updateTimer() {
-                const elapsedTime = new Date(Date.now() - startTime);
-                const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-                const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-                const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-                timer.textContent = `${hours}:${minutes}:${seconds}`;
-            }
-
-function updateAudio() {
-    includeAudio = document.getElementById('audioSelect').value === 'true'; // 'true' o 'false'
-
-    if (stream) {
-        // Detenemos el track de audio si está presente y lo reconfiguramos
-        const audioTracks = stream.getTracks().filter(track => track.kind === 'audio');
-        audioTracks.forEach(track => track.enabled = includeAudio); // Habilitar o deshabilitar
+        } catch (error) {
+            console.error('Error al solicitar permisos:', error);
+            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+        }
     }
-}
+        function startRecording() {
+            if (!stream) {
+                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                return;
+            }
 
-            
-function saveRecording(blob) {
-    // Obtener la ubicación actual
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
+            const options = {
+                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+            };
 
-        const filename = `recording_${year}${month}${day}_${hours}${minutes}${seconds}.mp4`;
-        const file = new File([blob], filename, { type: 'video/mp4' });
+            mediaRecorder = new MediaRecorder(stream, options);
 
-        const videoDetails = {
-            filename: filename,
-            lat: lat,
-            lon: lon
-        };
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    saveRecording(event.data);
+                }
+            };
 
-        console.log(videoDetails);
+            mediaRecorder.start();
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
 
-        // Crear enlace para descarga
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(file);
-        a.download = filename;
-        a.click(); // Ejecuta la descarga
-    });
-}
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        }
 
-            backButton.addEventListener('click', () => {
-                endScreen.classList.add('hidden');
-                recorderScreen.classList.remove('hidden');
-            });
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
 
-            window.onload = requestPermissions;
-            startButton.addEventListener('click', startRecording);
-            stopButton.addEventListener('click', stopRecording);
-        </script>
-    </body>
-</html>
+            clearInterval(timerInterval);
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
+            recorderScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        function updateTimer() {
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        function saveRecording(blob) {
+            // Crear el nombre del archivo con coordenadas de geolocalización
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const filename = `recording_${year}${month}${day}_${hours}${minutes}${seconds}_lat${latitude}_lon${longitude}.mp4`;
+
+            // Crear el archivo a partir del blob
+            const file = new Blob([blob], { type: 'video/mp4' });
+
+            // Crear un enlace para descargar el archivo
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(file);
+            a.download = filename;
+
+            // Simular el click para iniciar la descarga
+            a.click();
+
+            // Liberar el objeto URL después de la descarga
+            URL.revokeObjectURL(a.href);
+        }
+        backButton.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            recorderScreen.classList.remove('hidden');
+            timer.textContent = "00:00:00";
+        });
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        // Solicitar permisos al cargar la página
+        requestPermissions();
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            currentResolution = resolutionSelect.value;
+            updateCamera();
+        }
+
+        function updateAudio() {
+            const audioSelect = document.getElementById('audioSelect');
+            includeAudio = audioSelect.value === 'true';
+            updateCamera();
+        }
+    </script>
