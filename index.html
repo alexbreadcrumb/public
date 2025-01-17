@@ -155,7 +155,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.70</h1>
+    <h1>Easy Car Cam Recorder V1.71</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -288,6 +288,31 @@
             default: return 480;
         }
     }
+
+    // Función para actualizar la geolocalización
+    function updateLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                locationLabel.textContent = `Ubicación: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+            }, () => {
+                locationLabel.textContent = 'No se pudo obtener ubicación.';
+            });
+        } else {
+            locationLabel.textContent = 'Geolocalización no disponible';
+        }
+    }
+
+    // Llamar a la función cada 10 segundos para actualizar la ubicación
+    setInterval(updateLocation, 10000);
+
+    startButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
+
+    requestPermissions();
+</script>
+<script>
     function startRecording() {
         if (!stream) {
             alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
@@ -365,37 +390,14 @@
         endScreen.classList.add('hidden');
         recorderScreen.classList.remove('hidden');
     });
-
-    // Actualizar la geolocalización en tiempo real
-    function updateLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                locationLabel.textContent = `Ubicación: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
-            });
-        } else {
-            locationLabel.textContent = 'Geolocalización no disponible';
-        }
-    }
-
-    // Llamar a la función cada 10 segundos para actualizar la ubicación
-    setInterval(updateLocation, 10000);
-
-    startButton.addEventListener('click', startRecording);
-    stopButton.addEventListener('click', stopRecording);
-
-    requestPermissions();
 </script>
 <script>
-    // Actualizar la resolución
     function updateResolution() {
         const resolutionSelect = document.getElementById('resolutionSelect');
         currentResolution = resolutionSelect.value;
         updateCamera();
     }
 
-    // Actualizar si se debe incluir audio
     function updateAudio() {
         const audioSelect = document.getElementById('audioSelect');
         includeAudio = audioSelect.value === 'true';
