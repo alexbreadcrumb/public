@@ -110,19 +110,14 @@
             margin-top: 20px;
         }
 
-        #cameraList {
-            list-style-type: none;
-            padding: 0;
+        /* Estilo del menú sandwich */
+        #resolutionSelect {
+            margin: 10px;
         }
-
-        .camera-option {
-            margin: 5px 0;
-        }
-
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.56</h1>
+    <h1>Easy Car Cam Recorder V1.57</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -131,7 +126,12 @@
                 <button id="stopButton" disabled>Terminar</button>
                 <label for="cameraSelect">Selecciona una cámara:</label>
                 <select id="cameraSelect" onchange="updateCamera()"></select>
-                <ul id="cameraList"></ul>
+                <label for="resolutionSelect">Selecciona la resolución:</label>
+                <select id="resolutionSelect" onchange="updateResolution()">
+                    <option value="480">480p</option>
+                    <option value="720">720p</option>
+                    <option value="1080">1080p</option>
+                </select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -155,6 +155,7 @@
         let stream;
         let startTime;
         let timerInterval;
+        let selectedResolution = '480'; // Default resolution
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -163,13 +164,10 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-        const cameraSelect = document.getElementById('cameraSelect');
-        const cameraList = document.getElementById('cameraList');
 
         async function requestPermissions() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
+                await updateCamera();
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -178,25 +176,16 @@
                     return;
                 }
 
+                const cameraSelect = document.getElementById('cameraSelect');
                 cameraSelect.innerHTML = '';
-                cameraList.innerHTML = '';
 
                 videoDevices.forEach((device, index) => {
                     const option = document.createElement('option');
                     option.value = device.deviceId;
                     option.textContent = device.label || `Cámara ${index + 1}`;
                     cameraSelect.appendChild(option);
-
-                    // Añadir el detalle de la resolución
-                    getCameraCapabilities(device.deviceId).then(capabilities => {
-                        const listItem = document.createElement('li');
-                        listItem.classList.add('camera-option');
-                        listItem.textContent = `${device.label || `Cámara ${index + 1}`} - Resolución mínima: ${capabilities.minWidth}x${capabilities.minHeight}, Resolución máxima: ${capabilities.maxWidth}x${capabilities.maxHeight}`;
-                        cameraList.appendChild(listItem);
-                    });
                 });
 
-                // Configurar la primera cámara como predeterminada
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
@@ -204,44 +193,25 @@
             }
         }
 
-        async function getCameraCapabilities(deviceId) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: deviceId } }
-                });
-
-                const track = stream.getVideoTracks()[0];
-                const capabilities = track.getCapabilities();
-
-                // Calculamos las resoluciones mínimas basadas en la resolución máxima obtenida
-                const maxWidth = capabilities.width.max;
-                const maxHeight = capabilities.height.max;
-
-                const minWidth = Math.min(maxWidth, 640); // Resolución mínima, limitando a un valor razonable
-                const minHeight = Math.min(maxHeight, 360); // Resolución mínima, limitando a un valor razonable
-
-                return {
-                    minWidth: minWidth,
-                    minHeight: minHeight,
-                    maxWidth: maxWidth,
-                    maxHeight: maxHeight
-                };
-            } catch (error) {
-                console.error('Error al obtener las capacidades de la cámara:', error);
-                return { minWidth: 640, minHeight: 360, maxWidth: 1920, maxHeight: 1080 }; // Valores por defecto
-            }
-        }
-
         async function updateCamera() {
             try {
+                const cameraSelect = document.getElementById('cameraSelect');
                 const selectedCameraId = cameraSelect.value;
 
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
 
+                const resolution = selectedResolution;
+                const width = resolution === '480' ? 640 : (resolution === '720' ? 1280 : 1920);
+                const height = resolution === '480' ? 480 : (resolution === '720' ? 720 : 1080);
+
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedCameraId } },
+                    video: {
+                        deviceId: { exact: selectedCameraId },
+                        width: { ideal: width },
+                        height: { ideal: height }
+                    },
                     audio: true,
                 });
 
@@ -250,6 +220,12 @@
                 console.error('Error al cambiar la cámara:', error);
                 alert('No se pudo cambiar a la cámara seleccionada.');
             }
+        }
+
+        function updateResolution() {
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            selectedResolution = resolutionSelect.value;
+            updateCamera();  // Re-initialize camera with new resolution
         }
 
         function startRecording() {
