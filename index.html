@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
     <style>
-  body {
+        body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -109,10 +109,14 @@
         #backButton {
             margin-top: 20px;
         }
+
+        #cameraSelect {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.52</h1>
+    <h1>Easy Car Cam Recorder V1.53</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <div id="controls">
@@ -152,22 +156,10 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
+        const cameraSelect = document.getElementById('cameraSelect');
 
         async function requestPermissions() {
             try {
-                // Configurar la resolución predeterminada a 640x480 a 25 fps
-                const constraints = {
-                    video: {
-                        width: 720,
-                        height: 480,
-                        frameRate: { ideal: 25 }
-                    },
-                    audio: true
-                };
-                
-                // Solicitar permisos con la configuración de resolución
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -176,7 +168,6 @@
                     return;
                 }
 
-                const cameraSelect = document.getElementById('cameraSelect');
                 cameraSelect.innerHTML = '';
 
                 videoDevices.forEach((device, index) => {
@@ -194,18 +185,34 @@
             }
         }
 
+        async function getCameraCapabilities(deviceId) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+            const track = stream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities();
+            track.stop();
+            return capabilities;
+        }
+
         async function updateCamera() {
+            const selectedCameraId = cameraSelect.value;
+            if (!selectedCameraId) return;
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
             try {
-                const cameraSelect = document.getElementById('cameraSelect');
-                const selectedCameraId = cameraSelect.value;
+                const capabilities = await getCameraCapabilities(selectedCameraId);
 
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+                // Mostrar las resoluciones soportadas
+                const resolutions = capabilities.supportedResolutions || [{ width: 640, height: 480 }];
+                const resolutionsList = resolutions.map(res => `${res.width}x${res.height}`).join(', ');
 
-                // Volver a solicitar la cámara seleccionada
+                const cameraLabel = cameraSelect.options[cameraSelect.selectedIndex].textContent;
+                alert(`Cámara: ${cameraLabel}\nResoluciones soportadas: ${resolutionsList}`);
+
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedCameraId }, width: 640, height: 480, frameRate: 25 },
+                    video: { deviceId: { exact: selectedCameraId }, width: 640, height: 480 },
                     audio: true,
                 });
 
