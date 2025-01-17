@@ -109,76 +109,18 @@
         #backButton {
             margin-top: 20px;
         }
-
-        #config {
-            margin-bottom: 20px;
-        }
-
-        /* Estilos para el menú sandwich */
-        #menuButton {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 30px;
-            background-color: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-
-        #sandwichMenu {
-            position: absolute;
-            top: 60px;
-            left: 20px;
-            background-color: #333;
-            border-radius: 5px;
-            display: none;
-            flex-direction: column;
-            padding: 10px;
-            z-index: 1000;
-        }
-
-        #sandwichMenu label, #sandwichMenu select {
-            margin: 5px 0;
-        }
-
-        #sandwichMenu.open {
-            display: flex;
-        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.48</h1>
+    <h1>Easy Car Cam Recorder V1.49</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
-            <button id="menuButton" onclick="toggleMenu()">☰</button>
-
-            <div id="sandwichMenu" class="hidden">
-                <div id="config">
-                    <label for="cameraSelect">Cam:</label>
-                    <select id="cameraSelect" onchange="updateCamera()"></select>
-                    <label for="resolutionSelect">Resolución:</label>
-                    <select id="resolutionSelect">
-                        <option value="426x240">426x240</option>
-                        <option value="640x360">640x360</option>
-                        <option value="720x405">720x405</option>
-                        <option value="1080x720">1080x720</option>
-                        <option value="1920x1080">1920x1080</option>
-                    </select>
-
-                    <label for="fpsSelect">FPS:</label>
-                    <select id="fpsSelect">
-                        <option value="25">25</option>
-                        <option value="30" selected>30</option>
-                        <option value="60">60</option>
-                    </select>
-                </div>
-            </div>
-
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
+    <label for="cameraSelect">Selecciona una cámara:</label>
+    <select id="cameraSelect" onchange="updateCamera()"></select>
             </div>
         </div>
         <div id="endScreen" class="hidden">
@@ -189,7 +131,7 @@
                         <td><h1 id="finalTime"></h1></td>
                     </tr>
                 </tbody>
-            </table>
+            </table>   
             <button id="backButton">Volver</button>
         </div>
         <div class="block">
@@ -210,65 +152,57 @@
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
-        const menuButton = document.getElementById('menuButton');
-        const sandwichMenu = document.getElementById('sandwichMenu');
 
-        async function requestPermissions() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    async function requestPermissions() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-                if (videoDevices.length === 0) {
-                    alert('No se encontraron cámaras.');
-                    return;
-                }
-
-                const cameraSelect = document.getElementById('cameraSelect');
-                cameraSelect.innerHTML = '';
-
-                videoDevices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.textContent = device.label || `Cámara ${index + 1}`;
-                    cameraSelect.appendChild(option);
-                });
-
-                updateCamera();
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+            if (videoDevices.length === 0) {
+                alert('No se encontraron cámaras.');
+                return;
             }
+
+            const cameraSelect = document.getElementById('cameraSelect');
+            cameraSelect.innerHTML = '';
+
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Cámara ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Configurar la primera cámara como predeterminada
+            updateCamera();
+        } catch (error) {
+            console.error('Error al solicitar permisos:', error);
+            alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
         }
+    }
 
-        async function updateCamera() {
-            try {
-                const cameraSelect = document.getElementById('cameraSelect');
-                const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
-                const fpsSelect = document.getElementById('fpsSelect').value;
-                const selectedCameraId = cameraSelect.value;
+    async function updateCamera() {
+        try {
+            const cameraSelect = document.getElementById('cameraSelect');
+            const selectedCameraId = cameraSelect.value;
 
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        deviceId: { exact: selectedCameraId },
-                        width: { exact: parseInt(resolutionSelect[0]) },
-                        height: { exact: parseInt(resolutionSelect[1]) },
-                        frameRate: { exact: parseInt(fpsSelect) }
-                    },
-                    audio: true
-                });
-
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error al cambiar la cámara:', error);
-                alert('No se pudo cambiar a la cámara seleccionada.');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
             }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: selectedCameraId } },
+                audio: true,
+            });
+
+            video.srcObject = stream;
+        } catch (error) {
+            console.error('Error al cambiar la cámara:', error);
+            alert('No se pudo cambiar a la cámara seleccionada.');
         }
+    }
 
         function startRecording() {
             if (!stream) {
@@ -294,9 +228,6 @@
 
             startButton.disabled = true;
             stopButton.disabled = false;
-
-            // Cierra el menú sandwich al iniciar la grabación
-            sandwichMenu.classList.remove('open');
         }
 
         function stopRecording() {
@@ -337,10 +268,6 @@
             URL.revokeObjectURL(url);
         }
 
-        function toggleMenu() {
-            sandwichMenu.classList.toggle('open');
-        }
-
         backButton.addEventListener('click', () => {
             endScreen.classList.add('hidden');
             recorderScreen.classList.remove('hidden');
@@ -350,6 +277,7 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
+        // Solicitar permisos al cargar la página
         requestPermissions();
     </script>
 </body>
