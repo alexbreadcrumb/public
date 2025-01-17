@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
-    <! -- VERSIÓN VIGENTE: 1.64 --> 
+    <!-- VERSIÓN VIGENTE: 1.64 --> 
     <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Car Cam Recorder</title>
-    <style>
-        body {
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Easy Car Cam Recorder</title>
+        <style>
+ body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -111,24 +111,77 @@
             margin-top: 20px;
         }
 
-        #overlay {
+        /* Menu sandwich */
+        #menuButton {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 20px;
+            left: 20px;
+            background-color: transparent;
+            border: none;
             color: white;
-            font-size: 16px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px;
-            border-radius: 4px;
-            z-index: 1000;
+            font-size: 30px;
+            cursor: pointer;
         }
-    </style>
-</head>
-<body>
-    <h1>Easy Car Cam Recorder V1.65</h1>
-    <div id="overlay">Obteniendo ubicación...</div>
-    <div id="container">
-        <div id="recorderScreen" class="block">
+
+        #menu {
+            display: none;
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background-color: #424242;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+        }
+
+        #menu select {
+            background-color: #212121;
+            color: white;
+            border: 1px solid #1E88E5;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #menu label {
+            display: block;
+            color: white;
+        }
+        </style>
+    </head>
+    <body>
+        <h1>Easy Car Cam Recorder V1.65</h1>
+        <button id="menuButton">&#9776;</button>
+        <div id="menu">
+       <div>
+            <label for="cameraSelect">Selecciona una cámara:</label>
+            <select id="cameraSelect" onchange="updateCamera()"></select>
+        </div>
+        <div>
+            <label for="resolutionSelect">Selecciona una resolución:</label>
+            <select id="resolutionSelect" onchange="updateResolution()">
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+            </select>
+        </div>
+        <div>
+            <label for="audioSelect">Incluir audio:</label>
+            <select id="audioSelect" onchange="updateAudio()">
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+            </select>
+        </div>
+        </div>
+        <div id="container">
+            <div id="recorderScreen" class="block">
+                <div id="controls">
+                    <div id="timer">00:00:00</div>
+                    <button id="startButton">Iniciar</button>
+                    <button id="stopButton" disabled>Terminar</button>
+                </div>
+            </div>
+            <div id="endScreen" class="hidden">
             <div id="controls">
                 <div id="timer">00:00:00</div>
                 <button id="startButton">Iniciar</button>
@@ -147,110 +200,130 @@
                 </tbody>
             </table>   
             <button id="backButton">Volver</button>
+            </div>
+            <div class="block">
+                <canvas id="canvas" width="480" height="360"></canvas>
+            </div>
         </div>
-        <div class="block">
-            <video id="video" autoplay playsinline></video>
-        </div>
-    </div>
 
-    <script>
-        let mediaRecorder;
-        let stream;
-        let startTime;
-        let timerInterval;
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const timer = document.getElementById('timer');
-        const overlay = document.getElementById('overlay');
+        <script>
+            let mediaRecorder;
+            let stream;
+            let startTime;
+            let timerInterval;
+            let geoInterval;
+            let currentResolution = '480p';
+            let currentCameraId;
+            let includeAudio = true;
+            let latitude = 'Cargando...';
+            let longitude = 'Cargando...';
 
-        async function requestPermissions() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-            }
-        }
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.playsInline = true;
 
-        function startRecording() {
-            if (!stream) {
-                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-                return;
-            }
+            const startButton = document.getElementById('startButton');
+            const stopButton = document.getElementById('stopButton');
+            const timer = document.getElementById('timer');
 
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    saveRecording(event.data);
+            async function requestPermissions() {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: includeAudio,
+                    });
+                    video.srcObject = stream;
+                    drawCanvas();
+                } catch (error) {
+                    alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
                 }
-            };
-
-            mediaRecorder.start();
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
-
-            startButton.disabled = true;
-            stopButton.disabled = false;
-
-            startLocationUpdates();
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
             }
 
-            clearInterval(timerInterval);
-            startButton.disabled = false;
-            stopButton.disabled = true;
+            async function startRecording() {
+                if (!stream) {
+                    alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+                    return;
+                }
 
-            stopLocationUpdates();
-        }
+                const options = { mimeType: 'video/webm; codecs=vp9' };
+                mediaRecorder = new MediaRecorder(stream, options);
+                const chunks = [];
 
-        function updateTimer() {
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
-        }
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    saveRecording(blob);
+                };
 
-        function saveRecording(blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `CarCam_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            URL.revokeObjectURL(url);
-        }
+                mediaRecorder.start();
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                geoInterval = setInterval(updateCoordinates, 2000);
 
-        let locationInterval;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            }
 
-        function startLocationUpdates() {
-            locationInterval = setInterval(() => {
-                navigator.geolocation.getCurrentPosition(position => {
-                    const { latitude, longitude } = position.coords;
-                    overlay.textContent = `Lat: ${latitude.toFixed(5)}, Lng: ${longitude.toFixed(5)}`;
-                }, error => {
-                    console.error('Error al obtener ubicación:', error);
-                    overlay.textContent = 'Ubicación no disponible';
-                });
-            }, 5000);
-        }
+            function stopRecording() {
+                clearInterval(timerInterval);
+                clearInterval(geoInterval);
+                mediaRecorder.stop();
 
-        function stopLocationUpdates() {
-            clearInterval(locationInterval);
-            overlay.textContent = 'Obteniendo ubicación...';
-        }
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
 
-        startButton.addEventListener('click', startRecording);
-        stopButton.addEventListener('click', stopRecording);
+            function updateTimer() {
+                const elapsedTime = new Date(Date.now() - startTime);
+                const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+                const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+                timer.textContent = `${hours}:${minutes}:${seconds}`;
+            }
 
-        requestPermissions();
-    </script>
-</body>
+            function saveRecording(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `EasyCarCam_${Date.now()}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            async function updateCoordinates() {
+                if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            latitude = position.coords.latitude.toFixed(6);
+                            longitude = position.coords.longitude.toFixed(6);
+                        },
+                        (error) => {
+                            console.error('Error obteniendo la geolocalización:', error);
+                            latitude = 'No disponible';
+                            longitude = 'No disponible';
+                        }
+                    );
+                }
+            }
+
+            function drawCanvas() {
+                requestAnimationFrame(drawCanvas);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+                ctx.fillStyle = '#FFF';
+                ctx.font = '16px Arial';
+                ctx.fillText(`Lat: ${latitude} | Lon: ${longitude}`, 10, canvas.height - 15);
+            }
+
+            startButton.addEventListener('click', startRecording);
+            stopButton.addEventListener('click', stopRecording);
+
+            requestPermissions();
+        </script>
+    </body>
 </html>
