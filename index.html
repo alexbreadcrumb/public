@@ -148,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.43</h1>
+    <h1>Easy Car Cam Recorder V1.44</h1>
     <div id="container">
         <div id="recorderScreen" class="block">
             <button id="menuButton" onclick="toggleMenu()">☰</button>
@@ -243,32 +243,39 @@
         }
 
         async function updateCamera() {
-            try {
-                const cameraSelect = document.getElementById('cameraSelect');
-                const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
-                const fpsSelect = document.getElementById('fpsSelect').value;
-                const selectedCameraId = cameraSelect.value;
+    try {
+        const cameraSelect = document.getElementById('cameraSelect');
+        const resolutionSelect = document.getElementById('resolutionSelect').value.split('x');
+        const fpsSelect = document.getElementById('fpsSelect').value;
+        const selectedCameraId = cameraSelect.value;
 
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+        // Aseguramos que la resolución y FPS se convierten correctamente
+        const width = parseInt(resolutionSelect[0]);
+        const height = parseInt(resolutionSelect[1]);
+        const frameRate = parseInt(fpsSelect);
 
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        deviceId: { exact: selectedCameraId },
-                        width: { exact: parseInt(resolutionSelect[0]) },
-                        height: { exact: parseInt(resolutionSelect[1]) },
-                        frameRate: { exact: parseInt(fpsSelect) }
-                    },
-                    audio: true
-                });
-
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error al cambiar la cámara:', error);
-                alert('No se pudo cambiar a la cámara seleccionada.');
-            }
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
+
+        // Intentamos obtener el stream con la resolución y FPS seleccionados
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                deviceId: { exact: selectedCameraId },
+                width: { ideal: width }, // Ideal en lugar de exacto para una mejor flexibilidad
+                height: { ideal: height }, // Lo mismo para altura
+                frameRate: { ideal: frameRate } // Ideal para FPS
+            },
+            audio: true
+        });
+
+        video.srcObject = stream;
+    } catch (error) {
+        console.error('Error al cambiar la cámara:', error);
+        alert('No se pudo cambiar a la cámara seleccionada.');
+    }
+}
+
 
         function startRecording() {
             if (!stream) {
