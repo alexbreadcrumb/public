@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
-    <!-- VERSIÓN VIGENTE: 1.65 --> 
-    <head>
+<!-- VERSIÓN VIGENTE: 1.64 -->
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Easy Car Cam Recorder</title>
@@ -147,24 +147,10 @@
             display: block;
             color: white;
         }
-
-        /* Nuevo: Indicador de progreso */
-        #progressIndicator {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.66</h1>
+    <h1>Easy Car Cam Recorder V1.68</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -213,314 +199,82 @@
         </div>
     </div>
 
-    <!-- Nuevo: Indicador de progreso -->
-    <div id="progressIndicator">
-        <h3>Procesando video...</h3>
-        <p>Por favor, espere mientras se genera el archivo.</p>
-    </div>
-
     <script>
+        const startButton = document.getElementById("startButton");
+        const stopButton = document.getElementById("stopButton");
+        const videoElement = document.getElementById("video");
+        const timerElement = document.getElementById("timer");
+        const endScreen = document.getElementById("endScreen");
+        const backButton = document.getElementById("backButton");
+        const finalTime = document.getElementById("finalTime");
+
         let mediaRecorder;
-        let stream;
-        let startTime;
+        let chunks = [];
         let timerInterval;
-        let currentResolution = '480p';
-        let currentCameraId;
-        let includeAudio = true;
-        let recordedChunks = []; // Array para almacenar chunks
-        let chunkInterval; // Intervalo para solicitar chunks
-        const MAX_RECORDING_TIME = 30 * 60 * 1000; // 30 minutos en milisegundos
-        
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const timer = document.getElementById('timer');
-        const recorderScreen = document.getElementById('recorderScreen');
-        const endScreen = document.getElementById('endScreen');
-        const finalTime = document.getElementById('finalTime');
-        const backButton = document.getElementById('backButton');
-        const progressIndicator = document.getElementById('progressIndicator');
+        let seconds = 0;
 
-        // Menú Sandwich
-        const menuButton = document.getElementById('menuButton');
-        const menu = document.getElementById('menu');
-
-        menuButton.addEventListener('click', () => {
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-
-        async function requestPermissions() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-                if (videoDevices.length === 0) {
-                    alert('No se encontraron cámaras.');
-                    return;
-                }
-
-                const cameraSelect = document.getElementById('cameraSelect');
-                cameraSelect.innerHTML = '';
-
-                videoDevices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.textContent = device.label || `Cámara ${index + 1}`;
-                    cameraSelect.appendChild(option);
-                });
-
-                currentCameraId = videoDevices[0].deviceId;
-                updateCamera();
-            } catch (error) {
-                console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
-            }
-        }
-
-        async function updateCamera() {
-            try {
-                const cameraSelect = document.getElementById('cameraSelect');
-                currentCameraId = cameraSelect.value;
-
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        deviceId: { exact: currentCameraId }, 
-                        width: getResolutionWidth(currentResolution), 
-                        height: getResolutionHeight(currentResolution) 
-                    },
-                    audio: includeAudio
-                });
-
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error al cambiar la cámara:', error);
-                alert('No se pudo cambiar a la cámara seleccionada.');
-            }
-        }
-
-        function getResolutionWidth(resolution) {
-            switch (resolution) {
-                case '480p': return 854;
-                case '720p': return 1280;
-                case '1080p': return 1920;
-                default: return 854;
-            }
-        }
-
-        function getResolutionHeight(resolution) {
-            switch (resolution) {
-                case '480p': return 480;
-                case '720p': return 720;
-                case '1080p': return 1080;
-                default: return 480;
-            }
-        }
-
-        function startRecording() {
-            if (!stream) {
-                alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
-                return;
-            }
-
-            recordedChunks = []; // Limpiar chunks anteriores
-
-            const options = {
-                mimeType: 'video/webm;codecs=h264',
-                videoBitsPerSecond: 2500000 // 2.5 Mbps
-            };
-
-            try {
-                mediaRecorder = new MediaRecorder(stream, options);
-            } catch (e) {
-                console.error('Error al crear MediaRecorder:', e);
-                return;
-            }
-
-            mediaRecorder.ondataavailable = handleDataAvailable;
-            mediaRecorder.onstop = handleStop;
-
-            // Iniciar grabación con chunks de 1 segundo
-            mediaRecorder.start(1000);
-
-            // Solicitar datos cada minuto
-            chunkInterval = setInterval(() => {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.requestData();
-                }
-            }, 60000);
-
-            // Configurar límite de tiempo de grabación
-            setTimeout(() => {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    stopRecording();
-                }
-            }, MAX_RECORDING_TIME);
-
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
-
-            startButton.disabled = true;
-            stopButton.disabled = false;
-        }
-
-        function handleDataAvailable(event) {
-            if (event.data && event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        }
-
-        function handleStop() {
-            clearInterval(chunkInterval);
-            clearInterval(timerInterval);
-            
-            progressIndicator.style.display = 'block';
-            
-            // Crear el archivo final con todos los chunks
-            const blob = new Blob(recordedChunks, {
-                type: 'video/webm'
-            });
-            
-            saveRecording(blob);
-            progressIndicator.style.display = 'none';
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-
-            startButton.disabled = false;
-            stopButton.disabled = true;
-
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-
-            finalTime.textContent = `Tiempo total: ${hours}:${minutes}:${seconds}`;
-            recorderScreen.classList.add('hidden');
-            endScreen.classList.remove('hidden');
-        }
-
-        function saveRecording(blob) {
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.webm`;
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 100);
+        function formatTime(sec) {
+            const hours = Math.floor(sec / 3600).toString().padStart(2, "0");
+            const minutes = Math.floor((sec % 3600) / 60).toString().padStart(2, "0");
+            const seconds = (sec % 60).toString().padStart(2, "0");
+            return `${hours}:${minutes}:${seconds}`;
         }
 
         function updateTimer() {
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
+            timerElement.textContent = formatTime(seconds);
+            seconds++;
         }
 
-        backButton.addEventListener('click', () => {
-            endScreen.classList.add('hidden');
-            recorderScreen.classList.remove('hidden');
-            timer.textContent = "00:00:00";
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            seconds = 0;
+            timerElement.textContent = "00:00:00";
+        }
+
+        startButton.addEventListener("click", async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            videoElement.srcObject = stream;
+
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: "video/webm" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = "recording.webm";
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            mediaRecorder.start(1000); // Graba en chunks de 1 segundo
+            timerInterval = setInterval(updateTimer, 1000);
+            startButton.disabled = true;
+            stopButton.disabled = false;
         });
 
-        startButton.addEventListener('click', startRecording);
-        stopButton.addEventListener('click', stopRecording);
+        stopButton.addEventListener("click", () => {
+            mediaRecorder.stop();
+            videoElement.srcObject.getTracks().forEach((track) => track.stop());
+            resetTimer();
+            startButton.disabled = false;
+            stopButton.disabled = true;
 
-        function updateResolution() {
-            const resolutionSelect = document.getElementById('resolutionSelect');
-            currentResolution = resolutionSelect.value;
-            updateCamera();
-        }
-        function updateAudio() {
-            const audioSelect = document.getElementById('audioSelect');
-            includeAudio = audioSelect.value === 'true';
-            updateCamera();
-        }
+            endScreen.classList.remove("hidden");
+            finalTime.textContent = formatTime(seconds);
+        });
 
-        // Sistema de auto-guardado para archivos grandes
-        async function setupIndexedDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('CarCamDB', 1);
-
-                request.onerror = () => reject(new Error('Error al abrir IndexedDB'));
-
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains('chunks')) {
-                        db.createObjectStore('chunks', { autoIncrement: true });
-                    }
-                };
-
-                request.onsuccess = () => resolve(request.result);
-            });
-        }
-
-        async function saveChunkToIndexedDB(chunk) {
-            try {
-                const db = await setupIndexedDB();
-                const transaction = db.transaction(['chunks'], 'readwrite');
-                const store = transaction.objectStore('chunks');
-                await store.add(chunk);
-            } catch (error) {
-                console.error('Error al guardar chunk en IndexedDB:', error);
-            }
-        }
-
-        async function getChunksFromIndexedDB() {
-            try {
-                const db = await setupIndexedDB();
-                const transaction = db.transaction(['chunks'], 'readonly');
-                const store = transaction.objectStore('chunks');
-                const request = store.getAll();
-
-                return new Promise((resolve, reject) => {
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            } catch (error) {
-                console.error('Error al recuperar chunks de IndexedDB:', error);
-                return [];
-            }
-        }
-
-        async function clearIndexedDB() {
-            try {
-                const db = await setupIndexedDB();
-                const transaction = db.transaction(['chunks'], 'readwrite');
-                const store = transaction.objectStore('chunks');
-                await store.clear();
-            } catch (error) {
-                console.error('Error al limpiar IndexedDB:', error);
-            }
-        }
-
-        // Inicialización cuando se carga la página
-        requestPermissions();
-        setupIndexedDB().catch(console.error);
-
+        backButton.addEventListener("click", () => {
+            endScreen.classList.add("hidden");
+        });
     </script>
 </body>
 </html>
