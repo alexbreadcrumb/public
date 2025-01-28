@@ -1,280 +1,399 @@
 <!DOCTYPE html>
 <html lang="es">
-<!-- VERSIÓN VIGENTE: 1.64 -->
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Car Cam Recorder</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #212121;
-            color: white;
-            height: 100vh;
-            overflow: hidden;
-        }
+    <!-- VERSIÓN VIGENTE: 1.64 -->
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Easy Car Cam Recorder</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background-color: #212121;
+                color: white;
+                height: 100vh;
+                overflow: hidden;
+            }
 
-        h1 {
-            margin: 0;
-            padding: 20px;
-            background-color: #1E88E5;
-            color: white;
-            text-align: center;
-            width: 100%;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-        }
+            h1 {
+                margin: 0;
+                padding: 20px;
+                background-color: #1E88E5;
+                color: white;
+                text-align: center;
+                width: 100%;
+                box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+            }
 
-        #container {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: calc(100vh - 80px);
-        }
+            #container {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                height: calc(100vh - 80px);
+            }
 
-        .block {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+            .block {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
 
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+            #controls {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
 
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #1E88E5;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+            button {
+                margin: 10px;
+                padding: 10px 20px;
+                font-size: 16px;
+                background-color: #1E88E5;
+                border: none;
+                border-radius: 4px;
+                color: white;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
 
-        button:disabled {
-            background-color: #757575;
-            cursor: not-allowed;
-        }
+            button:disabled {
+                background-color: #757575;
+                cursor: not-allowed;
+            }
 
-        button:hover:not(:disabled) {
-            background-color: #1565C0;
-        }
+            button:hover:not(:disabled) {
+                background-color: #1565C0;
+            }
 
-        #timer {
-            font-size: 24px;
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #424242;
-            border-radius: 8px;
-        }
+            #timer {
+                font-size: 24px;
+                margin: 20px 0;
+                padding: 10px;
+                background-color: #424242;
+                border-radius: 8px;
+            }
 
-        video {
-            width: 90%;
-            max-width: 480px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-        }
+            video {
+                width: 90%;
+                max-width: 480px;
+                border-radius: 8px;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            }
 
-        .hidden {
-            display: none;
-        }
+            .hidden {
+                display: none;
+            }
 
-        #endScreen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-radius: 8px;
-            z-index: 999;
-            color: white;
-        }
+            #endScreen {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                padding: 20px;
+                background-color: rgba(0, 0, 0, 0.8);
+                border-radius: 8px;
+                z-index: 999;
+                color: white;
+            }
 
-        #backButton {
-            margin-top: 20px;
-        }
+            #backButton {
+                margin-top: 20px;
+            }
 
-        /* Menu sandwich */
-        #menuButton {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background-color: transparent;
-            border: none;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-        }
+            /* Menu sandwich */
+            #menuButton {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                background-color: transparent;
+                border: none;
+                color: white;
+                font-size: 30px;
+                cursor: pointer;
+            }
 
-        #menu {
-            display: none;
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            background-color: #424242;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-            z-index: 999;
-        }
+            #menu {
+                display: none;
+                position: absolute;
+                top: 80px;
+                left: 20px;
+                background-color: #424242;
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+                z-index: 999;
+            }
 
-        #menu select {
-            background-color: #212121;
-            color: white;
-            border: 1px solid #1E88E5;
-            padding: 5px;
-            margin-bottom: 10px;
-        }
+            #menu select {
+                background-color: #212121;
+                color: white;
+                border: 1px solid #1E88E5;
+                padding: 5px;
+                margin-bottom: 10px;
+            }
 
-        #menu label {
-            display: block;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <h1>Easy Car Cam Recorder V1.68</h1>
-    <button id="menuButton">&#9776;</button>
-    <div id="menu">
-        <div>
-            <label for="cameraSelect">Selecciona una cámara:</label>
-            <select id="cameraSelect" onchange="updateCamera()"></select>
-        </div>
-        <div>
-            <label for="resolutionSelect">Selecciona una resolución:</label>
-            <select id="resolutionSelect" onchange="updateResolution()">
-                <option value="480p">480p</option>
-                <option value="720p">720p</option>
-                <option value="1080p">1080p</option>
-            </select>
-        </div>
-        <div>
-            <label for="audioSelect">Incluir audio:</label>
-            <select id="audioSelect" onchange="updateAudio()">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
-        </div>
-    </div>
-    <div id="container">
-        <div id="recorderScreen" class="block">
-            <div id="controls">
-                <div id="timer">00:00:00</div>
-                <button id="startButton">Iniciar</button>
-                <button id="stopButton" disabled>Terminar</button>
+            #menu label {
+                display: block;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Easy Car Cam Recorder V1.70</h1>
+        <button id="menuButton">&#9776;</button>
+        <div id="menu">
+            <div>
+                <label for="cameraSelect">Selecciona una cámara:</label>
+                <select id="cameraSelect" onchange="updateCamera()"></select>
+            </div>
+            <div>
+                <label for="resolutionSelect">Selecciona una resolución:</label>
+                <select id="resolutionSelect" onchange="updateResolution()">
+                    <option value="480p">480p</option>
+                    <option value="720p">720p</option>
+                    <option value="1080p">1080p</option>
+                </select>
+            </div>
+            <div>
+                <label for="audioSelect">Incluir audio:</label>
+                <select id="audioSelect" onchange="updateAudio()">
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
             </div>
         </div>
-        <div id="endScreen" class="hidden">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>
-                            <h1>Viaje terminado!</h1>
-                            <h1 id="finalTime"></h1>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>   
-            <button id="backButton">Volver</button>
+        <div id="container">
+            <div id="recorderScreen" class="block">
+                <div id="controls">
+                    <div id="timer">00:00:00</div>
+                    <button id="startButton">Iniciar</button>
+                    <button id="stopButton" disabled>Terminar</button>
+                </div>
+            </div>
+            <div id="endScreen" class="hidden">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <h1>Viaje terminado!</h1>
+                                <h1 id="finalTime"></h1>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>   
+                <button id="backButton">Volver</button>
+            </div>
+            <div class="block">
+                <video id="video" autoplay playsinline></video>
+            </div>
         </div>
-        <div class="block">
-            <video id="video" autoplay playsinline></video>
-        </div>
-    </div>
 
-    <script>
-        const startButton = document.getElementById("startButton");
-        const stopButton = document.getElementById("stopButton");
-        const videoElement = document.getElementById("video");
-        const timerElement = document.getElementById("timer");
-        const endScreen = document.getElementById("endScreen");
-        const backButton = document.getElementById("backButton");
-        const finalTime = document.getElementById("finalTime");
+        <script>
+let mediaRecorder;
+let stream;
+let startTime;
+let timerInterval;
+let currentResolution = '480p';
+let currentCameraId;
+let includeAudio = true; // Variable para controlar si se incluye el audio
+const video = document.getElementById('video');
+const startButton = document.getElementById('startButton');
+const stopButton = document.getElementById('stopButton');
+const timer = document.getElementById('timer');
+const recorderScreen = document.getElementById('recorderScreen');
+const endScreen = document.getElementById('endScreen');
+const finalTime = document.getElementById('finalTime');
+const backButton = document.getElementById('backButton');
 
-        let mediaRecorder;
-        let chunks = [];
-        let timerInterval;
-        let seconds = 0;
+// Menú Sandwich
+const menuButton = document.getElementById('menuButton');
+const menu = document.getElementById('menu');
 
-        function formatTime(sec) {
-            const hours = Math.floor(sec / 3600).toString().padStart(2, "0");
-            const minutes = Math.floor((sec % 3600) / 60).toString().padStart(2, "0");
-            const seconds = (sec % 60).toString().padStart(2, "0");
-            return `${hours}:${minutes}:${seconds}`;
+menuButton.addEventListener('click', () => {
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+});
+
+async function requestPermissions() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+        if (videoDevices.length === 0) {
+            alert('No se encontraron cámaras.');
+            return;
         }
 
-        function updateTimer() {
-            timerElement.textContent = formatTime(seconds);
-            seconds++;
+        const cameraSelect = document.getElementById('cameraSelect');
+        cameraSelect.innerHTML = '';
+
+        videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Cámara ${index + 1}`;
+            cameraSelect.appendChild(option);
+        });
+
+        currentCameraId = videoDevices[0].deviceId;
+        updateCamera();
+    } catch (error) {
+        console.error('Error al solicitar permisos:', error);
+        alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
+    }
+}
+
+async function updateCamera() {
+    try {
+        const cameraSelect = document.getElementById('cameraSelect');
+        currentCameraId = cameraSelect.value;
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
 
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            seconds = 0;
-            timerElement.textContent = "00:00:00";
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
+            audio: includeAudio
+        });
+
+        video.srcObject = stream;
+    } catch (error) {
+        console.error('Error al cambiar la cámara:', error);
+        alert('No se pudo cambiar a la cámara seleccionada.');
+    }
+}
+
+function getResolutionWidth(resolution) {
+    switch (resolution) {
+        case '480p':
+            return 854;
+        case '720p':
+            return 1280;
+        case '1080p':
+            return 1920;
+        default:
+            return 854;
+    }
+}
+
+function getResolutionHeight(resolution) {
+    switch (resolution) {
+        case '480p':
+            return 480;
+        case '720p':
+            return 720;
+        case '1080p':
+            return 1080;
+        default:
+            return 480;
+    }
+}
+
+let recordedChunks = [];
+
+function startRecording() {
+    if (!stream) {
+        alert('No se puede iniciar la grabación sin permisos de cámara y micrófono.');
+        return;
+    }
+
+    const options = {
+        mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+    };
+
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+            recordedChunks.push(event.data);
         }
+    };
 
-        startButton.addEventListener("click", async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            videoElement.srcObject = stream;
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+        saveRecording(blob);
+        recordedChunks = [];
+    };
 
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    chunks.push(event.data);
-                }
-            };
+    mediaRecorder.start(1000); // Dividir en bloques de 1 segundo
 
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: "video/webm" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.style.display = "none";
-                a.href = url;
-                a.download = "recording.webm";
-                document.body.appendChild(a);
-                a.click();
-                URL.revokeObjectURL(url);
-            };
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
 
-            mediaRecorder.start(1000); // Graba en chunks de 1 segundo
-            timerInterval = setInterval(updateTimer, 1000);
-            startButton.disabled = true;
-            stopButton.disabled = false;
-        });
+    startButton.disabled = true;
+    stopButton.disabled = false;
+}
 
-        stopButton.addEventListener("click", () => {
-            mediaRecorder.stop();
-            videoElement.srcObject.getTracks().forEach((track) => track.stop());
-            resetTimer();
-            startButton.disabled = false;
-            stopButton.disabled = true;
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
 
-            endScreen.classList.remove("hidden");
-            finalTime.textContent = formatTime(seconds);
-        });
+    clearInterval(timerInterval);
+    startButton.disabled = false;
+    stopButton.disabled = true;
 
-        backButton.addEventListener("click", () => {
-            endScreen.classList.add("hidden");
-        });
-    </script>
-</body>
+    const elapsedTime = new Date(Date.now() - startTime);
+    const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+    finalTime.textContent = `${hours}:${minutes}:${seconds}`;
+    recorderScreen.classList.add('hidden');
+    endScreen.classList.remove('hidden');
+}
+
+function updateTimer() {
+    const elapsedTime = new Date(Date.now() - startTime);
+    const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+    timer.textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+function saveRecording(blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recording.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function updateResolution() {
+    currentResolution = document.getElementById('resolutionSelect').value;
+    updateCamera();
+}
+
+function updateAudio() {
+    includeAudio = document.getElementById('audioSelect').value === 'true';
+    updateCamera();
+}
+
+startButton.addEventListener('click', startRecording);
+stopButton.addEventListener('click', stopRecording);
+backButton.addEventListener('click', () => {
+    recorderScreen.classList.remove('hidden');
+    endScreen.classList.add('hidden');
+});
+
+requestPermissions();
+
+            
+        </script>
+    </body>
 </html>
