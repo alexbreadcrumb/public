@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-    <!-- VERSIÓN VIGENTE: 1.64 --> 
+    <!-- VERSIÓN VIGENTE: 1.65 --> 
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -83,14 +83,6 @@
             border-radius: 8px;
         }
 
-        #location {
-            font-size: 18px;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #424242;
-            border-radius: 8px;
-        }
-
         video {
             width: 90%;
             max-width: 480px;
@@ -155,10 +147,24 @@
             display: block;
             color: white;
         }
+
+        /* Nuevo: Indicador de progreso */
+        #progressIndicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>Easy Car Cam Recorder V1.100</h1>
+    <h1>Easy Car Cam Recorder V1.65</h1>
     <button id="menuButton">&#9776;</button>
     <div id="menu">
         <div>
@@ -185,7 +191,6 @@
         <div id="recorderScreen" class="block">
             <div id="controls">
                 <div id="timer">00:00:00</div>
-                <div id="location">Ubicación: Cargando...</div>
                 <button id="startButton">Iniciar</button>
                 <button id="stopButton" disabled>Terminar</button>
             </div>
@@ -207,6 +212,13 @@
             <video id="video" autoplay playsinline></video>
         </div>
     </div>
+
+    <!-- Nuevo: Indicador de progreso -->
+    <div id="progressIndicator">
+        <h3>Procesando video...</h3>
+        <p>Por favor, espere mientras se genera el archivo.</p>
+    </div>
+
     <script>
         let mediaRecorder;
         let stream;
@@ -214,16 +226,20 @@
         let timerInterval;
         let currentResolution = '480p';
         let currentCameraId;
-        let includeAudio = true; // Variable para controlar si se incluye el audio
+        let includeAudio = true;
+        let recordedChunks = []; // Array para almacenar chunks
+        let chunkInterval; // Intervalo para solicitar chunks
+        const MAX_RECORDING_TIME = 30 * 60 * 1000; // 30 minutos en milisegundos
+        
         const video = document.getElementById('video');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const timer = document.getElementById('timer');
-        const locationDisplay = document.getElementById('location');
         const recorderScreen = document.getElementById('recorderScreen');
         const endScreen = document.getElementById('endScreen');
         const finalTime = document.getElementById('finalTime');
         const backButton = document.getElementById('backButton');
+        const progressIndicator = document.getElementById('progressIndicator');
 
         // Menú Sandwich
         const menuButton = document.getElementById('menuButton');
@@ -236,7 +252,6 @@
         async function requestPermissions() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                await requestLocation();
 
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
@@ -256,30 +271,11 @@
                     cameraSelect.appendChild(option);
                 });
 
-                // Configurar la primera cámara como predeterminada
                 currentCameraId = videoDevices[0].deviceId;
                 updateCamera();
             } catch (error) {
                 console.error('Error al solicitar permisos:', error);
-                alert('Por favor, otorga permisos para usar la cámara, el micrófono y el GPS.');
-            }
-        }
-
-        async function requestLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    position => {
-                        const { latitude, longitude } = position.coords;
-                        locationDisplay.textContent = `Ubicación: Latitud ${latitude.toFixed(6)}, Longitud ${longitude.toFixed(6)}`;
-                    },
-                    error => {
-                        console.error('Error al obtener la ubicación:', error);
-                        locationDisplay.textContent = 'Ubicación: No disponible';
-                    },
-                    { enableHighAccuracy: true }
-                );
-            } else {
-                locationDisplay.textContent = 'Ubicación: No soportada por el navegador';
+                alert('Por favor, otorga permisos para usar la cámara y el micrófono.');
             }
         }
 
@@ -292,9 +288,12 @@
                     stream.getTracks().forEach(track => track.stop());
                 }
 
-                // Reemplazamos solo la cámara sin cambiar la resolución ni el audio
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: currentCameraId }, width: getResolutionWidth(currentResolution), height: getResolutionHeight(currentResolution) },
+                    video: { 
+                        deviceId: { exact: currentCameraId }, 
+                        width: getResolutionWidth(currentResolution), 
+                        height: getResolutionHeight(currentResolution) 
+                    },
                     audio: includeAudio
                 });
 
@@ -307,27 +306,19 @@
 
         function getResolutionWidth(resolution) {
             switch (resolution) {
-                case '480p':
-                    return 854;
-                case '720p':
-                    return 1280;
-                case '1080p':
-                    return 1920;
-                default:
-                    return 854;
+                case '480p': return 854;
+                case '720p': return 1280;
+                case '1080p': return 1920;
+                default: return 854;
             }
         }
 
         function getResolutionHeight(resolution) {
             switch (resolution) {
-                case '480p':
-                    return 480;
-                case '720p':
-                    return 720;
-                case '1080p':
-                    return 1080;
-                default:
-                    return 480;
+                case '480p': return 480;
+                case '720p': return 720;
+                case '1080p': return 1080;
+                default: return 480;
             }
         }
 
@@ -337,19 +328,40 @@
                 return;
             }
 
+            recordedChunks = []; // Limpiar chunks anteriores
+
             const options = {
-                mimeType: 'video/mp4; codecs=avc1.42E01E,mp4a.40.2'
+                mimeType: 'video/webm;codecs=h264',
+                videoBitsPerSecond: 2500000 // 2.5 Mbps
             };
 
-            mediaRecorder = new MediaRecorder(stream, options);
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e) {
+                console.error('Error al crear MediaRecorder:', e);
+                return;
+            }
 
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    saveRecording(event.data);
+            mediaRecorder.ondataavailable = handleDataAvailable;
+            mediaRecorder.onstop = handleStop;
+
+            // Iniciar grabación con chunks de 1 segundo
+            mediaRecorder.start(1000);
+
+            // Solicitar datos cada minuto
+            chunkInterval = setInterval(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.requestData();
                 }
-            };
+            }, 60000);
 
-            mediaRecorder.start();
+            // Configurar límite de tiempo de grabación
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    stopRecording();
+                }
+            }, MAX_RECORDING_TIME);
+
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 1000);
 
@@ -357,12 +369,32 @@
             stopButton.disabled = false;
         }
 
+        function handleDataAvailable(event) {
+            if (event.data && event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        }
+
+        function handleStop() {
+            clearInterval(chunkInterval);
+            clearInterval(timerInterval);
+            
+            progressIndicator.style.display = 'block';
+            
+            // Crear el archivo final con todos los chunks
+            const blob = new Blob(recordedChunks, {
+                type: 'video/webm'
+            });
+            
+            saveRecording(blob);
+            progressIndicator.style.display = 'none';
+        }
+
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
             }
 
-            clearInterval(timerInterval);
             startButton.disabled = false;
             stopButton.disabled = true;
 
@@ -376,14 +408,6 @@
             endScreen.classList.remove('hidden');
         }
 
-        function updateTimer() {
-            const elapsedTime = new Date(Date.now() - startTime);
-            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
-        }
-
         function saveRecording(blob) {
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
@@ -392,7 +416,7 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.mp4`;
+            const filename = `CarCam_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.webm`;
 
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -401,7 +425,19 @@
             a.download = filename;
             document.body.appendChild(a);
             a.click();
-            URL.revokeObjectURL(url);
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        function updateTimer() {
+            const elapsedTime = new Date(Date.now() - startTime);
+            const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+            timer.textContent = `${hours}:${minutes}:${seconds}`;
         }
 
         backButton.addEventListener('click', () => {
@@ -413,20 +449,78 @@
         startButton.addEventListener('click', startRecording);
         stopButton.addEventListener('click', stopRecording);
 
-        // Solicitar permisos al cargar la página
-        requestPermissions();
-
         function updateResolution() {
             const resolutionSelect = document.getElementById('resolutionSelect');
             currentResolution = resolutionSelect.value;
             updateCamera();
         }
-
         function updateAudio() {
             const audioSelect = document.getElementById('audioSelect');
             includeAudio = audioSelect.value === 'true';
             updateCamera();
         }
+
+        // Sistema de auto-guardado para archivos grandes
+        async function setupIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('CarCamDB', 1);
+
+                request.onerror = () => reject(new Error('Error al abrir IndexedDB'));
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('chunks')) {
+                        db.createObjectStore('chunks', { autoIncrement: true });
+                    }
+                };
+
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        async function saveChunkToIndexedDB(chunk) {
+            try {
+                const db = await setupIndexedDB();
+                const transaction = db.transaction(['chunks'], 'readwrite');
+                const store = transaction.objectStore('chunks');
+                await store.add(chunk);
+            } catch (error) {
+                console.error('Error al guardar chunk en IndexedDB:', error);
+            }
+        }
+
+        async function getChunksFromIndexedDB() {
+            try {
+                const db = await setupIndexedDB();
+                const transaction = db.transaction(['chunks'], 'readonly');
+                const store = transaction.objectStore('chunks');
+                const request = store.getAll();
+
+                return new Promise((resolve, reject) => {
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            } catch (error) {
+                console.error('Error al recuperar chunks de IndexedDB:', error);
+                return [];
+            }
+        }
+
+        async function clearIndexedDB() {
+            try {
+                const db = await setupIndexedDB();
+                const transaction = db.transaction(['chunks'], 'readwrite');
+                const store = transaction.objectStore('chunks');
+                await store.clear();
+            } catch (error) {
+                console.error('Error al limpiar IndexedDB:', error);
+            }
+        }
+
+        // Inicialización cuando se carga la página
+        requestPermissions();
+        setupIndexedDB().catch(console.error);
+
     </script>
 </body>
 </html>
