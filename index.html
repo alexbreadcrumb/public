@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Puzzle Musical Deslizante</title>
+    <title>Puzzletunes</title>
     <style>
         :root {
             --background: #121212;
@@ -329,7 +329,7 @@
 
         // --- Game App Component ---
         function App() {
-            const [gameState, setGameState] = useState('loading'); // loading, playing, paused, won
+            const [gameState, setGameState] = useState('loading'); // loading, playing, paused, won, error
             const [pieces, setPieces] = useState([]);
             const [album, setAlbum] = useState(null);
             const [moves, setMoves] = useState(0);
@@ -372,8 +372,8 @@
             const fetchAlbumAndAudio = async () => {
                 const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
                 const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                const proxyUrl = 'https://cors.eu.org/';
                 try {
-                    const proxyUrl = 'https://cors.eu.org/';
                     const albumApiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(randomGenre)}&media=music&entity=album&limit=50`;
                     let response = await fetch(proxyUrl + albumApiUrl);
                     if (!response.ok) throw new Error(`Album search failed: ${response.status}`);
@@ -389,11 +389,14 @@
 
                     data = await response.json();
                     const songWithPreview = data.results.find(song => song.previewUrl);
+                    
+                    const artworkUrl = randomAlbum.artworkUrl100.replace('100x100', '600x600');
 
                     return {
                         artistName: randomAlbum.artistName,
                         collectionName: randomAlbum.collectionName,
-                        artworkUrl: randomAlbum.artworkUrl100.replace('100x100', '600x600'),
+                        // FIX: Prepend proxy to artwork URL to prevent CORS issues on mobile
+                        artworkUrl: proxyUrl + artworkUrl,
                         previewUrl: songWithPreview ? songWithPreview.previewUrl : null
                     };
                 } catch (error) {
@@ -418,7 +421,7 @@
                 
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
-                img.src = newAlbum.artworkUrl;
+                img.src = newAlbum.artworkUrl; // Now using the proxied URL
                 img.onload = () => {
                     setAlbum(newAlbum);
                     if (newAlbum.previewUrl) {
@@ -428,20 +431,18 @@
                     const correctOrder = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                     
                     let shuffled = [...correctOrder];
-                    // Simple shuffle check (number of inversions). An odd number of inversions is unsolvable.
-                    let inversions = 0;
+                    let inversions;
                     do {
                         shuffled = [...correctOrder].sort(() => Math.random() - 0.5);
                         inversions = 0;
                         for (let i = 0; i < shuffled.length - 1; i++) {
                             for (let j = i + 1; j < shuffled.length; j++) {
-                                // Don't count the empty tile in inversions
                                 if (shuffled[i] !== SIZE * SIZE - 1 && shuffled[j] !== SIZE * SIZE - 1 && shuffled[i] > shuffled[j]) {
                                     inversions++;
                                 }
                             }
                         }
-                    } while (inversions % 2 !== 0); // Re-shuffle until we get a solvable puzzle
+                    } while (inversions % 2 !== 0);
 
                     setPieces(correctOrder.map(originalIndex => ({
                         originalIndex,
@@ -501,21 +502,15 @@
             };
 
             const toggleMute = () => {
-                // This is the key for mobile Safari: unlock audio on first user gesture
-                if (!isAudioUnlocked.current && audioRef.current) {
-                    const playPromise = audioRef.current.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                           audioRef.current.pause();
-                           isAudioUnlocked.current = true;
-                           setIsMuted(prev => !prev);
-                        }).catch(error => {
-                           console.error("Audio unlock failed:", error);
-                        });
-                    }
-                } else {
-                    setIsMuted(prev => !prev);
+                // FIX: More robust audio unlocking for iOS
+                if (!isAudioUnlocked.current && audioRef.current?.src) {
+                    // This is a direct, synchronous call from a user event, which iOS allows.
+                    // We fire and forget, its only purpose is to unlock the audio context.
+                    audioRef.current.play();
+                    isAudioUnlocked.current = true;
                 }
+                // The useEffect will handle the actual pausing based on the new state.
+                setIsMuted(prev => !prev);
             };
 
             const deleteScore = (id) => {
@@ -534,7 +529,7 @@
 
             return (
                 <React.Fragment>
-                    <audio ref={audioRef} loop crossOrigin="anonymous"></audio>
+                    <audio ref={audioRef} loop crossOrigin="anonymous" playsInline></audio>
                     {isScoresModalOpen && <HighScoresModal scores={highScores} onClose={() => setScoresModalOpen(false)} onDelete={deleteScore} />}
                     
                     <h1>Puzzle Musical</h1>
@@ -560,7 +555,7 @@
                     <div className="puzzle-container">
                         {renderOverlay()}
                         {album && pieces.sort((a, b) => a.currentIndex - b.currentIndex).map(piece => {
-                            const { originalIndex, currentIndex, isEmpty } = piece;
+                            const { originalIndex, isEmpty } = piece;
                             const row = Math.floor(originalIndex / SIZE);
                             const col = originalIndex % SIZE;
                             const style = isEmpty ? {} : {
