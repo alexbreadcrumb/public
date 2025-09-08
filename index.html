@@ -64,12 +64,18 @@
             background-image: none !important;
             cursor: default;
         }
-        #controls, #stats {
-            display: flex;
+        #controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 60px 60px; /* Grid for new buttons */
             gap: 1rem;
             width: 100%;
         }
-        #stats { margin-bottom: 1rem; }
+        #stats {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
         #stats > div {
             flex-grow: 1;
             text-align: center;
@@ -85,7 +91,6 @@
             color: var(--primary);
         }
         button {
-            flex-grow: 1;
             padding: 0.85rem 1rem; /* Slightly larger buttons */
             border: none;
             border-radius: 8px;
@@ -95,9 +100,20 @@
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         button:hover { background-color: #eab308; }
+        button#pause-btn { grid-column: 3 / 4; }
+        button#mute-btn { grid-column: 4 / 5; background-color: #4b5563; }
+        button#mute-btn.unmuted { background-color: #22c55e; }
         button#pause-btn.paused { background-color: #22c55e; }
+        button#new-game-3, button#new-game-4 { grid-column: span 1; }
+        #new-game-controls {
+            display: contents; /* Make children part of the grid */
+        }
+
         h2 { margin-top: 0; color: var(--primary); text-align: center; }
         #high-scores-list { list-style: none; padding: 0; margin: 0; }
         #high-scores-list li {
@@ -157,9 +173,14 @@
                 </div>
             </div>
             <div id="controls">
-                <button id="new-game-3">Nuevo 3x3</button>
-                <button id="new-game-4">Nuevo 4x4</button>
-                <button id="pause-btn">Pausar</button>
+                <div id="new-game-controls">
+                    <button id="new-game-3">3x3</button>
+                    <button id="new-game-4">4x4</button>
+                </div>
+                <button id="pause-btn">||</button> <!-- Pause Icon -->
+                <button id="mute-btn">
+                    <!-- Speaker Icon will be injected by JS -->
+                </button>
             </div>
         </section>
         <section id="high-scores-container" class="panel">
@@ -175,7 +196,8 @@
             <button id="play-again-btn" style="width: 100%; margin-top: 1rem;">Jugar de Nuevo</button>
         </div>
     </div>
-
+    
+    <audio id="audio-preview" loop></audio>
     <footer>Game By: Ale Fernández 2025 - PY</footer>
 
     <script>
@@ -184,30 +206,53 @@
             const timeEl = document.getElementById('time');
             const movesEl = document.getElementById('moves');
             const pauseBtn = document.getElementById('pause-btn');
+            const muteBtn = document.getElementById('mute-btn');
             const scoresListEl = document.getElementById('high-scores-list');
             const victoryModalEl = document.getElementById('victory-modal');
+            const audioEl = document.getElementById('audio-preview');
+
+            const speakerIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+            const speakerMutedIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
 
             let state = {
                 gridSize: 3,
                 pieces: [],
                 imageUrl: '',
+                audioPreviewUrl: '',
                 moves: 0,
                 time: 0,
                 isPaused: false,
-                isSolved: false
+                isSolved: false,
+                isMuted: true
             };
             let timerInterval = null;
+            
+            const saveState = () => localStorage.setItem('puzzleGameState', JSON.stringify(state));
+            const loadState = () => JSON.parse(localStorage.getItem('puzzleGameState'));
+            const saveScores = (scores) => localStorage.setItem('puzzleHighScores', JSON.stringify(scores));
+            const loadScores = () => JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
 
             const formatTime = (totalSeconds) => {
                 const min = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
                 const sec = (totalSeconds % 60).toString().padStart(2, '0');
                 return `${min}:${sec}`;
             };
-
-            const saveState = () => localStorage.setItem('puzzleGameState', JSON.stringify(state));
-            const loadState = () => JSON.parse(localStorage.getItem('puzzleGameState'));
-            const saveScores = (scores) => localStorage.setItem('puzzleHighScores', JSON.stringify(scores));
-            const loadScores = () => JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
+            
+            const handleAudio = () => {
+                if (state.audioPreviewUrl && !state.isPaused && !state.isSolved && !state.isMuted) {
+                    if (audioEl.src !== state.audioPreviewUrl) {
+                        audioEl.src = state.audioPreviewUrl;
+                    }
+                    audioEl.play().catch(e => console.warn("El audio fue bloqueado por el navegador. Se requiere interacción del usuario."));
+                } else {
+                    audioEl.pause();
+                }
+            };
+            
+            const renderMuteButton = () => {
+                muteBtn.innerHTML = state.isMuted ? speakerMutedIcon : speakerIcon;
+                muteBtn.classList.toggle('unmuted', !state.isMuted);
+            };
 
             const renderBoard = () => {
                 if (!state.imageUrl) {
@@ -222,10 +267,8 @@
 
                 state.pieces.forEach((piece, currentIndex) => {
                     const pieceEl = document.createElement('div');
-                    
                     pieceEl.classList.add('piece');
                     if (piece.isEmpty) pieceEl.classList.add('empty');
-                    
                     const correctX = piece.correctPosition % state.gridSize;
                     const correctY = Math.floor(piece.correctPosition / state.gridSize);
                     
@@ -234,13 +277,12 @@
                     pieceEl.style.backgroundImage = `url(${state.imageUrl})`;
                     pieceEl.style.backgroundSize = `${boardSize}px ${boardSize}px`;
                     pieceEl.style.backgroundPosition = `-${correctX * pieceSize}px -${correctY * pieceSize}px`;
-                    
                     pieceEl.dataset.index = currentIndex;
-                    
                     boardEl.appendChild(pieceEl);
                 });
                 movesEl.textContent = state.moves;
                 timeEl.textContent = formatTime(state.time);
+                handleAudio();
             };
             window.addEventListener('resize', renderBoard);
 
@@ -250,69 +292,44 @@
                     if (!state.isPaused && !state.isSolved) {
                         state.time++;
                         timeEl.textContent = formatTime(state.time);
-                        saveState(); // Save time on every tick
+                        saveState();
                     }
                 }, 1000);
             };
 
             const togglePause = () => {
                 state.isPaused = !state.isPaused;
-                pauseBtn.textContent = state.isPaused ? 'Reanudar' : 'Pausar';
+                pauseBtn.innerHTML = state.isPaused ? '▶' : '||';
                 pauseBtn.classList.toggle('paused', state.isPaused);
                 boardEl.style.opacity = state.isPaused ? '0.5' : '1';
                 if (!state.isPaused) startTimer();
+                handleAudio();
+                saveState();
+            };
+            
+            const toggleMute = () => {
+                state.isMuted = !state.isMuted;
+                renderMuteButton();
+                handleAudio();
                 saveState();
             };
 
-            const fetchAndPrepareImage = async (size, retries = 5) => {
-                if (retries === 0) {
-                    boardEl.innerHTML = `<p style="color: #ef4444;">No se pudo cargar una portada. Revisa tu conexión e intenta de nuevo.</p>`;
-                    return;
-                }
-                boardEl.innerHTML = `<p>Buscando portadas de discos...</p>`;
-                try {
-                    const genres = ['rock', 'pop', 'jazz', 'electronic', 'hip-hop', 'classical', 'soundtrack', 'alternative', 'reggae', 'soul'];
-                    const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-                    
-                    const targetUrl = `https://itunes.apple.com/search?term=${randomGenre}&entity=album&limit=50&media=music`;
-                    // Use a CORS proxy to avoid cross-origin issues, especially on mobile
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-                    
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error(`Error en API o Proxy: ${response.status}`);
-                    
-                    const data = await response.json();
-                    if (data.resultCount === 0) {
-                         // Retry with a different genre if no results
-                        return fetchAndPrepareImage(size, retries - 1);
-                    }
-
-                    const randomAlbum = data.results[Math.floor(Math.random() * data.resultCount)];
-                    const artworkUrl = randomAlbum.artworkUrl100.replace('100x100', '600x600');
-                    
-                    state.imageUrl = artworkUrl;
-                    initGameLogic(size);
-
-                } catch (error) {
-                    console.error("Error al preparar imagen:", error);
-                    // Retry on error
-                    fetchAndPrepareImage(size, retries - 1);
-                }
-            };
-            
             const initGameLogic = (size) => {
                 state.gridSize = size;
                 state.moves = 0;
                 state.time = 0;
                 state.isPaused = false;
                 state.isSolved = false;
-
+                
+                audioEl.pause();
+                audioEl.src = '';
+                
                 const totalPieces = size * size;
                 const solvedPieces = Array.from({ length: totalPieces }, (_, i) => ({ correctPosition: i, isEmpty: i === totalPieces - 1 }));
                 
                 let shuffled = [...solvedPieces];
                 let emptyIndex = totalPieces - 1;
-                for (let i = 0; i < 500; i++) { // Shuffling logic
+                for (let i = 0; i < 500; i++) {
                     const validMoves = [];
                     const { row, col } = { row: Math.floor(emptyIndex / size), col: emptyIndex % size };
                     if (row > 0) validMoves.push(emptyIndex - size);
@@ -330,15 +347,60 @@
                 saveState();
             };
             
-            const startNewGame = (size) => {
-                fetchAndPrepareImage(size);
+            const prepareNewGameData = async (size) => {
+                boardEl.innerHTML = `<p>Buscando un álbum...</p>`;
+                
+                const genres = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal'];
+                let album = null;
+
+                for (let i = 0; i < 3; i++) { // Retry up to 3 times
+                    try {
+                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                        const searchUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
+                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
+
+                        const response = await fetch(proxyUrl);
+                        if (!response.ok) throw new Error('Network response was not ok.');
+                        
+                        const results = await response.json();
+
+                        if (results && results.resultCount > 0) {
+                            const validAlbums = results.results.filter(r => r.artworkUrl100 && r.previewUrl);
+                            if (validAlbums.length > 0) {
+                                const randomAlbum = validAlbums[Math.floor(Math.random() * validAlbums.length)];
+                                album = {
+                                    imageUrl: randomAlbum.artworkUrl100.replace('100x100bb', '600x600bb'),
+                                    audioPreviewUrl: randomAlbum.previewUrl
+                                };
+                                break; // Success, exit loop
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching album data (attempt ' + (i+1) + '):', error);
+                    }
+                }
+
+                if (album) {
+                    state.imageUrl = album.imageUrl;
+                    state.audioPreviewUrl = album.audioPreviewUrl;
+                    initGameLogic(size);
+                } else {
+                    boardEl.innerHTML = `<p style="padding: 20px;">No se pudo cargar una portada.<br>Revisa tu conexión e intenta de nuevo.</p>`;
+                }
             };
             
+            const startNewGame = (size) => {
+                state.audioPreviewUrl = '';
+                handleAudio();
+                prepareNewGameData(size);
+            };
+
             const checkWin = () => {
                 const isSolved = state.pieces.every((p, i) => p.correctPosition === i);
                 if (isSolved) {
                     state.isSolved = true;
                     clearInterval(timerInterval);
+                    handleAudio();
                     updateHighScores();
                     renderHighScores();
                     document.getElementById('final-time').textContent = formatTime(state.time);
@@ -358,26 +420,20 @@
 
             const renderHighScores = () => {
                 const scores = loadScores();
-                if (scores.length === 0) {
-                    scoresListEl.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No hay récords todavía.</p>';
-                    return;
-                }
-                scoresListEl.innerHTML = scores.map(s => `
-                    <li>
-                        <span>${formatTime(s.time)}</span>
-                        <span style="color: var(--text-secondary); font-size: 0.8rem;">${s.moves} movs (${s.size}x${s.size})</span>
-                    </li>
-                `).join('');
+                scoresListEl.innerHTML = scores.length === 0 
+                    ? '<p style="text-align: center; color: var(--text-secondary);">No hay récords todavía.</p>'
+                    : scores.map(s => `
+                        <li>
+                            <span>${formatTime(s.time)}</span>
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">${s.moves} movs (${s.size}x${s.size})</span>
+                        </li>`).join('');
             };
 
             const handleMove = (clickedIndex) => {
                 if (state.isPaused || state.isSolved) return;
-
                 const emptyIndex = state.pieces.findIndex(p => p.isEmpty);
-                
                 const { row: cRow, col: cCol } = { row: Math.floor(clickedIndex / state.gridSize), col: clickedIndex % state.gridSize };
                 const { row: eRow, col: eCol } = { row: Math.floor(emptyIndex / state.gridSize), col: emptyIndex % state.gridSize };
-
                 if (Math.abs(cRow - eRow) + Math.abs(cCol - eCol) === 1) {
                     [state.pieces[clickedIndex], state.pieces[emptyIndex]] = [state.pieces[emptyIndex], state.pieces[clickedIndex]];
                     state.moves++;
@@ -393,11 +449,10 @@
                     handleMove(parseInt(piece.dataset.index, 10));
                 }
             });
-            // Touch support
             boardEl.addEventListener('touchstart', (e) => {
                 const piece = e.target.closest('.piece');
                 if (piece && !piece.classList.contains('empty')) {
-                    e.preventDefault(); // Prevent click event from firing too
+                    e.preventDefault();
                     handleMove(parseInt(piece.dataset.index, 10));
                 }
             }, { passive: false });
@@ -405,26 +460,32 @@
             document.getElementById('new-game-3').onclick = () => startNewGame(3);
             document.getElementById('new-game-4').onclick = () => startNewGame(4);
             pauseBtn.onclick = togglePause;
+            muteBtn.onclick = toggleMute;
             document.getElementById('play-again-btn').onclick = () => {
                 victoryModalEl.classList.remove('show');
                 startNewGame(state.gridSize);
             };
-
-            const savedGame = loadState();
-            if (savedGame && !savedGame.isSolved && savedGame.imageUrl) {
-                Object.assign(state, savedGame);
-                renderBoard();
-                if (state.isPaused) {
-                    pauseBtn.textContent = 'Reanudar';
-                    pauseBtn.classList.add('paused');
-                    boardEl.style.opacity = '0.5';
+            
+            const initApp = async () => {
+                const savedGame = loadState();
+                if (savedGame && !savedGame.isSolved && savedGame.imageUrl) {
+                    Object.assign(state, savedGame);
+                    renderBoard();
+                    if (state.isPaused) {
+                        pauseBtn.innerHTML = '▶';
+                        pauseBtn.classList.add('paused');
+                        boardEl.style.opacity = '0.5';
+                    } else {
+                        startTimer();
+                    }
                 } else {
-                    startTimer();
+                    await prepareNewGameData(3);
                 }
-            } else {
-                startNewGame(3);
-            }
-            renderHighScores();
+                renderHighScores();
+                renderMuteButton();
+            };
+
+            initApp();
         });
     </script>
 </body>
