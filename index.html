@@ -373,16 +373,20 @@
                 const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
                 const randomGenre = genres[Math.floor(Math.random() * genres.length)];
                 try {
-                    const proxyUrl = 'https://corsproxy.io/?';
-                    const albumApiUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
-                    let response = await fetch(proxyUrl + encodeURIComponent(albumApiUrl));
+                    const proxyUrl = 'https://cors.eu.org/';
+                    const albumApiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(randomGenre)}&media=music&entity=album&limit=50`;
+                    let response = await fetch(proxyUrl + albumApiUrl);
+                    if (!response.ok) throw new Error(`Album search failed: ${response.status}`);
+                    
                     let data = await response.json();
                     const validResults = data.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
                     if (validResults.length === 0) throw new Error("No valid albums found");
 
                     const randomAlbum = validResults[Math.floor(Math.random() * validResults.length)];
                     const songApiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(randomAlbum.artistName + ' ' + randomAlbum.collectionName)}&media=music&entity=song&limit=10`;
-                    response = await fetch(proxyUrl + encodeURIComponent(songApiUrl));
+                    response = await fetch(proxyUrl + songApiUrl);
+                    if (!response.ok) throw new Error(`Song search failed: ${response.status}`);
+
                     data = await response.json();
                     const songWithPreview = data.results.find(song => song.previewUrl);
 
@@ -422,7 +426,22 @@
                     }
 
                     const correctOrder = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                    const shuffled = [...correctOrder].sort(() => Math.random() - 0.5);
+                    
+                    let shuffled = [...correctOrder];
+                    // Simple shuffle check (number of inversions). An odd number of inversions is unsolvable.
+                    let inversions = 0;
+                    do {
+                        shuffled = [...correctOrder].sort(() => Math.random() - 0.5);
+                        inversions = 0;
+                        for (let i = 0; i < shuffled.length - 1; i++) {
+                            for (let j = i + 1; j < shuffled.length; j++) {
+                                // Don't count the empty tile in inversions
+                                if (shuffled[i] !== SIZE * SIZE - 1 && shuffled[j] !== SIZE * SIZE - 1 && shuffled[i] > shuffled[j]) {
+                                    inversions++;
+                                }
+                            }
+                        }
+                    } while (inversions % 2 !== 0); // Re-shuffle until we get a solvable puzzle
 
                     setPieces(correctOrder.map(originalIndex => ({
                         originalIndex,
@@ -483,11 +502,20 @@
 
             const toggleMute = () => {
                 // This is the key for mobile Safari: unlock audio on first user gesture
-                if (!isAudioUnlocked.current) {
-                    audioRef.current.play().then(() => audioRef.current.pause());
-                    isAudioUnlocked.current = true;
+                if (!isAudioUnlocked.current && audioRef.current) {
+                    const playPromise = audioRef.current.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                           audioRef.current.pause();
+                           isAudioUnlocked.current = true;
+                           setIsMuted(prev => !prev);
+                        }).catch(error => {
+                           console.error("Audio unlock failed:", error);
+                        });
+                    }
+                } else {
+                    setIsMuted(prev => !prev);
                 }
-                setIsMuted(prev => !prev);
             };
 
             const deleteScore = (id) => {
@@ -531,14 +559,13 @@
 
                     <div className="puzzle-container">
                         {renderOverlay()}
-                        {album && pieces.map(piece => {
+                        {album && pieces.sort((a, b) => a.currentIndex - b.currentIndex).map(piece => {
                             const { originalIndex, currentIndex, isEmpty } = piece;
                             const row = Math.floor(originalIndex / SIZE);
                             const col = originalIndex % SIZE;
                             const style = isEmpty ? {} : {
                                 backgroundImage: `url(${album.artworkUrl})`,
                                 backgroundPosition: `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`,
-                                transform: `translate(${(currentIndex % SIZE - col) * 100}%, ${(Math.floor(currentIndex / SIZE) - row) * 100}%)`,
                             };
                             return (
                                 <div 
