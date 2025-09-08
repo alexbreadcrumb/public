@@ -54,6 +54,7 @@
             margin-bottom: 1.5rem; /* More space */
             color: var(--text-secondary);
             text-align: center;
+            font-size: 1.1rem; /* Larger status text */
         }
         .piece {
             transition: transform 0.2s ease-in-out;
@@ -216,12 +217,11 @@
                 boardEl.innerHTML = '';
                 boardEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
                 
-                const boardSize = boardEl.clientWidth; // Use clientWidth for more reliable measurement
+                const boardSize = boardEl.clientWidth;
                 const pieceSize = boardSize / state.gridSize;
 
-                state.pieces.forEach((piece) => {
+                state.pieces.forEach((piece, currentIndex) => {
                     const pieceEl = document.createElement('div');
-                    const currentIndex = state.pieces.indexOf(piece);
                     
                     pieceEl.classList.add('piece');
                     if (piece.isEmpty) pieceEl.classList.add('empty');
@@ -235,7 +235,6 @@
                     pieceEl.style.backgroundSize = `${boardSize}px ${boardSize}px`;
                     pieceEl.style.backgroundPosition = `-${correctX * pieceSize}px -${correctY * pieceSize}px`;
                     
-                    // The position in the grid is determined by order, but we can set a data-attribute for click handling
                     pieceEl.dataset.index = currentIndex;
                     
                     boardEl.appendChild(pieceEl);
@@ -265,17 +264,28 @@
                 saveState();
             };
 
-            const fetchAndPrepareImage = async (size) => {
+            const fetchAndPrepareImage = async (size, retries = 5) => {
+                if (retries === 0) {
+                    boardEl.innerHTML = `<p style="color: #ef4444;">No se pudo cargar una portada. Revisa tu conexión e intenta de nuevo.</p>`;
+                    return;
+                }
                 boardEl.innerHTML = `<p>Buscando portadas de discos...</p>`;
                 try {
                     const genres = ['rock', 'pop', 'jazz', 'electronic', 'hip-hop', 'classical', 'soundtrack', 'alternative', 'reggae', 'soul'];
                     const randomGenre = genres[Math.floor(Math.random() * genres.length)];
                     
-                    const response = await fetch(`https://itunes.apple.com/search?term=${randomGenre}&entity=album&limit=50&media=music`);
-                    if (!response.ok) throw new Error(`Error en API de iTunes: ${response.status}`);
+                    const targetUrl = `https://itunes.apple.com/search?term=${randomGenre}&entity=album&limit=50&media=music`;
+                    // Use a CORS proxy to avoid cross-origin issues, especially on mobile
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error(`Error en API o Proxy: ${response.status}`);
                     
                     const data = await response.json();
-                    if (data.resultCount === 0) return fetchAndPrepareImage(size);
+                    if (data.resultCount === 0) {
+                         // Retry with a different genre if no results
+                        return fetchAndPrepareImage(size, retries - 1);
+                    }
 
                     const randomAlbum = data.results[Math.floor(Math.random() * data.resultCount)];
                     const artworkUrl = randomAlbum.artworkUrl100.replace('100x100', '600x600');
@@ -285,7 +295,8 @@
 
                 } catch (error) {
                     console.error("Error al preparar imagen:", error);
-                    boardEl.innerHTML = `<p style="color: #ef4444;">No se pudo cargar una portada. Revisa tu conexión e intenta de nuevo.</p>`;
+                    // Retry on error
+                    fetchAndPrepareImage(size, retries - 1);
                 }
             };
             
@@ -359,10 +370,9 @@
                 `).join('');
             };
 
-            boardEl.addEventListener('click', (e) => {
-                if (state.isPaused || state.isSolved || !e.target.classList.contains('piece') || e.target.classList.contains('empty')) return;
+            const handleMove = (clickedIndex) => {
+                if (state.isPaused || state.isSolved) return;
 
-                const clickedIndex = parseInt(e.target.dataset.index, 10);
                 const emptyIndex = state.pieces.findIndex(p => p.isEmpty);
                 
                 const { row: cRow, col: cCol } = { row: Math.floor(clickedIndex / state.gridSize), col: clickedIndex % state.gridSize };
@@ -375,7 +385,22 @@
                     checkWin();
                     saveState();
                 }
+            }
+
+            boardEl.addEventListener('click', (e) => {
+                const piece = e.target.closest('.piece');
+                if (piece && !piece.classList.contains('empty')) {
+                    handleMove(parseInt(piece.dataset.index, 10));
+                }
             });
+            // Touch support
+            boardEl.addEventListener('touchstart', (e) => {
+                const piece = e.target.closest('.piece');
+                if (piece && !piece.classList.contains('empty')) {
+                    e.preventDefault(); // Prevent click event from firing too
+                    handleMove(parseInt(piece.dataset.index, 10));
+                }
+            }, { passive: false });
             
             document.getElementById('new-game-3').onclick = () => startNewGame(3);
             document.getElementById('new-game-4').onclick = () => startNewGame(4);
@@ -390,7 +415,6 @@
                 Object.assign(state, savedGame);
                 renderBoard();
                 if (state.isPaused) {
-                    // Correctly reflect paused state without toggling logic
                     pauseBtn.textContent = 'Reanudar';
                     pauseBtn.classList.add('paused');
                     boardEl.style.opacity = '0.5';
