@@ -3,489 +3,681 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Deslizante Musical</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Puzzle Musical Deslizante</title>
     <style>
         :root {
-            --bg: #1a1a1a;
-            --surface: #2a2a2a;
-            --primary: #facc15;
-            --text: #e5e7eb;
-            --text-secondary: #9ca3af;
-            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --background: #121212;
+            --surface: #1e1e1e;
+            --primary: #1DB954;
+            --primary-hover: #1ED760;
+            --on-background: #FFFFFF;
+            --on-surface: #E0E0E0;
+            --on-surface-secondary: #B3B3B3;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
+
+        html, body {
+            height: 100%;
             margin: 0;
-            padding: 20px 10px 70px 10px; /* Increased bottom padding for footer */
-            box-sizing: border-box;
+            background-color: var(--background);
+            color: var(--on-background);
+            font-family: var(--font-family);
+            overscroll-behavior: none;
         }
-        #app-container {
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            box-sizing: border-box;
+            gap: 1.5rem;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2 {
+            margin: 0;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        h1 {
+            color: var(--primary);
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-            align-items: center;
-            width: 100%;
-            max-width: 480px; /* Slightly wider for better spacing */
-        }
-        .panel {
-            background-color: var(--surface);
-            border-radius: 12px; /* Softer corners */
-            padding: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            width: 100%;
-            box-sizing: border-box;
-        }
-        #game-board {
-            display: grid;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            background-color: #111;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem; /* More space */
-            color: var(--text-secondary);
-            text-align: center;
-            font-size: 1.1rem; /* Larger status text */
-        }
-        .piece {
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .piece.empty {
-            background-image: none !important;
-            cursor: default;
-        }
-        #controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 60px 60px; /* Grid for new buttons */
-            gap: 1rem;
-            width: 100%;
-        }
-        #stats {
-            display: flex;
-            gap: 1rem;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-        #stats > div {
-            flex-grow: 1;
-            text-align: center;
-        }
-        #stats .label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-transform: uppercase; /* Added for style */
-        }
-        #stats .value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        button {
-            padding: 0.85rem 1rem; /* Slightly larger buttons */
-            border: none;
-            border-radius: 8px;
-            background-color: var(--primary);
-            color: var(--bg);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        button:hover { background-color: #eab308; }
-        button#pause-btn { grid-column: 3 / 4; }
-        button#mute-btn { grid-column: 4 / 5; background-color: #4b5563; }
-        button#mute-btn.unmuted { background-color: #22c55e; }
-        button#pause-btn.paused { background-color: #22c55e; }
-        button#new-game-3, button#new-game-4 { grid-column: span 1; }
-        #new-game-controls {
-            display: contents; /* Make children part of the grid */
         }
 
-        h2 { margin-top: 0; color: var(--primary); text-align: center; }
-        #high-scores-list { list-style: none; padding: 0; margin: 0; }
-        #high-scores-list li {
+        .puzzle-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+
+        .puzzle-piece {
+            width: 100%;
+            height: 100%;
+            background-size: 300% 300%;
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+            visibility: visible;
+            border-radius: 4px;
+        }
+
+        .puzzle-piece.empty {
+            visibility: hidden;
+            cursor: default;
+        }
+        
+        .puzzle-piece:not(.empty):hover {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            z-index: 10;
+        }
+        
+        .controls-stats {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem 0.25rem;
-            border-bottom: 1px solid #3a3a3a;
+            gap: 1rem;
+            width: 100%;
         }
-        #high-scores-list li:last-child { border: none; }
-        #victory-modal {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.8);
-            display: none;
+        
+        .stats, .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--on-surface);
+        }
+        
+        .stat-item svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--on-surface-secondary);
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            padding: 20px;
+            transition: background-color 0.2s ease;
         }
-        #victory-modal.show { display: flex; }
-        .modal-content {
-            text-align: center;
-            animation: fade-in 0.3s ease-out;
+
+        .control-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
-        @keyframes fade-in {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+
+        .control-button svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface);
         }
+        
+        #new-game-btn {
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #new-game-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .high-scores {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--surface);
+            padding: 1rem;
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+
+        .high-scores h2 {
+            margin-bottom: 1rem;
+            color: var(--on-surface);
+        }
+
+        .high-scores ol {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .high-scores li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-radius: 4px;
+            background-color: rgba(0,0,0,0.2);
+            color: var(--on-surface-secondary);
+        }
+        
+        .high-scores li:nth-child(1) {
+            color: #FFD700; /* Gold */
+            font-weight: 600;
+        }
+        .high-scores li:nth-child(2) {
+            color: #C0C0C0; /* Silver */
+        }
+        .high-scores li:nth-child(3) {
+            color: #CD7F32; /* Bronze */
+        }
+
         footer {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 1rem;
-            background-color: #111;
-            color: var(--text-secondary);
+            background-color: var(--surface);
+            color: var(--on-surface-secondary);
             text-align: center;
+            padding: 0.5rem;
             font-size: 0.8rem;
-            z-index: 50;
-            box-sizing: border-box;
+            box-shadow: 0 -2px 10px var(--shadow-color);
         }
     </style>
 </head>
 <body>
-    <main id="app-container">
-        <section class="panel">
-            <div id="game-board">Cargando...</div>
-            <div id="stats">
-                <div>
-                    <div class="label">TIEMPO</div>
-                    <div id="time" class="value">00:00</div>
+    <audio id="audio-player" loop crossorigin="anonymous"></audio>
+
+    <div class="main-container">
+        <h1>Puzzle Musical</h1>
+
+        <div class="controls-stats">
+            <div class="stats">
+                <div class="stat-item">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg>
+                    <span id="timer">00:00</span>
                 </div>
-                <div>
-                    <div class="label">MOVIMIENTOS</div>
-                    <div id="moves" class="value">0</div>
+                <div class="stat-item">
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <span id="moves">0</span>
                 </div>
             </div>
-            <div id="controls">
-                <div id="new-game-controls">
-                    <button id="new-game-3">3x3</button>
-                    <button id="new-game-4">4x4</button>
-                </div>
-                <button id="pause-btn">||</button> <!-- Pause Icon -->
-                <button id="mute-btn">
-                    <!-- Speaker Icon will be injected by JS -->
+             <div class="controls">
+                <button id="pause-btn" class="control-button" title="Pausar/Reanudar">
+                    <svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 7h3v10H8zm5 0h3v10h-3z"></path></svg>
+                    <svg id="play-icon" viewBox="0 0 24 24" style="display: none;"><path d="M7 6v12l10-6z"></path></svg>
+                </button>
+                <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido">
+                    <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                    <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
                 </button>
             </div>
-        </section>
-        <section id="high-scores-container" class="panel">
-            <h2>Mejores Tiempos</h2>
-            <ol id="high-scores-list"></ol>
-        </section>
-    </main>
+        </div>
 
-    <div id="victory-modal">
-        <div class="modal-content panel">
-            <h2 style="font-size: 2.5rem;">¡Victoria!</h2>
-            <p>Completaste el puzzle en <strong id="final-time"></strong> con <strong id="final-moves"></strong> movimientos.</p>
-            <button id="play-again-btn" style="width: 100%; margin-top: 1rem;">Jugar de Nuevo</button>
+        <div class="puzzle-container" id="puzzle-container">
+            <!-- Piezas generadas por JS -->
+        </div>
+
+        <button id="new-game-btn">Nuevo Juego</button>
+
+        <div class="high-scores">
+            <h2>Mejores Tiempos</h2>
+            <ol id="high-scores-list">
+                <!-- Tiempos generados por JS -->
+            </ol>
         </div>
     </div>
     
-    <audio id="audio-preview" loop></audio>
     <footer>Game By: Ale Fernández 2025 - PY</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const boardEl = document.getElementById('game-board');
-            const timeEl = document.getElementById('time');
+            const puzzleContainer = document.getElementById('puzzle-container');
+            const timerEl = document.getElementById('timer');
             const movesEl = document.getElementById('moves');
+            const newGameBtn = document.getElementById('new-game-btn');
             const pauseBtn = document.getElementById('pause-btn');
-            const muteBtn = document.getElementById('mute-btn');
-            const scoresListEl = document.getElementById('high-scores-list');
-            const victoryModalEl = document.getElementById('victory-modal');
-            const audioEl = document.getElementById('audio-preview');
+            const audioBtn = document.getElementById('audio-btn');
+            const highScoresList = document.getElementById('high-scores-list');
+            const audioEl = document.getElementById('audio-player');
 
-            const speakerIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
-            const speakerMutedIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+            const pauseIcon = document.getElementById('pause-icon');
+            const playIcon = document.getElementById('play-icon');
+            const muteIcon = document.getElementById('mute-icon');
+            const unmuteIcon = document.getElementById('unmute-icon');
 
-            let state = {
-                gridSize: 3,
-                pieces: [],
-                imageUrl: '',
-                audioPreviewUrl: '',
-                moves: 0,
-                time: 0,
-                isPaused: false,
-                isSolved: false,
-                isMuted: true
-            };
+            const SIZE = 3;
+            let pieces = [];
+            let moves = 0;
+            let time = 0;
             let timerInterval = null;
-            
-            const saveState = () => localStorage.setItem('puzzleGameState', JSON.stringify(state));
-            const loadState = () => JSON.parse(localStorage.getItem('puzzleGameState'));
-            const saveScores = (scores) => localStorage.setItem('puzzleHighScores', JSON.stringify(scores));
-            const loadScores = () => JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
+            let isPaused = false;
+            let isMuted = true;
+            let currentAlbum = null;
 
-            const formatTime = (totalSeconds) => {
-                const min = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-                const sec = (totalSeconds % 60).toString().padStart(2, '0');
-                return `${min}:${sec}`;
-            };
-            
-            const handleAudio = () => {
-                if (state.audioPreviewUrl && !state.isPaused && !state.isSolved && !state.isMuted) {
-                    if (audioEl.src !== state.audioPreviewUrl) {
-                        audioEl.src = state.audioPreviewUrl;
-                    }
-                    audioEl.play().catch(e => console.warn("El audio fue bloqueado por el navegador. Se requiere interacción del usuario."));
-                } else {
-                    audioEl.pause();
-                }
-            };
-            
-            const renderMuteButton = () => {
-                muteBtn.innerHTML = state.isMuted ? speakerMutedIcon : speakerIcon;
-                muteBtn.classList.toggle('unmuted', !state.isMuted);
-            };
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                return `${mins}:${secs}`;
+            }
 
-            const renderBoard = () => {
-                if (!state.imageUrl) {
-                    boardEl.innerHTML = 'Error: No se encontró imagen.';
-                    return;
-                }
-                boardEl.innerHTML = '';
-                boardEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
-                
-                const boardSize = boardEl.clientWidth;
-                const pieceSize = boardSize / state.gridSize;
-
-                state.pieces.forEach((piece, currentIndex) => {
-                    const pieceEl = document.createElement('div');
-                    pieceEl.classList.add('piece');
-                    if (piece.isEmpty) pieceEl.classList.add('empty');
-                    const correctX = piece.correctPosition % state.gridSize;
-                    const correctY = Math.floor(piece.correctPosition / state.gridSize);
-                    
-                    pieceEl.style.width = `${pieceSize}px`;
-                    pieceEl.style.height = `${pieceSize}px`;
-                    pieceEl.style.backgroundImage = `url(${state.imageUrl})`;
-                    pieceEl.style.backgroundSize = `${boardSize}px ${boardSize}px`;
-                    pieceEl.style.backgroundPosition = `-${correctX * pieceSize}px -${correctY * pieceSize}px`;
-                    pieceEl.dataset.index = currentIndex;
-                    boardEl.appendChild(pieceEl);
-                });
-                movesEl.textContent = state.moves;
-                timeEl.textContent = formatTime(state.time);
-                handleAudio();
-            };
-            window.addEventListener('resize', renderBoard);
-
-            const startTimer = () => {
+            function startTimer() {
                 if (timerInterval) clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
-                    if (!state.isPaused && !state.isSolved) {
-                        state.time++;
-                        timeEl.textContent = formatTime(state.time);
-                        saveState();
+                    if (!isPaused) {
+                        time++;
+                        timerEl.textContent = formatTime(time);
                     }
                 }, 1000);
-            };
+            }
 
-            const togglePause = () => {
-                state.isPaused = !state.isPaused;
-                pauseBtn.innerHTML = state.isPaused ? '▶' : '||';
-                pauseBtn.classList.toggle('paused', state.isPaused);
-                boardEl.style.opacity = state.isPaused ? '0.5' : '1';
-                if (!state.isPaused) startTimer();
-                handleAudio();
-                saveState();
-            };
-            
-            const toggleMute = () => {
-                state.isMuted = !state.isMuted;
-                renderMuteButton();
-                handleAudio();
-                saveState();
-            };
+            function stopTimer() {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
 
-            const initGameLogic = (size) => {
-                state.gridSize = size;
-                state.moves = 0;
-                state.time = 0;
-                state.isPaused = false;
-                state.isSolved = false;
-                
-                audioEl.pause();
-                audioEl.src = '';
-                
-                const totalPieces = size * size;
-                const solvedPieces = Array.from({ length: totalPieces }, (_, i) => ({ correctPosition: i, isEmpty: i === totalPieces - 1 }));
-                
-                let shuffled = [...solvedPieces];
-                let emptyIndex = totalPieces - 1;
-                for (let i = 0; i < 500; i++) {
-                    const validMoves = [];
-                    const { row, col } = { row: Math.floor(emptyIndex / size), col: emptyIndex % size };
-                    if (row > 0) validMoves.push(emptyIndex - size);
-                    if (row < size - 1) validMoves.push(emptyIndex + size);
-                    if (col > 0) validMoves.push(emptyIndex - 1);
-                    if (col < size - 1) validMoves.push(emptyIndex + 1);
-                    const swapIndex = validMoves[Math.floor(Math.random() * validMoves.length)];
-                    [shuffled[emptyIndex], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[emptyIndex]];
-                    emptyIndex = swapIndex;
+            function updateUI() {
+                timerEl.textContent = formatTime(time);
+                movesEl.textContent = moves;
+                pauseIcon.style.display = isPaused ? 'none' : 'block';
+                playIcon.style.display = isPaused ? 'block' : 'none';
+                muteIcon.style.display = isMuted ? 'block' : 'none';
+                unmuteIcon.style.display = isMuted ? 'none' : 'block';
+                renderHighScores();
+            }
+
+            function saveGameState() {
+                if (!currentAlbum) return;
+                const state = {
+                    pieces: pieces.map(p => p.originalIndex),
+                    moves,
+                    time,
+                    isPaused, // Guarda el estado actual real
+                    isMuted,
+                    album: currentAlbum
+                };
+                localStorage.setItem('puzzleGameState', JSON.stringify(state));
+            }
+
+            function loadGameState() {
+                const savedState = localStorage.getItem('puzzleGameState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    pieces = state.pieces.map((originalIndex, currentIndex) => ({
+                        el: null,
+                        originalIndex,
+                        currentIndex,
+                        isEmpty: originalIndex === SIZE * SIZE - 1
+                    }));
+                    moves = state.moves;
+                    time = state.time;
+                    isMuted = state.isMuted;
+                    currentAlbum = state.album;
+                    
+                    // Lógica clave: siempre iniciar pausado al cargar la página
+                    isPaused = true;
+
+                    return true;
                 }
-                state.pieces = shuffled;
+                return false;
+            }
 
-                renderBoard();
-                startTimer();
-                saveState();
-            };
-            
-            const prepareNewGameData = async (size) => {
-                boardEl.innerHTML = `<p>Buscando un álbum...</p>`;
+            function clearGameState() {
+                localStorage.removeItem('puzzleGameState');
+            }
+
+            function renderBoard() {
+                puzzleContainer.innerHTML = '';
+                const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
                 
-                const genres = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal'];
-                let album = null;
-
-                for (let i = 0; i < 3; i++) { // Retry up to 3 times
-                    try {
-                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-                        const searchUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
-                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
-
-                        const response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error('Network response was not ok.');
-                        
-                        const results = await response.json();
-
-                        if (results && results.resultCount > 0) {
-                            const validAlbums = results.results.filter(r => r.artworkUrl100 && r.previewUrl);
-                            if (validAlbums.length > 0) {
-                                const randomAlbum = validAlbums[Math.floor(Math.random() * validAlbums.length)];
-                                album = {
-                                    imageUrl: randomAlbum.artworkUrl100.replace('100x100bb', '600x600bb'),
-                                    audioPreviewUrl: randomAlbum.previewUrl
-                                };
-                                break; // Success, exit loop
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching album data (attempt ' + (i+1) + '):', error);
+                for (let i = 0; i < SIZE * SIZE; i++) {
+                    const pieceData = pieces.find(p => p.currentIndex === i);
+                    const pieceEl = document.createElement('div');
+                    pieceEl.classList.add('puzzle-piece');
+                    
+                    if (pieceData.isEmpty) {
+                        pieceEl.classList.add('empty');
+                    } else {
+                        const row = Math.floor(pieceData.originalIndex / SIZE);
+                        const col = pieceData.originalIndex % SIZE;
+                        pieceEl.style.backgroundImage = `url(${imageUrl})`;
+                        pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
                     }
+                    
+                    pieceEl.dataset.index = i;
+                    pieceEl.addEventListener('click', () => onPieceClick(i));
+                    pieceData.el = pieceEl;
+                    puzzleContainer.appendChild(pieceEl);
                 }
-
-                if (album) {
-                    state.imageUrl = album.imageUrl;
-                    state.audioPreviewUrl = album.audioPreviewUrl;
-                    initGameLogic(size);
-                } else {
-                    boardEl.innerHTML = `<p style="padding: 20px;">No se pudo cargar una portada.<br>Revisa tu conexión e intenta de nuevo.</p>`;
-                }
-            };
+            }
             
-            const startNewGame = (size) => {
-                state.audioPreviewUrl = '';
-                handleAudio();
-                prepareNewGameData(size);
-            };
+            function onPieceClick(clickedIndex) {
+                if (isPaused) return;
 
-            const checkWin = () => {
-                const isSolved = state.pieces.every((p, i) => p.correctPosition === i);
-                if (isSolved) {
-                    state.isSolved = true;
-                    clearInterval(timerInterval);
-                    handleAudio();
-                    updateHighScores();
-                    renderHighScores();
-                    document.getElementById('final-time').textContent = formatTime(state.time);
-                    document.getElementById('final-moves').textContent = state.moves;
-                    victoryModalEl.classList.add('show');
-                    localStorage.removeItem('puzzleGameState');
-                }
-            };
-            
-            const updateHighScores = () => {
-                const scores = loadScores();
-                const newScore = { time: state.time, moves: state.moves, size: state.gridSize, date: new Date().toISOString() };
-                scores.push(newScore);
-                scores.sort((a, b) => a.time - b.time);
-                saveScores(scores.slice(0, 5));
-            };
+                const emptyPiece = pieces.find(p => p.isEmpty);
+                const clickedPiece = pieces.find(p => p.currentIndex === clickedIndex);
+                
+                if (!clickedPiece || clickedPiece.isEmpty) return;
 
-            const renderHighScores = () => {
-                const scores = loadScores();
-                scoresListEl.innerHTML = scores.length === 0 
-                    ? '<p style="text-align: center; color: var(--text-secondary);">No hay récords todavía.</p>'
-                    : scores.map(s => `
-                        <li>
-                            <span>${formatTime(s.time)}</span>
-                            <span style="color: var(--text-secondary); font-size: 0.8rem;">${s.moves} movs (${s.size}x${s.size})</span>
-                        </li>`).join('');
-            };
+                const emptyIndex = emptyPiece.currentIndex;
+                const { row: emptyRow, col: emptyCol } = getRowCol(emptyIndex);
+                const { row: clickedRow, col: clickedCol } = getRowCol(clickedIndex);
 
-            const handleMove = (clickedIndex) => {
-                if (state.isPaused || state.isSolved) return;
-                const emptyIndex = state.pieces.findIndex(p => p.isEmpty);
-                const { row: cRow, col: cCol } = { row: Math.floor(clickedIndex / state.gridSize), col: clickedIndex % state.gridSize };
-                const { row: eRow, col: eCol } = { row: Math.floor(emptyIndex / state.gridSize), col: emptyIndex % state.gridSize };
-                if (Math.abs(cRow - eRow) + Math.abs(cCol - eCol) === 1) {
-                    [state.pieces[clickedIndex], state.pieces[emptyIndex]] = [state.pieces[emptyIndex], state.pieces[clickedIndex]];
-                    state.moves++;
-                    renderBoard();
-                    checkWin();
-                    saveState();
+                const isAdjacent = (Math.abs(emptyRow - clickedRow) === 1 && emptyCol === clickedCol) ||
+                                   (Math.abs(emptyCol - clickedCol) === 1 && emptyRow === clickedRow);
+
+                if (isAdjacent) {
+                    swapPieces(clickedPiece, emptyPiece);
+                    moves++;
+                    updateUI();
+                    if (checkWin()) {
+                        handleWin();
+                    } else {
+                        saveGameState();
+                    }
                 }
             }
 
-            boardEl.addEventListener('click', (e) => {
-                const piece = e.target.closest('.piece');
-                if (piece && !piece.classList.contains('empty')) {
-                    handleMove(parseInt(piece.dataset.index, 10));
+            function swapPieces(piece1, piece2) {
+                // 1. Update state (the source of truth)
+                const tempIndex = piece1.currentIndex;
+                piece1.currentIndex = piece2.currentIndex;
+                piece2.currentIndex = tempIndex;
+
+                // 2. Re-render the entire board based on the new state
+                renderBoard();
+            }
+
+            function getRowCol(index) {
+                return { row: Math.floor(index / SIZE), col: index % SIZE };
+            }
+
+            function checkWin() {
+                return pieces.every(p => p.currentIndex === p.originalIndex);
+            }
+
+            function handleWin() {
+                stopTimer();
+                isPaused = true;
+                showOverlay(`¡Ganaste!<br>${formatTime(time)}`);
+                saveScore(time);
+                clearGameState();
+                handleAudio(true); // Stop on win
+            }
+
+            function saveScore(score) {
+                const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
+                const date = new Date().toLocaleDateString('es-ES');
+                highScores.push({ score, date });
+                highScores.sort((a, b) => a.score - b.score);
+                localStorage.setItem('puzzleHighScores', JSON.stringify(highScores.slice(0, 5)));
+                renderHighScores();
+            }
+
+            function renderHighScores() {
+                const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
+                highScoresList.innerHTML = highScores
+                    .map(item => `<li><span>${item.date}</span><span>${formatTime(item.score)}</span></li>`)
+                    .join('');
+                if (highScores.length === 0) {
+                     highScoresList.innerHTML = '<li><span>-</span><span>-</span></li>';
+                }
+            }
+
+            function showOverlay(text) {
+                hideOverlay(); // Ensure no multiple overlays
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+                overlay.innerHTML = text;
+                puzzleContainer.appendChild(overlay);
+            }
+
+            function hideOverlay() {
+                const overlay = puzzleContainer.querySelector('.overlay');
+                if (overlay) overlay.remove();
+            }
+
+            async function fetchRandomAlbum() {
+                const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
+                let attempts = 5;
+                while (attempts > 0) {
+                    try {
+                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                        const proxyUrl = 'https://corsproxy.io/?';
+                        const apiUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
+                        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+                        
+                        const validResults = data.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
+
+                        if (validResults.length > 0) {
+                            const randomAlbum = validResults[Math.floor(Math.random() * validResults.length)];
+                            return {
+                                artistName: randomAlbum.artistName,
+                                collectionName: randomAlbum.collectionName,
+                                artworkUrl: randomAlbum.artworkUrl100
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching album data (attempt ${6 - attempts}):`, error);
+                    }
+                    attempts--;
+                }
+                return null;
+            }
+
+            async function fetchAndSetAudio(artist, album) {
+                 try {
+                    const proxyUrl = 'https://corsproxy.io/?';
+                    const apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(artist + ' ' + album)}&media=music&entity=song&limit=10`;
+                    const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const data = await response.json();
+                    
+                    const songWithPreview = data.results.find(song => song.previewUrl);
+                    
+                    if (songWithPreview) {
+                        currentAlbum.previewUrl = songWithPreview.previewUrl;
+                        audioEl.src = currentAlbum.previewUrl;
+                        handleAudio();
+                    } else {
+                        console.log('No audio preview found for this album.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching audio data:', error);
+                }
+            }
+
+
+            async function prepareNewGameData() {
+                stopTimer();
+                hideOverlay();
+                showOverlay('Cargando portada...');
+                
+                const album = await fetchRandomAlbum();
+                
+                if (album) {
+                    currentAlbum = album;
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.src = currentAlbum.artworkUrl.replace('100x100', '600x600');
+                    
+                    img.onload = () => {
+                        hideOverlay();
+                        const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        // Shuffle logic
+                        for (let i = indices.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [indices[i], indices[j]] = [indices[j], indices[i]];
+                        }
+                        
+                        pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                            el: null,
+                            originalIndex: i,
+                            currentIndex: indices[i],
+                            isEmpty: i === SIZE * SIZE - 1
+                        }));
+
+                        time = 0;
+                        moves = 0;
+                        isPaused = false;
+
+                        renderBoard();
+                        startTimer();
+                        updateUI();
+                        saveGameState();
+                        fetchAndSetAudio(currentAlbum.artistName, currentAlbum.collectionName);
+                    };
+                    img.onerror = () => {
+                        showOverlay('Error al cargar imagen. Intenta de nuevo.');
+                    };
+                } else {
+                    showOverlay('No se pudo cargar una portada.<br>Revisa tu conexión e intenta de nuevo.');
+                }
+            }
+
+            function handleAudio(forceStop = false) {
+                if (!currentAlbum || !currentAlbum.previewUrl) {
+                    if (audioEl.src) {
+                        audioEl.pause();
+                        audioEl.src = '';
+                    }
+                    return;
+                }
+                
+                if (audioEl.src !== currentAlbum.previewUrl) {
+                    audioEl.src = currentAlbum.previewUrl;
+                }
+
+                if (forceStop) {
+                    audioEl.pause();
+                    return;
+                }
+            
+                if (isMuted || isPaused) {
+                    audioEl.pause();
+                } else {
+                    const playPromise = audioEl.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.error("Audio playback failed:", error);
+                            isMuted = true;
+                            updateUI();
+                        });
+                    }
+                }
+            }
+
+            function initGame() {
+                if (!loadGameState()) {
+                    prepareNewGameData();
+                } else {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.src = currentAlbum.artworkUrl.replace('100x100', '600x600');
+                    img.onload = () => {
+                        renderBoard();
+                        startTimer();
+                        updateUI();
+                        if(isPaused) {
+                           showOverlay("Pausado");
+                        }
+                        handleAudio();
+                    };
+                     img.onerror = () => {
+                        showOverlay('Error al cargar imagen guardada. Inicia un nuevo juego.');
+                     };
+                }
+            }
+            
+            newGameBtn.addEventListener('click', () => {
+                clearGameState();
+                handleAudio(true);
+                currentAlbum = null;
+                prepareNewGameData();
+            });
+
+            pauseBtn.addEventListener('click', () => {
+                if(!currentAlbum || checkWin()) return;
+                isPaused = !isPaused;
+                if(isPaused) {
+                    stopTimer();
+                    showOverlay("Pausado");
+                } else {
+                    hideOverlay();
+                    startTimer();
+                }
+                handleAudio();
+                updateUI();
+                saveGameState();
+            });
+
+            audioBtn.addEventListener('click', () => {
+                isMuted = !isMuted;
+                handleAudio();
+                updateUI();
+                if(currentAlbum) saveGameState();
+            });
+            
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    if (timerInterval && !isPaused) {
+                       saveGameState();
+                    }
                 }
             });
-            boardEl.addEventListener('touchstart', (e) => {
-                const piece = e.target.closest('.piece');
-                if (piece && !piece.classList.contains('empty')) {
-                    e.preventDefault();
-                    handleMove(parseInt(piece.dataset.index, 10));
-                }
-            }, { passive: false });
             
-            document.getElementById('new-game-3').onclick = () => startNewGame(3);
-            document.getElementById('new-game-4').onclick = () => startNewGame(4);
-            pauseBtn.onclick = togglePause;
-            muteBtn.onclick = toggleMute;
-            document.getElementById('play-again-btn').onclick = () => {
-                victoryModalEl.classList.remove('show');
-                startNewGame(state.gridSize);
-            };
-            
-            const initApp = async () => {
-                const savedGame = loadState();
-                if (savedGame && !savedGame.isSolved && savedGame.imageUrl) {
-                    Object.assign(state, savedGame);
-                    renderBoard();
-                    if (state.isPaused) {
-                        pauseBtn.innerHTML = '▶';
-                        pauseBtn.classList.add('paused');
-                        boardEl.style.opacity = '0.5';
-                    } else {
-                        startTimer();
-                    }
-                } else {
-                    await prepareNewGameData(3);
-                }
-                renderHighScores();
-                renderMuteButton();
-            };
-
-            initApp();
+            initGame();
         });
     </script>
 </body>
