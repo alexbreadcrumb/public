@@ -218,14 +218,17 @@
             padding: 1.5rem;
             border-radius: 12px;
             width: 90%;
-            max-width: 400px;
+            max-width: 480px;
             box-shadow: 0 8px 32px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            flex-shrink: 0;
         }
         .modal-header h2 {
             margin: 0;
@@ -248,31 +251,55 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            overflow-y: auto;
+            max-height: 60vh;
         }
         .high-scores-list li {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 1rem;
             padding: 0.75rem;
-            border-radius: 4px;
+            border-radius: 8px;
             background-color: rgba(0,0,0,0.2);
             color: var(--on-surface-secondary);
         }
-        .high-scores-list li .score-details {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
+        .score-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
         }
-        .high-scores-list li:nth-child(1) { color: #FFD700; font-weight: 600; }
-        .high-scores-list li:nth-child(2) { color: #C0C0C0; }
-        .high-scores-list li:nth-child(3) { color: #CD7F32; }
+        .score-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .score-track-name {
+            font-weight: bold;
+            color: var(--on-surface);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0 0 0.25rem 0;
+        }
+        .score-meta {
+            font-size: 0.85rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0 1rem;
+        }
+        .high-scores-list li:nth-child(1) .score-track-name { color: #FFD700; }
+        .high-scores-list li:nth-child(2) .score-track-name { color: #C0C0C0; }
+        .high-scores-list li:nth-child(3) .score-track-name { color: #CD7F32; }
         
         .delete-score-btn {
             background: none;
             border: none;
             cursor: pointer;
             padding: 0.25rem;
+            margin-left: auto;
+            flex-shrink: 0;
         }
         .delete-score-btn svg {
             width: 20px;
@@ -313,7 +340,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item" title="Movimientos">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -356,7 +383,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v01</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v02</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -401,7 +428,6 @@
                     if (!isPaused) {
                         time++;
                         timerEl.textContent = formatTime(time);
-                        if(gameInProgress) saveGameState();
                     }
                 }, 1000);
             }
@@ -427,7 +453,6 @@
 
             function saveGameState() {
                 if (!currentAlbum || !gameInProgress) return;
-                // Create an array where index = currentIndex and value = originalIndex
                 const boardState = new Array(SIZE * SIZE);
                 pieces.forEach(p => {
                     boardState[p.currentIndex] = p.originalIndex;
@@ -448,10 +473,6 @@
                 if (savedState) {
                     const state = JSON.parse(savedState);
                     const savedBoardState = state.pieces;
-
-                    // Reconstruct the `pieces` array from the saved state.
-                    // The new `pieces` array will have objects where the array index
-                    // corresponds to the `currentIndex` of the piece.
                     pieces = savedBoardState.map((originalIndex, currentIndex) => ({
                         el: null,
                         originalIndex: originalIndex,
@@ -481,9 +502,6 @@
                 const imageUrl = currentAlbum.proxiedArtworkUrl;
                 
                 for (let i = 0; i < SIZE * SIZE; i++) {
-                    // Find the piece that should be at the current position `i`.
-                    // The data structure from `loadGameState` or the modified `prepareNewGameData` might differ.
-                    // This find method is robust enough for both.
                     const pieceData = pieces.find(p => p.currentIndex === i);
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece');
@@ -499,7 +517,7 @@
                     
                     pieceEl.dataset.index = i;
                     pieceEl.addEventListener('click', () => onPieceClick(i));
-                    pieceData.el = pieceEl; // This might be problematic if pieces structure changes.
+                    pieceData.el = pieceEl;
                     puzzleContainer.appendChild(pieceEl);
                 }
             }
@@ -558,14 +576,18 @@
             function saveScore(score, moves) {
                 const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
                 const date = new Date().toLocaleDateString('es-ES');
-                highScores.push({ score, moves, date });
+                highScores.push({ 
+                    score, 
+                    moves, 
+                    date,
+                    trackName: currentAlbum.trackName || currentAlbum.collectionName,
+                    thumbnailUrl: currentAlbum.artworkUrl.replace('600x600', '100x100')
+                });
                 highScores.sort((a, b) => {
-                    if (a.score !== b.score) {
-                        return a.score - b.score;
-                    }
+                    if (a.score !== b.score) return a.score - b.score;
                     return a.moves - b.moves;
                 });
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores.slice(0, 10)));
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores.slice(0, 5)));
                 renderHighScores();
             }
 
@@ -574,11 +596,14 @@
                 highScoresList.innerHTML = highScores
                     .map((item, index) => `
                         <li>
-                            <div class="score-details">
-                               <span>#${index + 1}</span>
-                               <span>${item.date}</span>
-                               <span>${formatTime(item.score)}</span>
-                               <span>${item.moves} mov.</span>
+                            <img src="${item.thumbnailUrl}" class="score-thumbnail" alt="Portada del álbum">
+                            <div class="score-info">
+                                <p class="score-track-name">${item.trackName}</p>
+                                <div class="score-meta">
+                                    <span>${formatTime(item.score)}</span>
+                                    <span>${item.moves} mov.</span>
+                                    <span>${item.date}</span>
+                                </div>
                             </div>
                             <button class="delete-score-btn" data-index="${index}" title="Eliminar Récord">
                                 <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
@@ -634,7 +659,9 @@
 
                     if (songWithPreview) {
                         currentAlbum.previewUrl = songWithPreview.previewUrl;
+                        currentAlbum.trackName = songWithPreview.trackName;
                         audioEl.src = currentAlbum.previewUrl;
+                        saveGameState(); // Save state now that we have audio info
                     } else {
                         console.log('No audio preview found for this album.');
                     }
@@ -642,7 +669,6 @@
                     console.error('Error fetching audio data:', error);
                 }
             }
-
 
             async function prepareNewGameData() {
                 stopTimer();
@@ -706,6 +732,14 @@
                             if (inversions % 2 === 0) solvable = true;
                         }
                         
+                        pieces = initialPieces.map((originalIdx, currentIdx) => ({
+                            el: null,
+                            originalIndex: shuffledIndices[currentIdx],
+                            currentIndex: currentIdx,
+                            isEmpty: shuffledIndices[currentIdx] === SIZE * SIZE - 1
+                        }));
+                        
+                        // Re-map to the correct structure
                         pieces = shuffledIndices.map((originalIndex, currentIndex) => ({
                             el: null,
                             originalIndex: originalIndex,
@@ -751,7 +785,7 @@
                         if (currentAlbum.previewUrl) {
                             audioEl.src = currentAlbum.previewUrl;
                         } else {
-                            fetchAndSetAudio(); // Fetch if not present in saved state
+                            fetchAndSetAudio();
                         }
                     };
                      img.onerror = () => {
@@ -803,7 +837,8 @@
                 if (!isMuted && audioEl.src) {
                     audioEl.play().catch(error => {
                         console.error("Audio playback failed on user interaction:", error);
-                        isMuted = true; // Revert state if play fails
+                        isMuted = true;
+                        updateUI();
                     });
                 } else {
                     audioEl.pause();
