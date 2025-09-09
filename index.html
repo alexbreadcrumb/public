@@ -170,6 +170,27 @@
             fill: var(--on-surface);
         }
         
+        .search-container {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        #artist-search-input {
+            flex-grow: 1;
+            background-color: var(--surface);
+            border: 1px solid #444;
+            border-radius: 50px;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            color: var(--on-background);
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        #artist-search-input:focus {
+            border-color: var(--primary);
+        }
+
         #new-game-btn {
             background-color: var(--primary);
             color: var(--background);
@@ -180,6 +201,7 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.2s ease;
+            white-space: nowrap;
         }
 
         #new-game-btn:hover {
@@ -254,6 +276,20 @@
             gap: 0.75rem;
             overflow-y: auto;
             max-height: 60vh;
+        }
+        .high-scores-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .high-scores-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        .high-scores-list::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        .high-scores-list::-webkit-scrollbar-thumb:hover {
+            background: #777;
         }
         .high-scores-list li {
             display: flex;
@@ -366,8 +402,10 @@
             <p id="artist-name"></p>
         </div>
 
-        <button id="new-game-btn">Nuevo Juego</button>
-
+        <form id="artist-search-form" class="search-container">
+            <input type="text" id="artist-search-input" placeholder="Buscar por artista (opcional)...">
+            <button id="new-game-btn" type="submit">Nuevo Juego</button>
+        </form>
     </div>
 
     <!-- High Scores Modal -->
@@ -383,13 +421,15 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v02</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.3</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const puzzleContainer = document.getElementById('puzzle-container');
             const timerEl = document.getElementById('timer');
             const movesEl = document.getElementById('moves');
+            const artistSearchForm = document.getElementById('artist-search-form');
+            const artistSearchInput = document.getElementById('artist-search-input');
             const newGameBtn = document.getElementById('new-game-btn');
             const pauseBtn = document.getElementById('pause-btn');
             const audioBtn = document.getElementById('audio-btn');
@@ -642,68 +682,80 @@
                 if (overlay) overlay.remove();
             }
 
-            async function fetchAndSetAudio() {
-                audioBtn.disabled = true;
-                if (!currentAlbum) return;
-
+            async function findPlayableAlbum(artistName = '') {
+                showOverlay(artistName ? `Buscando álbumes de ${artistName}...` : 'Buscando álbum aleatorio...');
+                
                 try {
-                    const searchTerm = `${currentAlbum.artistName} ${currentAlbum.collectionName}`;
-                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=10`;
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
-
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error('Network response was not ok');
-
-                    const data = await response.json();
-                    const songWithPreview = data.results.find(song => song.previewUrl);
-
-                    if (songWithPreview) {
-                        currentAlbum.previewUrl = songWithPreview.previewUrl;
-                        currentAlbum.trackName = songWithPreview.trackName;
-                        audioEl.src = currentAlbum.previewUrl;
-                        saveGameState(); // Save state now that we have audio info
+                    // 1. Fetch a list of candidate albums
+                    let albumApiUrl;
+                    if (artistName) {
+                        albumApiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&media=music&entity=album&limit=50`;
                     } else {
-                        console.log('No audio preview found for this album.');
+                        const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
+                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                        albumApiUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
                     }
+
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(albumApiUrl)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Could not fetch album list');
+                    const albumData = await response.json();
+                    
+                    let candidateAlbums = albumData.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
+                    if (candidateAlbums.length === 0) throw new Error('No albums found for the criteria');
+
+                    // Shuffle candidates to try them in random order
+                    for (let i = candidateAlbums.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [candidateAlbums[i], candidateAlbums[j]] = [candidateAlbums[j], candidateAlbums[i]];
+                    }
+
+                    // 2. Iterate through candidates to find one with a song preview
+                    for (const album of candidateAlbums) {
+                        showOverlay(`Verificando música para<br>${album.collectionName}...`);
+                        const searchTerm = `${album.artistName} ${album.collectionName}`;
+                        const songSearchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=10`;
+                        const songProxyUrl = `https://corsproxy.io/?${encodeURIComponent(songSearchUrl)}`;
+                        
+                        const songResponse = await fetch(songProxyUrl);
+                        if (!songResponse.ok) continue; // Try next album if search fails
+
+                        const songData = await songResponse.json();
+                        const songWithPreview = songData.results.find(song => song.previewUrl);
+
+                        if (songWithPreview) {
+                            // We found a playable album! Return all necessary data.
+                            return {
+                                albumInfo: album,
+                                songInfo: songWithPreview
+                            };
+                        }
+                    }
+                    // If loop finishes without finding a song
+                    throw new Error('No albums with available music found.');
+
                 } catch (error) {
-                    console.error('Error fetching audio data:', error);
+                    console.error('Error finding playable album:', error);
+                    return null; // Indicate failure
                 }
             }
 
-            async function prepareNewGameData() {
+
+            async function prepareNewGameData(artistName = '') {
                 stopTimer();
                 hideOverlay();
-                showOverlay('Cargando portada...');
                 
-                const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
-                let albumData = null;
-                let attempts = 5;
+                const playableData = await findPlayableAlbum(artistName);
 
-                while (attempts > 0 && !albumData) {
-                    try {
-                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-                        const apiUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
-                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
-                        const response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        const data = await response.json();
-                        
-                        const validResults = data.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
-                        if (validResults.length > 0) {
-                            albumData = validResults[Math.floor(Math.random() * validResults.length)];
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching album data (attempt ${6 - attempts}):`, error);
-                    }
-                    attempts--;
-                }
-
-                if (albumData) {
+                if (playableData) {
+                    const { albumInfo, songInfo } = playableData;
                     currentAlbum = {
-                        artistName: albumData.artistName,
-                        collectionName: albumData.collectionName,
-                        artworkUrl: albumData.artworkUrl100.replace('100x100', '600x600'),
-                        proxiedArtworkUrl: `https://corsproxy.io/?${encodeURIComponent(albumData.artworkUrl100.replace('100x100', '600x600'))}`
+                        artistName: albumInfo.artistName,
+                        collectionName: albumInfo.collectionName,
+                        artworkUrl: albumInfo.artworkUrl100.replace('100x100', '600x600'),
+                        proxiedArtworkUrl: `https://corsproxy.io/?${encodeURIComponent(albumInfo.artworkUrl100.replace('100x100', '600x600'))}`,
+                        previewUrl: songInfo.previewUrl,
+                        trackName: songInfo.trackName
                     };
 
                     const img = new Image();
@@ -712,34 +764,26 @@
                     
                     img.onload = () => {
                         hideOverlay();
-                        const initialPieces = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                        let shuffledIndices = [];
+                        audioEl.src = currentAlbum.previewUrl;
                         
-                        let solvable = false;
-                        while (!solvable) {
-                            shuffledIndices = [...initialPieces];
-                             for (let i = shuffledIndices.length - 2; i > 0; i--) { // -2 to not shuffle the empty slot
-                                const j = Math.floor(Math.random() * (i + 1));
-                                [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
-                            }
+                        const initialPieces = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        let shuffledIndices;
+                        
+                        // Generate a solvable puzzle
+                        do {
+                            shuffledIndices = [...initialPieces].sort(() => Math.random() - 0.5);
                             let inversions = 0;
-                            const boardWithoutEmpty = shuffledIndices.filter(p => p !== SIZE * SIZE -1);
-                            for (let i = 0; i < boardWithoutEmpty.length; i++) {
+                            const boardWithoutEmpty = shuffledIndices.filter(p => p !== SIZE * SIZE - 1);
+                             for (let i = 0; i < boardWithoutEmpty.length - 1; i++) {
                                 for (let j = i + 1; j < boardWithoutEmpty.length; j++) {
-                                    if (boardWithoutEmpty[i] > boardWithoutEmpty[j]) inversions++;
+                                     if (boardWithoutEmpty[i] > boardWithoutEmpty[j]) {
+                                        inversions++;
+                                    }
                                 }
                             }
-                            if (inversions % 2 === 0) solvable = true;
-                        }
+                           if (inversions % 2 === 0) break;
+                        } while (true);
                         
-                        pieces = initialPieces.map((originalIdx, currentIdx) => ({
-                            el: null,
-                            originalIndex: shuffledIndices[currentIdx],
-                            currentIndex: currentIdx,
-                            isEmpty: shuffledIndices[currentIdx] === SIZE * SIZE - 1
-                        }));
-                        
-                        // Re-map to the correct structure
                         pieces = shuffledIndices.map((originalIndex, currentIndex) => ({
                             el: null,
                             originalIndex: originalIndex,
@@ -755,7 +799,6 @@
                         renderBoard();
                         startTimer();
                         updateUI();
-                        fetchAndSetAudio();
                         saveGameState();
                     };
                     img.onerror = () => {
@@ -763,12 +806,12 @@
                         gameInProgress = false;
                     };
                 } else {
-                    showOverlay('No se pudo cargar una portada.<br>Revisa tu conexión e intenta de nuevo.');
+                    showOverlay(artistName ? `No se encontró música para "${artistName}".` : 'No se pudo cargar un álbum.<br>Revisa tu conexión.');
                     gameInProgress = false;
                 }
             }
             
-            function initGame() {
+            async function loadAndPrepareGame() {
                 if (!loadGameState()) {
                     prepareNewGameData();
                 } else {
@@ -778,14 +821,12 @@
                     img.onload = () => {
                         renderBoard();
                         startTimer();
+                        if (currentAlbum.previewUrl) {
+                             audioEl.src = currentAlbum.previewUrl;
+                        }
                         updateUI();
                         if(isPaused) {
                            showOverlay("Pausado");
-                        }
-                        if (currentAlbum.previewUrl) {
-                            audioEl.src = currentAlbum.previewUrl;
-                        } else {
-                            fetchAndSetAudio();
                         }
                     };
                      img.onerror = () => {
@@ -794,7 +835,8 @@
                 }
             }
             
-            newGameBtn.addEventListener('click', () => {
+            artistSearchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
                 if (gameInProgress) {
                     if (!confirm("¿Estás seguro de que quieres empezar un nuevo juego? Perderás tu progreso actual.")) {
                         return;
@@ -806,7 +848,8 @@
                 audioBtn.disabled = true;
                 currentAlbum = null;
                 gameInProgress = false;
-                prepareNewGameData();
+                const artistName = artistSearchInput.value.trim();
+                prepareNewGameData(artistName);
             });
 
             pauseBtn.addEventListener('click', () => {
@@ -855,7 +898,7 @@
                 }
             });
 
-            initGame();
+            loadAndPrepareGame();
         });
     </script>
 </body>
