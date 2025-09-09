@@ -180,6 +180,7 @@
             font-size: 1.5rem;
             font-weight: 600;
             z-index: 10;
+            cursor: pointer;
         }
         
         #new-game-btn {
@@ -318,7 +319,7 @@
                     <svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 7h3v10H8zm5 0h3v10h-3z"></path></svg>
                     <svg id="play-icon" viewBox="0 0 24 24" style="display: none;"><path d="M7 6v12l10-6z"></path></svg>
                 </button>
-                <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido">
+                <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido" disabled>
                     <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
                     <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
                 </button>
@@ -459,11 +460,15 @@
                 renderHighScores();
             }
 
-            function showOverlay(text) {
+            function showOverlay(text, clickable = false) {
                 hideOverlay();
                 const overlay = document.createElement('div');
                 overlay.className = 'overlay';
                 overlay.innerHTML = text;
+                if (clickable) {
+                     overlay.style.cursor = "pointer";
+                     overlay.addEventListener('click', () => togglePause(), { once: true });
+                }
                 puzzleContainer.appendChild(overlay);
             }
 
@@ -539,13 +544,14 @@
             }
 
             function checkWin() {
+                if (!pieces || pieces.length === 0) return false;
                 return pieces.every(p => p.currentIndex === p.originalIndex);
             }
 
             function handleWin() {
                 stopTimer();
                 isPaused = true;
-                setTimeout(() => { // Small delay for final move animation
+                setTimeout(() => { 
                      showOverlay(`¡Ganaste!<br>${formatTime(time)} / ${moves} movs`);
                 }, 200);
                 saveScore(time, moves);
@@ -625,7 +631,8 @@
                     const response = await fetch(proxyUrl);
                     if (!response.ok) throw new Error('Network response for audio was not ok');
                     const data = await response.json();
-                    const songWithPreview = data.results.find(song => song.previewUrl && song.collectionName.toLowerCase().includes(album.toLowerCase()));
+                    // More reliable find: just get the first song with a preview
+                    const songWithPreview = data.results.find(song => song.previewUrl);
                     if (songWithPreview) {
                         currentAlbum.previewUrl = songWithPreview.previewUrl;
                         audioEl.src = currentAlbum.previewUrl;
@@ -661,25 +668,33 @@
                     
                     img.onload = () => {
                         hideOverlay();
-                        const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                        // Simple shuffle for testing, can be made more complex to ensure solvability
-                        for (let i = 0; i < 50; i++) {
-                            const emptyIdx = indices.indexOf(SIZE * SIZE - 1);
-                            const {row, col} = getRowCol(emptyIdx);
-                            const neighbors = [];
-                            if (row > 0) neighbors.push(emptyIdx - SIZE);
-                            if (row < SIZE - 1) neighbors.push(emptyIdx + SIZE);
-                            if (col > 0) neighbors.push(emptyIdx - 1);
-                            if (col < SIZE - 1) neighbors.push(emptyIdx + 1);
-                            const swapWith = neighbors[Math.floor(Math.random() * neighbors.length)];
-                            [indices[emptyIdx], indices[swapWith]] = [indices[swapWith], indices[emptyIdx]];
-                        }
+                        const finalIndex = SIZE * SIZE - 1;
+                        let indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                         
+                        // Proper shuffle algorithm to ensure solvability
+                        let solvable = false;
+                        while (!solvable) {
+                            indices = Array.from({ length: SIZE * SIZE }, (_, i) => i)
+                                .map(value => ({ value, sort: Math.random() }))
+                                .sort((a, b) => a.sort - b.sort)
+                                .map(({ value }) => value);
+
+                            let inversions = 0;
+                            for (let i = 0; i < indices.length - 1; i++) {
+                                for (let j = i + 1; j < indices.length; j++) {
+                                    if (indices[i] !== finalIndex && indices[j] !== finalIndex && indices[i] > indices[j]) {
+                                        inversions++;
+                                    }
+                                }
+                            }
+                             solvable = inversions % 2 === 0;
+                        }
+
                         pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                             el: null,
                             originalIndex: i,
                             currentIndex: indices.indexOf(i),
-                            isEmpty: i === SIZE * SIZE - 1
+                            isEmpty: i === finalIndex
                         }));
 
                         time = 0;
@@ -711,9 +726,9 @@
                         startTimer();
                         updateUI();
                         if(isPaused) {
-                           showOverlay("Pausado. ¡Toca para reanudar!");
-                           puzzleContainer.querySelector('.overlay').addEventListener('click', () => togglePause(), { once: true });
+                           showOverlay("Pausado. ¡Toca para reanudar!", true);
                         }
+                        // Use saved audio URL if available, otherwise fetch it
                         if (currentAlbum.previewUrl) {
                             audioEl.src = currentAlbum.previewUrl;
                             audioBtn.disabled = false;
@@ -733,7 +748,7 @@
                 isPaused = !isPaused;
                 if(isPaused) {
                     stopTimer();
-                    showOverlay("Pausado");
+                    showOverlay("Pausado", false);
                     audioEl.pause();
                 } else {
                     hideOverlay();
@@ -746,12 +761,14 @@
             }
 
             newGameBtn.addEventListener('click', () => {
-                clearGameState();
-                audioEl.pause();
-                audioEl.src = '';
-                currentAlbum = null;
-                audioBtn.disabled = true;
-                prepareNewGameData();
+                if (confirm('¿Estás seguro de que quieres empezar un nuevo juego? Se perderá tu progreso actual.')) {
+                    clearGameState();
+                    audioEl.pause();
+                    audioEl.src = '';
+                    currentAlbum = null;
+                    audioBtn.disabled = true;
+                    prepareNewGameData();
+                }
             });
 
             pauseBtn.addEventListener('click', togglePause);
