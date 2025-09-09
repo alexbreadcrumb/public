@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <!-- PWA & Icon Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#1DB954">
+    
     <title>Puzzletunes</title>
     <style>
         :root {
@@ -365,6 +371,12 @@
             animation-play-state: running;
         }
         
+        @media (hover: none) {
+            .marquee-wrapper.animate .marquee-content {
+                animation-play-state: running;
+            }
+        }
+        
         @keyframes marquee {
             0% { transform: translateX(0%); }
             100% { transform: translateX(-100%); }
@@ -409,7 +421,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -449,7 +461,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.13</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.14</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -549,7 +561,7 @@
                 elements.puzzleContainer.innerHTML = '';
                 if (!state.currentAlbum) return;
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
+                const proxiedImageUrl = `https://corsproxy.io/?${(imageUrl)}`;
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceData = state.pieces.find(p => p.currentIndex === i);
@@ -647,9 +659,10 @@
                 const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
                 elements.highScoresList.innerHTML = highScores.map(item => {
                     if (!item || !item.album || !item.album.artworkUrl) {
+                        console.error('Invalid score item found:', item);
                         return '';
                     }
-                    const proxiedThumbUrl = `https://corsproxy.io/?${encodeURIComponent(item.album.artworkUrl)}`;
+                    const proxiedThumbUrl = `https://corsproxy.io/?${(item.album.artworkUrl)}`;
                     const wrapperId = `marquee-wrapper-${item.id}`;
                     
                     const html = `
@@ -672,7 +685,8 @@
                     
                     setTimeout(() => {
                         const wrapper = document.getElementById(wrapperId);
-                        if (wrapper && wrapper.scrollWidth > wrapper.clientWidth) {
+                        const content = wrapper ? wrapper.querySelector('.marquee-content') : null;
+                        if (wrapper && content && content.scrollWidth > wrapper.clientWidth) {
                             wrapper.classList.add('animate');
                         }
                     }, 0);
@@ -725,7 +739,7 @@
                 
                 const searchAttribute = isArtistSearch ? '&attribute=artistTerm' : '';
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=200${searchAttribute}`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
+                const proxyUrl = `https://corsproxy.io/?${(searchUrl)}`;
 
                 try {
                     const response = await fetch(proxyUrl);
@@ -779,7 +793,7 @@
             
             async function findSuggestions(searchTerm) {
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
+                const proxyUrl = `https://corsproxy.io/?${(searchUrl)}`;
                 try {
                     const response = await fetch(proxyUrl);
                     if (!response.ok) return [];
@@ -820,7 +834,7 @@
                 if (album) {
                     state.currentAlbum = album;
                     const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${(imageUrl)}`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -881,13 +895,16 @@
                 
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
+                
+                state.isMuted = true;
+                updateUI();
 
                 saveGameState();
             }
 
             function initGame() {
                 if (loadGameState() && state.gameInProgress) {
-                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(state.currentAlbum.artworkUrl.replace('100x100', '600x600'))}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${(state.currentAlbum.artworkUrl.replace('100x100', '600x600'))}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
@@ -960,7 +977,10 @@
             elements.audioBtn.addEventListener('click', () => {
                 state.isMuted = !state.isMuted;
                 if (!state.isMuted && elements.audioPlayer.src) {
-                    elements.audioPlayer.play().catch(e => console.error("Error playing audio on unmute:", e));
+                    elements.audioPlayer.play().catch(e => {
+                        console.error("Error playing audio on unmute:", e);
+                        state.isMuted = true;
+                    });
                 } else {
                     elements.audioPlayer.pause();
                 }
@@ -970,9 +990,6 @@
 
             elements.audioPlayer.addEventListener('canplaythrough', () => {
                 elements.audioBtn.disabled = false;
-                if (!state.isMuted && !state.isPaused) {
-                     elements.audioPlayer.play().catch(e => console.error("Autoplay failed:", e));
-                }
             });
             
             elements.audioPlayer.addEventListener('play', () => {
@@ -988,10 +1005,12 @@
                 elements.scoresModal.classList.add('visible');
             });
 
+
+
             elements.closeScoresBtn.addEventListener('click', () => {
                 elements.scoresModal.classList.remove('visible');
-            });
-            
+});
+
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
                 if (deleteBtn) {
