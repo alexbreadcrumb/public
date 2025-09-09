@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-g">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Puzzletunes</title>
     <style>
@@ -335,23 +335,39 @@
             flex-grow: 1;
             overflow: hidden; /* For marquee */
         }
+        .score-track-container {
+            overflow: hidden;
+            position: relative;
+            display: block;
+        }
         .score-track {
             font-weight: 600;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: clip; /* Required for marquee */
             color: var(--on-surface);
+            display: inline-block;
         }
         
-        .marquee {
+        .score-track.marquee {
             animation: marquee 10s linear infinite;
         }
 
         @keyframes marquee {
-            0%   { transform: translateX(100%); }
+            0% { transform: translateX(0%); }
+            10% { transform: translateX(0%); }
+            90% { transform: translateX(calc(100% - 100%)); } /* A bit complex to handle variable width */
+            100% { transform: translateX(0%); }
+        }
+
+        .score-track.marquee {
+            padding-left: 100%;
+            animation: marquee-scroll 8s linear infinite;
+        }
+
+        @keyframes marquee-scroll {
+            0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
         }
-        
+
         .score-artist {
             color: var(--on-surface-secondary);
             font-size: 0.9rem;
@@ -435,7 +451,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -481,7 +497,7 @@
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.9</footer>
+    <footer id="footer">Game By: Ale Fernández PY-2025 - v01</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -730,8 +746,18 @@
             function renderHighScores() {
                 const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
                 highScoresList.innerHTML = highScores.map((item, index) => {
-                    const isLongText = item.trackName.length > 20;
-                    // Apply marquee only on non-touch devices on hover, or always on touch devices
+                    const scoreTrackEl = document.createElement('div');
+                    scoreTrackEl.textContent = item.trackName;
+                    
+                    const container = document.createElement('div');
+                    container.style.visibility = 'hidden';
+                    container.style.position = 'absolute';
+                    container.style.whiteSpace = 'nowrap';
+                    container.appendChild(scoreTrackEl);
+                    document.body.appendChild(container);
+                    const isLongText = scoreTrackEl.offsetWidth > 200; // Approx width of the container
+                    document.body.removeChild(container);
+
                     const marqueeClass = isLongText ? 'marquee' : '';
 
                     return `
@@ -840,6 +866,9 @@
 
             audioEl.addEventListener('canplaythrough', () => {
                 audioBtn.disabled = false;
+                if (!isMuted && gameInProgress && !isPaused) {
+                    audioEl.play().catch(e => console.error("Autoplay failed:", e));
+                }
             });
 
             audioEl.addEventListener('error', () => {
@@ -860,6 +889,7 @@
                 audioEl.pause();
                 audioEl.src = '';
                 audioBtn.disabled = true;
+                isMuted = false; // Set to autoplay
 
                 const album = await findAlbumWithMusic(artistQuery);
 
@@ -875,18 +905,22 @@
                         currentAlbum.artworkUrl = proxiedImageUrl; // Use proxied URL for rendering
                         hideOverlay();
                         
-                        const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                        for (let i = indices.length - 1; i > 0; i--) {
-                            const j = Math.floor(Math.random() * (i + 1));
-                            [indices[i], indices[j]] = [indices[j], indices[i]];
-                        }
-                        
-                        pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                        // Scramble pieces logic fixed
+                        const orderedPieces = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        const shuffledPieces = [...orderedPieces].sort(() => Math.random() - 0.5);
+
+                        pieces = orderedPieces.map((originalIndex, i) => ({
                             el: null,
-                            originalIndex: indices.findIndex(idx => idx === i),
-                            currentIndex: i,
-                            isEmpty: indices[i] === SIZE * SIZE - 1
+                            originalIndex: originalIndex,
+                            currentIndex: shuffledPieces.indexOf(originalIndex),
+                            isEmpty: originalIndex === SIZE * SIZE - 1
                         }));
+
+                        // Correctly set current positions
+                        shuffledPieces.forEach((originalIndex, i) => {
+                            const piece = pieces.find(p => p.originalIndex === originalIndex);
+                            if (piece) piece.currentIndex = i;
+                        });
                         
                         time = 0;
                         moves = 0;
@@ -915,12 +949,11 @@
                     updateUI();
                     showOverlay('Presiona "Nuevo Juego" para comenzar');
                 } else {
-                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(currentAlbum.artworkUrl)}`;
+                    const proxiedImageUrl = currentAlbum.artworkUrl; // Already proxied from save
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
                     img.onload = () => {
-                         currentAlbum.artworkUrl = proxiedImageUrl;
                          renderBoard();
                          startTimer();
                          updateUI();
