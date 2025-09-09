@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-g">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Puzzletunes</title>
     <style>
@@ -15,8 +16,6 @@
             --on-surface-secondary: #B3B3B3;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --success: #28a745;
-            --error: #dc3545;
         }
 
         html {
@@ -30,12 +29,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100%;
             margin: 0;
-            padding: 1rem 1rem 5rem 1rem; /* Added bottom padding for footer */
+            padding: 1rem;
             box-sizing: border-box;
-            overscroll-behavior: none;
-            -webkit-tap-highlight-color: transparent;
+            min-height: 100%;
         }
 
         .main-container {
@@ -46,6 +43,12 @@
             gap: 1rem;
             flex-grow: 1;
         }
+        
+        @media (max-height: 740px) {
+            .main-container {
+                gap: 0.5rem;
+            }
+        }
 
         h1 {
             margin: 0;
@@ -53,8 +56,7 @@
             font-weight: 700;
             color: var(--primary);
         }
-
-        /* Controls & Stats */
+        
         .controls-stats {
             display: flex;
             justify-content: space-between;
@@ -98,27 +100,20 @@
             justify-content: center;
             transition: background-color 0.2s ease;
         }
-
-        .control-button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .control-button:disabled svg {
-            fill: #555;
-        }
-        
         .control-button:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
             background-color: transparent !important;
         }
-
+        .control-button:hover:not(:disabled) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
         .control-button svg {
             width: 24px;
             height: 24px;
             fill: var(--on-surface);
         }
 
-        /* Puzzle Board */
         .puzzle-container {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -143,23 +138,18 @@
             visibility: visible;
             border-radius: 4px;
         }
-
         .puzzle-piece.empty {
             visibility: hidden;
             cursor: default;
         }
-        
         .puzzle-piece:not(.empty):hover {
             transform: scale(0.95);
             opacity: 0.9;
         }
-        
+
         .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.8);
             color: white;
             display: flex;
@@ -171,60 +161,60 @@
             font-weight: 600;
             z-index: 10;
             padding: 1rem;
-            box-sizing: border-box;
         }
         
-        .overlay .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #fff;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .album-info {
-            text-align: center;
-            background-color: var(--surface);
-            padding: 0.5rem 1rem;
-            border-radius: 12px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .album-info h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--on-surface);
-            margin: 0;
-        }
-        .album-info p {
-            font-size: 0.9rem;
-            color: var(--on-surface-secondary);
-            margin: 0.25rem 0 0;
-        }
-
-        /* Search & New Game */
-        .new-game-controls {
+        .suggestions-container {
+            margin-top: 1rem;
             display: flex;
             gap: 0.5rem;
-            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .suggestion-btn {
+            background-color: var(--primary);
+            color: var(--background);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+        }
+        .suggestion-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .current-track-info {
+            text-align: center;
+            padding: 0 1rem;
+        }
+        .current-track-info h2 {
+            font-size: 1.1rem;
+            margin: 0;
+            color: var(--on-surface);
+        }
+        .current-track-info p {
+            font-size: 0.9rem;
+            margin: 0.25rem 0 0;
+            color: var(--on-surface-secondary);
+        }
+
+        .new-game-controls {
+            display: flex;
+            gap: 1rem;
             align-items: center;
+            width: 100%;
         }
         
         #artist-search {
             flex-grow: 1;
             background-color: var(--surface);
-            border: 1px solid #333;
+            border: 1px solid var(--on-surface-secondary);
             border-radius: 50px;
             padding: 0.75rem 1rem;
             font-size: 1rem;
-            color: var(--on-surface);
+            color: var(--on-background);
             min-width: 0; /* Fix for flexbox shrinking */
         }
         
@@ -240,28 +230,49 @@
             transition: background-color 0.2s ease;
             white-space: nowrap;
         }
-        #new-game-btn:hover { background-color: var(--primary-hover); }
-
-        /* High Scores Modal */
-        .modal {
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
+        #new-game-btn:hover {
+            background-color: var(--primary-hover);
         }
-        .modal.show { display: flex; }
+        
+        @media (max-width: 480px) {
+            .new-game-controls {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            #artist-search, #new-game-btn {
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+        
+        @media (max-height: 740px) {
+             #artist-search, #new-game-btn {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
         .modal-content {
             background-color: var(--surface);
-            margin: auto;
             padding: 1.5rem;
-            border-radius: 16px;
+            border-radius: 12px;
             width: 90%;
             max-width: 500px;
             max-height: 80vh;
@@ -278,167 +289,116 @@
             margin: 0;
             color: var(--on-surface);
         }
-        .close-button {
-            color: var(--on-surface-secondary);
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .high-scores-list-container {
-            overflow-y: auto;
-            padding-right: 0.5rem; /* Space for scrollbar */
-        }
-        
-        /* Custom scrollbar for high scores */
-        .high-scores-list-container::-webkit-scrollbar { width: 6px; }
-        .high-scores-list-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
-        .high-scores-list-container::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-        .high-scores-list-container::-webkit-scrollbar-thumb:hover { background: #777; }
-        
-        .high-scores ol {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        .high-scores li {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            background-color: rgba(0,0,0,0.3);
-        }
-        
-        .score-rank {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: var(--on-surface-secondary);
-            width: 2rem;
-            text-align: center;
-        }
-        .high-scores li:nth-child(1) .score-rank { color: #FFD700; }
-        .high-scores li:nth-child(2) .score-rank { color: #C0C0C0; }
-        .high-scores li:nth-child(3) .score-rank { color: #CD7F32; }
-        
-        .score-art {
-            width: 50px;
-            height: 50px;
-            border-radius: 4px;
-            background-size: cover;
-            flex-shrink: 0;
-        }
-        .score-details {
-            flex-grow: 1;
-            overflow: hidden; /* For marquee */
-        }
-        .score-track-container {
-            overflow: hidden;
-            position: relative;
-            display: block;
-        }
-        .score-track {
-            font-weight: 600;
-            white-space: nowrap;
-            color: var(--on-surface);
-            display: inline-block;
-        }
-        
-        .score-track.marquee {
-            animation: marquee 10s linear infinite;
-        }
-
-        @keyframes marquee {
-            0% { transform: translateX(0%); }
-            10% { transform: translateX(0%); }
-            90% { transform: translateX(calc(100% - 100%)); } /* A bit complex to handle variable width */
-            100% { transform: translateX(0%); }
-        }
-
-        .score-track.marquee {
-            padding-left: 100%;
-            animation: marquee-scroll 8s linear infinite;
-        }
-
-        @keyframes marquee-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
-
-        .score-artist {
-            color: var(--on-surface-secondary);
-            font-size: 0.9rem;
-        }
-
-        .score-stats {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            font-size: 0.9rem;
-            color: var(--on-surface-secondary);
-            white-space: nowrap;
-        }
-        .score-stats span {
-            font-weight: 600;
-            color: var(--on-surface);
-            margin-left: 0.25rem;
-        }
-        
-        .delete-score-btn {
+        .modal-header .close-btn {
             background: none;
             border: none;
             cursor: pointer;
             padding: 0.5rem;
         }
-        .delete-score-btn svg {
+        .modal-header .close-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface-secondary);
+        }
+        
+        #high-scores-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        #high-scores-list::-webkit-scrollbar { width: 5px; }
+        #high-scores-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        #high-scores-list::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.2);
+            margin-bottom: 0.5rem;
+        }
+        .score-item:last-child { margin-bottom: 0; }
+        .score-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .score-info {
+            flex-grow: 1;
+            overflow: hidden; /* For marquee */
+        }
+        .score-track {
+            font-weight: 600;
+            color: var(--on-surface);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip; /* Changed from ellipsis */
+        }
+        .score-artist {
+            color: var(--on-surface-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        .score-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--on-surface-secondary);
+        }
+        
+        .marquee-wrapper {
+            overflow: hidden;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 10s linear infinite;
+            animation-play-state: paused;
+            padding-right: 2rem; /* space at the end of scroll */
+        }
+        .marquee-wrapper:hover .marquee-content,
+        .marquee-wrapper.animate .marquee-content {
+            animation-play-state: running;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .score-delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            flex-shrink: 0;
+        }
+        .score-delete-btn svg {
             width: 20px;
             height: 20px;
-            fill: #777;
-            transition: fill 0.2s ease;
+            fill: #ff4d4d;
         }
-        .delete-score-btn:hover svg { fill: var(--error); }
 
-
-        /* Footer */
         footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
             width: 100%;
-            background-color: var(--surface);
-            color: var(--on-surface-secondary);
             text-align: center;
             padding: 0.5rem;
             font-size: 0.8rem;
-            box-shadow: 0 -2px 10px var(--shadow-color);
-            z-index: 50;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 480px) {
-            .new-game-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-        }
-        
-        /* Layout adjustments for short screens to avoid scroll */
-        @media (max-height: 800px) {
-            .main-container { gap: 0.75rem; }
-            h1 { margin-bottom: 0.5rem; }
-            #artist-search, #new-game-btn {
-                padding-top: 0.6rem;
-                padding-bottom: 0.6rem;
-                font-size: 0.9rem;
-            }
+            color: var(--on-surface-secondary);
+            flex-shrink: 0;
+            margin-top: auto;
         }
 
     </style>
 </head>
 <body>
-    <audio id="audio-player" crossorigin="anonymous" playsinline loop></audio>
+
+    <audio id="audio-player" crossorigin="anonymous" loop playsinline></audio>
 
     <div class="main-container">
         <h1>Puzzletunes</h1>
@@ -450,7 +410,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -463,18 +423,14 @@
                     <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
                     <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
                 </button>
-                 <button id="scores-btn" class="control-button" title="Mejores Tiempos">
+                <button id="scores-btn" class="control-button" title="Mejores Tiempos">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
                 </button>
             </div>
         </div>
 
         <div class="puzzle-container" id="puzzle-container"></div>
-        
-        <div class="album-info" id="album-info" style="visibility: hidden;">
-            <h2 id="album-name"></h2>
-            <p id="artist-name"></p>
-        </div>
+        <div class="current-track-info" id="current-track-info"></div>
 
         <div class="new-game-controls">
             <input type="text" id="artist-search" placeholder="Buscar por artista (opcional)">
@@ -482,196 +438,148 @@
         </div>
     </div>
     
-    <div id="high-scores-modal" class="modal">
+    <div id="scores-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Mejores Tiempos</h2>
-                <span class="close-button" id="close-scores-btn">&times;</span>
+                <button class="close-btn" id="close-scores-btn">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                </button>
             </div>
-            <div class="high-scores">
-                 <div class="high-scores-list-container">
-                    <ol id="high-scores-list"></ol>
-                </div>
-            </div>
+            <ol id="high-scores-list"></ol>
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.11</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.12</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const puzzleContainer = document.getElementById('puzzle-container');
-            const timerEl = document.getElementById('timer');
-            const movesEl = document.getElementById('moves');
-            const newGameBtn = document.getElementById('new-game-btn');
-            const pauseBtn = document.getElementById('pause-btn');
-            const audioBtn = document.getElementById('audio-btn');
-            const scoresBtn = document.getElementById('scores-btn');
-            const highScoresModal = document.getElementById('high-scores-modal');
-            const closeScoresBtn = document.getElementById('close-scores-btn');
-            const highScoresList = document.getElementById('high-scores-list');
-            const audioEl = document.getElementById('audio-player');
-            const albumInfoEl = document.getElementById('album-info');
-            const albumNameEl = document.getElementById('album-name');
-            const artistNameEl = document.getElementById('artist-name');
-            const artistSearchEl = document.getElementById('artist-search');
-
-            const pauseIcon = document.getElementById('pause-icon');
-            const playIcon = document.getElementById('play-icon');
-            const muteIcon = document.getElementById('mute-icon');
-            const unmuteIcon = document.getElementById('unmute-icon');
-
             const SIZE = 3;
-            let pieces = [];
-            let moves = 0;
-            let time = 0;
-            let timerInterval = null;
-            let isPaused = true;
-            let isMuted = true;
-            let currentAlbum = null;
-            let gameInProgress = false;
+            const elements = {
+                puzzleContainer: document.getElementById('puzzle-container'),
+                timer: document.getElementById('timer'),
+                moves: document.getElementById('moves'),
+                newGameBtn: document.getElementById('new-game-btn'),
+                pauseBtn: document.getElementById('pause-btn'),
+                audioBtn: document.getElementById('audio-btn'),
+                scoresBtn: document.getElementById('scores-btn'),
+                artistSearch: document.getElementById('artist-search'),
+                trackInfo: document.getElementById('current-track-info'),
+                audioPlayer: document.getElementById('audio-player'),
+                pauseIcon: document.getElementById('pause-icon'),
+                playIcon: document.getElementById('play-icon'),
+                muteIcon: document.getElementById('mute-icon'),
+                unmuteIcon: document.getElementById('unmute-icon'),
+                scoresModal: document.getElementById('scores-modal'),
+                closeScoresBtn: document.getElementById('close-scores-btn'),
+                highScoresList: document.getElementById('high-scores-list'),
+            };
 
-            // --- State Management ---
+            let state = {
+                pieces: [],
+                moves: 0,
+                time: 0,
+                timerInterval: null,
+                isPaused: true,
+                isMuted: true,
+                currentAlbum: null,
+                gameInProgress: false,
+            };
+            
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
                 const secs = (seconds % 60).toString().padStart(2, '0');
                 return `${mins}:${secs}`;
             }
 
-            function startTimer() {
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = setInterval(() => {
-                    if (!isPaused) {
-                        time++;
-                        timerEl.textContent = formatTime(time);
-                    }
-                }, 1000);
-            }
-
-            function stopTimer() {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-
             function updateUI() {
-                timerEl.textContent = formatTime(time);
-                movesEl.textContent = moves;
-                pauseIcon.style.display = isPaused ? 'none' : 'block';
-                playIcon.style.display = isPaused ? 'block' : 'none';
-                muteIcon.style.display = isMuted ? 'block' : 'none';
-                unmuteIcon.style.display = isMuted ? 'none' : 'block';
-                if(currentAlbum){
-                    albumInfoEl.style.visibility = 'visible';
-                    albumNameEl.textContent = currentAlbum.trackName;
-                    artistNameEl.textContent = currentAlbum.artistName;
-                } else {
-                    albumInfoEl.style.visibility = 'hidden';
-                }
+                elements.timer.textContent = formatTime(state.time);
+                elements.moves.textContent = state.moves;
+                elements.pauseIcon.style.display = state.isPaused ? 'none' : 'block';
+                elements.playIcon.style.display = state.isPaused ? 'block' : 'none';
+                elements.muteIcon.style.display = state.isMuted ? 'block' : 'none';
+                elements.unmuteIcon.style.display = state.isMuted ? 'none' : 'block';
+                elements.pauseBtn.disabled = !state.gameInProgress;
             }
-
-            // --- Local Storage ---
+            
             function saveGameState() {
-                if (!currentAlbum || !gameInProgress) return;
-                
-                const pieceMap = Array(SIZE * SIZE).fill(null);
-                pieces.forEach(p => {
-                    pieceMap[p.currentIndex] = p.originalIndex;
-                });
-                
-                const state = {
-                    pieceMap: pieceMap,
-                    moves,
-                    time,
-                    isPaused: true, // Always save as paused
-                    isMuted,
-                    album: currentAlbum
+                if (!state.currentAlbum) return;
+                const gameState = {
+                    pieces: state.pieces.map(p => ({ originalIndex: p.originalIndex, currentIndex: p.currentIndex })),
+                    moves: state.moves,
+                    time: state.time,
+                    isPaused: state.isPaused,
+                    isMuted: state.isMuted,
+                    album: state.currentAlbum,
+                    gameInProgress: state.gameInProgress,
                 };
-                localStorage.setItem('puzzletunesGameState', JSON.stringify(state));
+                localStorage.setItem('puzzletunesGameState', JSON.stringify(gameState));
             }
 
             function loadGameState() {
-                const savedState = localStorage.getItem('puzzletunesGameState');
-                if (savedState) {
-                    try {
-                        const state = JSON.parse(savedState);
-                        const pieceMap = state.pieceMap;
-                        
-                        pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                const saved = localStorage.getItem('puzzletunesGameState');
+                if (saved) {
+                    const savedState = JSON.parse(saved);
+                    state.moves = savedState.moves;
+                    state.time = savedState.time;
+                    state.isMuted = savedState.isMuted;
+                    state.currentAlbum = savedState.album;
+                    state.gameInProgress = savedState.gameInProgress;
+                    state.isPaused = true;
+                    
+                    const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
+                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
+                        const originalIndex = pieceMap.get(i);
+                        return {
                             el: null,
-                            originalIndex: -1, 
+                            originalIndex: originalIndex,
                             currentIndex: i,
-                            isEmpty: false,
-                        }));
-                        
-                        pieceMap.forEach((originalIndex, currentIndex) => {
-                            const piece = pieces[currentIndex];
-                            if(piece) {
-                                piece.originalIndex = originalIndex;
-                                if(originalIndex === SIZE * SIZE - 1) {
-                                    piece.isEmpty = true;
-                                }
-                            }
-                        });
-
-                        moves = state.moves;
-                        time = state.time;
-                        isMuted = state.isMuted;
-                        currentAlbum = state.album;
-                        isPaused = state.isPaused;
-                        gameInProgress = true;
-                        
-                        if (currentAlbum.previewUrl) {
-                            setAudioSource(currentAlbum.previewUrl);
-                        }
-                        
-                        return true;
-                    } catch(e) {
-                        console.error("Error loading saved state:", e);
-                        clearGameState();
-                        return false;
-                    }
+                            isEmpty: originalIndex === SIZE * SIZE - 1
+                        };
+                    });
+                    return true;
                 }
                 return false;
             }
-
+            
             function clearGameState() {
                 localStorage.removeItem('puzzletunesGameState');
             }
 
-            // --- Board Logic ---
             function renderBoard() {
-                puzzleContainer.innerHTML = '';
-                const imageUrl = currentAlbum.artworkUrl;
+                elements.puzzleContainer.innerHTML = '';
+                if (!state.currentAlbum) return;
+                const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
-                    const pieceData = pieces.find(p => p.currentIndex === i);
+                    const pieceData = state.pieces.find(p => p.currentIndex === i);
+                    if(!pieceData) continue;
+
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece');
                     
-                    if (!pieceData) continue;
-
                     if (pieceData.isEmpty) {
                         pieceEl.classList.add('empty');
                     } else {
                         const row = Math.floor(pieceData.originalIndex / SIZE);
                         const col = pieceData.originalIndex % SIZE;
-                        pieceEl.style.backgroundImage = `url(${imageUrl})`;
+                        pieceEl.style.backgroundImage = `url(${proxiedImageUrl})`;
                         pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
                     }
                     
                     pieceEl.dataset.index = i;
                     pieceEl.addEventListener('click', () => onPieceClick(i));
                     pieceData.el = pieceEl;
-                    puzzleContainer.appendChild(pieceEl);
+                    elements.puzzleContainer.appendChild(pieceEl);
                 }
             }
             
             function onPieceClick(clickedIndex) {
-                if (isPaused || !gameInProgress) return;
+                if (state.isPaused) return;
 
-                const emptyPiece = pieces.find(p => p.isEmpty);
-                const clickedPiece = pieces.find(p => p.currentIndex === clickedIndex);
-                
+                const emptyPiece = state.pieces.find(p => p.isEmpty);
+                const clickedPiece = state.pieces.find(p => p.currentIndex === clickedIndex);
                 if (!clickedPiece || clickedPiece.isEmpty) return;
 
                 const emptyIndex = emptyPiece.currentIndex;
@@ -683,13 +591,12 @@
 
                 if (isAdjacent) {
                     swapPieces(clickedPiece, emptyPiece);
-                    moves++;
+                    state.moves++;
                     updateUI();
                     if (checkWin()) {
                         handleWin();
-                    } else {
-                        saveGameState();
                     }
+                    saveGameState();
                 }
             }
 
@@ -705,154 +612,143 @@
             }
 
             function checkWin() {
-                return pieces.every(p => p.currentIndex === p.originalIndex);
+                return state.pieces.every(p => p.currentIndex === p.originalIndex);
             }
 
             function handleWin() {
                 stopTimer();
-                isPaused = true;
-                gameInProgress = false;
-                showOverlay(`¡Ganaste!<br>${formatTime(time)}`);
-                saveScore(time, moves);
+                state.isPaused = true;
+                state.gameInProgress = false;
+                showOverlay(`¡Ganaste!<br>${formatTime(state.time)}`);
+                saveScore();
                 clearGameState();
-                audioEl.pause();
+                elements.audioPlayer.pause();
                 updateUI();
             }
 
-            // --- High Scores ---
-            function saveScore(score, moves) {
-                const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
-                const date = new Date().toLocaleDateString('es-ES');
+            function saveScore() {
+                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
                 const newScore = {
-                    score,
-                    moves,
-                    date,
-                    albumArt: currentAlbum.artworkUrl,
-                    trackName: currentAlbum.trackName,
-                    artistName: currentAlbum.artistName,
+                    time: state.time,
+                    moves: state.moves,
+                    album: state.currentAlbum,
+                    id: Date.now()
                 };
-
                 highScores.push(newScore);
-
                 highScores.sort((a, b) => {
-                    if (a.score !== b.score) {
-                        return a.score - b.score;
-                    }
+                    if (a.time !== b.time) return a.time - b.time;
                     return a.moves - b.moves;
                 });
-                
-                localStorage.setItem('puzzleHighScores', JSON.stringify(highScores.slice(0, 10)));
+                highScores = highScores.slice(0, 10);
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
             }
 
             function renderHighScores() {
-                const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
-                highScoresList.innerHTML = highScores.map((item, index) => {
-                    const scoreTrackEl = document.createElement('div');
-                    scoreTrackEl.textContent = item.trackName;
+                const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                elements.highScoresList.innerHTML = highScores.map(item => {
+                    const proxiedThumbUrl = `https://corsproxy.io/?${item.album.artworkUrl}`;
+                    const wrapperId = `marquee-wrapper-${item.id}`;
                     
-                    const container = document.createElement('div');
-                    container.style.visibility = 'hidden';
-                    container.style.position = 'absolute';
-                    container.style.whiteSpace = 'nowrap';
-                    container.appendChild(scoreTrackEl);
-                    document.body.appendChild(container);
-                    const isLongText = scoreTrackEl.offsetWidth > 200; // Approx width of the container
-                    document.body.removeChild(container);
-
-                    const marqueeClass = isLongText ? 'marquee' : '';
-
-                    return `
-                        <li>
-                            <span class="score-rank">${index + 1}</span>
-                            <div class="score-art" style="background-image: url('${item.albumArt}')"></div>
-                            <div class="score-details">
-                                <div class="score-track-container">
-                                     <div class="score-track ${marqueeClass}">${item.trackName}</div>
+                    const html = `
+                        <li class="score-item">
+                            <img src="${proxiedThumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
+                            <div class="score-info">
+                                <p class="score-artist">${item.album.artistName}</p>
+                                <div class="marquee-wrapper" id="${wrapperId}">
+                                    <p class="score-track marquee-content">${item.album.collectionName}</p>
                                 </div>
-                                <div class="score-artist">${item.artistName}</div>
+                                <div class="score-stats">
+                                    <span>${formatTime(item.time)}</span>
+                                    <span>${item.moves} mov.</span>
+                                </div>
                             </div>
-                            <div class="score-stats">
-                                <div><svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor; vertical-align:middle;"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg><span>${formatTime(item.score)}</span></div>
-                                <div><svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor; vertical-align:middle;"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg><span>${item.moves}</span></div>
-                            </div>
-                            <button class="delete-score-btn" data-index="${index}" title="Eliminar Récord">
+                            <button class="score-delete-btn" data-id="${item.id}" title="Eliminar récord">
                                 <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
                             </button>
-                        </li>
-                    `;
+                        </li>`;
+                    
+                    setTimeout(() => {
+                        const wrapper = document.getElementById(wrapperId);
+                        if (wrapper && wrapper.scrollWidth > wrapper.clientWidth) {
+                            wrapper.classList.add('animate');
+                        }
+                    }, 0);
+                    
+                    return html;
+
                 }).join('');
-                if (highScores.length === 0) {
-                     highScoresList.innerHTML = '<li>Aún no hay récords. ¡Juega para ser el primero!</li>';
-                }
-                
-                document.querySelectorAll('.delete-score-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const index = parseInt(e.currentTarget.dataset.index);
-                        deleteScore(index);
-                    });
-                });
             }
             
-            function deleteScore(index) {
-                let highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
-                highScores.splice(index, 1);
-                localStorage.setItem('puzzleHighScores', JSON.stringify(highScores));
+            function deleteScore(id) {
+                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                highScores = highScores.filter(score => score.id !== id);
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
             }
 
-            function showOverlay(text, showSpinner = false) {
+            function showOverlay(text, suggestions = []) {
                 hideOverlay();
                 const overlay = document.createElement('div');
                 overlay.className = 'overlay';
-                let content = '';
-                if(showSpinner) {
-                    content += '<div class="spinner"></div>';
+                overlay.innerHTML = `<div>${text}</div>`;
+                
+                if (suggestions.length > 0) {
+                    const suggestionsContainer = document.createElement('div');
+                    suggestionsContainer.className = 'suggestions-container';
+                    suggestions.forEach(suggestion => {
+                        const btn = document.createElement('button');
+                        btn.className = 'suggestion-btn';
+                        btn.textContent = suggestion;
+                        btn.onclick = () => {
+                            elements.artistSearch.value = suggestion;
+                            prepareNewGame();
+                        };
+                        suggestionsContainer.appendChild(btn);
+                    });
+                    overlay.appendChild(suggestionsContainer);
                 }
-                content += `<div>${text}</div>`;
-                overlay.innerHTML = content;
-                puzzleContainer.appendChild(overlay);
+
+                elements.puzzleContainer.appendChild(overlay);
             }
 
             function hideOverlay() {
-                const overlay = puzzleContainer.querySelector('.overlay');
+                const overlay = elements.puzzleContainer.querySelector('.overlay');
                 if (overlay) overlay.remove();
             }
-
-            // --- API & Audio ---
-            async function findAlbumWithMusic(artist) {
-                const searchTerm = artist || ['rock', 'pop', 'jazz', 'electronic', 'hiphop', 'reggae', 'soul', 'funk'][Math.floor(Math.random() * 8)];
-                const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
+            
+            async function findAlbumWithMusic(searchTerm, isArtistSearch = false) {
+                const genres = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk'];
+                const query = searchTerm || genres[Math.floor(Math.random() * genres.length)];
+                
+                const searchAttribute = isArtistSearch ? '&attribute=artistTerm' : '';
+                const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=200${searchAttribute}`;
+                const proxyUrl = `https://corsproxy.io/?${searchUrl}`;
 
                 try {
                     const response = await fetch(proxyUrl);
                     if (!response.ok) throw new Error('Network response failed.');
                     const data = await response.json();
+                    
+                    const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100);
+                    if (songsWithPreview.length === 0) return null;
 
-                    if (!data.results || data.results.length === 0) {
-                        throw new Error(`No results found for "${searchTerm}"`);
-                    }
-
-                    const songsWithPreview = data.results.filter(s => s.previewUrl && s.artworkUrl100);
-                    if (songsWithPreview.length === 0) {
-                        throw new Error(`No music found for "${searchTerm}"`);
-                    }
-
-                    const albums = {};
-                    songsWithPreview.forEach(song => {
-                        if (!albums[song.collectionId]) {
-                            albums[song.collectionId] = {
+                    const albums = songsWithPreview.reduce((acc, song) => {
+                        if (!acc[song.collectionId]) {
+                            acc[song.collectionId] = {
                                 artistName: song.artistName,
-                                trackName: song.collectionName, // Use collection name for album title
-                                artworkUrl: song.artworkUrl100.replace('100x100bb', '600x600bb'),
+                                collectionName: song.collectionName,
+                                artworkUrl: song.artworkUrl100,
                                 previewUrl: song.previewUrl
                             };
                         }
-                    });
+                        return acc;
+                    }, {});
 
-                    const uniqueAlbums = Object.values(albums);
-                    return uniqueAlbums[Math.floor(Math.random() * uniqueAlbums.length)];
+                    const albumArray = Object.values(albums);
+                    if (albumArray.length === 0) return null;
+                    
+                    return albumArray[Math.floor(Math.random() * albumArray.length)];
 
                 } catch (error) {
                     console.error('Error finding album with music:', error);
@@ -860,163 +756,238 @@
                 }
             }
             
-            function setAudioSource(url) {
-                audioEl.src = url;
-                audioEl.load();
-                audioBtn.disabled = true;
+            function calculateLevenshteinDistance(a, b) {
+                if (a.length === 0) return b.length;
+                if (b.length === 0) return a.length;
+                const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+                for (let i = 0; i <= a.length; i++) { matrix[0][i] = i; }
+                for (let j = 0; j <= b.length; j++) { matrix[j][0] = j; }
+                for (let j = 1; j <= b.length; j++) {
+                    for (let i = 1; i <= a.length; i++) {
+                        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                        matrix[j][i] = Math.min(
+                            matrix[j][i - 1] + 1, // deletion
+                            matrix[j - 1][i] + 1, // insertion
+                            matrix[j - 1][i - 1] + cost, // substitution
+                        );
+                    }
+                }
+                return matrix[b.length][a.length];
+            }
+            
+            async function findSuggestions(searchTerm) {
+                const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`;
+                const proxyUrl = `https://corsproxy.io/?${searchUrl}`;
+                try {
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) return [];
+                    const data = await response.json();
+                    
+                    const artistNames = [...new Set(data.results.map(r => r.artistName))];
+                    const suggestions = artistNames
+                        .map(name => ({ name, distance: calculateLevenshteinDistance(searchTerm.toLowerCase(), name.toLowerCase()) }))
+                        .filter(item => item.distance < 4) // Only suggest close matches
+                        .sort((a, b) => a.distance - b.distance)
+                        .map(item => item.name)
+                        .slice(0, 3);
+                    return suggestions;
+                } catch (error) {
+                    return [];
+                }
             }
 
-            audioEl.addEventListener('canplaythrough', () => {
-                audioBtn.disabled = false;
-                if (!isMuted && gameInProgress && !isPaused) {
-                    audioEl.play().catch(e => console.error("Autoplay failed:", e));
-                }
-            });
-
-            audioEl.addEventListener('error', () => {
-                console.error("Audio failed to load.");
-                audioBtn.disabled = true;
-            });
-
-
-            // --- Game Flow ---
             async function prepareNewGame() {
-                const artistQuery = artistSearchEl.value.trim();
-                const searchMessage = artistQuery ? `Buscando música de ${artistQuery}...` : 'Buscando música...';
-                showOverlay(searchMessage, true);
-                
                 stopTimer();
                 hideOverlay();
-                clearGameState();
-                audioEl.pause();
-                audioEl.src = '';
-                audioBtn.disabled = true;
-                isMuted = false; // Set to autoplay
+                
+                const searchTerm = elements.artistSearch.value.trim();
+                const isArtistSearch = searchTerm.length > 0;
+                
+                showOverlay(`Buscando música${isArtistSearch ? ` de ${searchTerm}` : ''}...`);
 
-                const album = await findAlbumWithMusic(artistQuery);
+                let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
+                
+                if (!album && isArtistSearch) {
+                    const suggestions = await findSuggestions(searchTerm);
+                    if (suggestions.length > 0) {
+                        showOverlay(`Quisiste decir:`, suggestions);
+                        return;
+                    }
+                }
 
                 if (album) {
-                    currentAlbum = album;
-                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(currentAlbum.artworkUrl)}`;
-
+                    state.currentAlbum = album;
+                    const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                    const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                    
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
                     
                     img.onload = () => {
-                        currentAlbum.artworkUrl = proxiedImageUrl; // Use proxied URL for rendering
                         hideOverlay();
-                        
-                        // Scramble pieces logic fixed
-                        const orderedPieces = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                        const shuffledPieces = [...orderedPieces].sort(() => Math.random() - 0.5);
-
-                        pieces = orderedPieces.map((originalIndex, i) => ({
-                            el: null,
-                            originalIndex: originalIndex,
-                            currentIndex: shuffledPieces.indexOf(originalIndex),
-                            isEmpty: originalIndex === SIZE * SIZE - 1
-                        }));
-
-                        // Correctly set current positions
-                        shuffledPieces.forEach((originalIndex, i) => {
-                            const piece = pieces.find(p => p.originalIndex === originalIndex);
-                            if (piece) piece.currentIndex = i;
-                        });
-                        
-                        time = 0;
-                        moves = 0;
-                        isPaused = false;
-                        gameInProgress = true;
-
-                        renderBoard();
-                        startTimer();
-                        setAudioSource(currentAlbum.previewUrl);
-                        updateUI();
-                        saveGameState(); // Save initial state
+                        resetGame();
+                        startNewGame();
                     };
                     img.onerror = () => {
                         showOverlay('Error al cargar imagen. Intenta de nuevo.');
                     };
                 } else {
-                    const errorMessage = artistQuery ? `No se encontró música para "${artistQuery}"` : 'Error de red. Intenta de nuevo.';
-                    showOverlay(errorMessage);
+                    showOverlay(`No se encontró música ${isArtistSearch ? ` para "${searchTerm}"` : 'aleatoria'}.`);
                 }
             }
 
+            function resetGame() {
+                state.time = 0;
+                state.moves = 0;
+                state.isPaused = false;
+                state.isMuted = true;
+                state.gameInProgress = true;
+                
+                const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                let shuffledIndices;
+                do {
+                    shuffledIndices = indices.sort(() => Math.random() - 0.5);
+                } while (!isSolvable(shuffledIndices));
+
+                state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                    el: null,
+                    originalIndex: i,
+                    currentIndex: shuffledIndices.indexOf(i),
+                    isEmpty: i === SIZE * SIZE - 1
+                }));
+            }
+            
+            function isSolvable(shuffled) {
+                let inversions = 0;
+                const puzzle = shuffled.filter(i => i !== SIZE * SIZE - 1);
+                for (let i = 0; i < puzzle.length - 1; i++) {
+                    for (let j = i + 1; j < puzzle.length; j++) {
+                        if (puzzle[i] > puzzle[j]) {
+                            inversions++;
+                        }
+                    }
+                }
+                return inversions % 2 === 0;
+            }
+
+            function startNewGame() {
+                renderBoard();
+                startTimer();
+                updateUI();
+                elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                
+                elements.audioPlayer.src = state.currentAlbum.previewUrl;
+                elements.audioBtn.disabled = true;
+
+                saveGameState();
+            }
+
             function initGame() {
-                if (!loadGameState()) {
-                    isPaused = true;
-                    gameInProgress = false;
-                    updateUI();
-                    showOverlay('Presiona "Nuevo Juego" para comenzar');
-                } else {
-                    const proxiedImageUrl = currentAlbum.artworkUrl; // Already proxied from save
+                if (loadGameState() && state.gameInProgress) {
+                    const proxiedImageUrl = `https://corsproxy.io/?${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
                     img.onload = () => {
-                         renderBoard();
-                         startTimer();
-                         updateUI();
-                         if(isPaused) {
-                           showOverlay("Pausado");
-                         }
+                        renderBoard();
+                        startTimer();
+                        updateUI();
+                        showOverlay("Pausado");
+                        elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                        if (state.currentAlbum.previewUrl) {
+                            elements.audioPlayer.src = state.currentAlbum.previewUrl;
+                        }
                     };
                      img.onerror = () => {
-                        showOverlay('Error al cargar imagen guardada. Inicia un nuevo juego.');
+                        showOverlay('Error al cargar imagen guardada.');
                      };
+                } else {
+                    prepareNewGame();
                 }
                 renderHighScores();
             }
             
-            // --- Event Listeners ---
-            newGameBtn.addEventListener('click', () => {
-                if (gameInProgress && !confirm('¿Estás seguro de que quieres empezar un nuevo juego? Se perderá tu progreso actual.')) {
-                    return;
+            function startTimer() {
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval = setInterval(() => {
+                    if (!state.isPaused) {
+                        state.time++;
+                        elements.timer.textContent = formatTime(state.time);
+                    }
+                }, 1000);
+            }
+
+            function stopTimer() {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+
+            elements.newGameBtn.addEventListener('click', () => {
+                if (state.gameInProgress) {
+                    if (!confirm('¿Seguro que quieres empezar un nuevo juego? Se perderá tu progreso.')) {
+                        return;
+                    }
                 }
+                clearGameState();
+                elements.audioPlayer.pause();
+                elements.audioPlayer.src = '';
+                state.currentAlbum = null;
                 prepareNewGame();
             });
 
-            pauseBtn.addEventListener('click', () => {
-                if(!currentAlbum || !gameInProgress) return;
-                isPaused = !isPaused;
-                if(isPaused) {
+            elements.pauseBtn.addEventListener('click', () => {
+                if (!state.gameInProgress) return;
+                state.isPaused = !state.isPaused;
+                if (state.isPaused) {
+                    stopTimer();
                     showOverlay("Pausado");
-                    audioEl.pause();
+                    elements.audioPlayer.pause();
                 } else {
                     hideOverlay();
-                    if (!isMuted && audioEl.src && !audioEl.ended) {
-                        audioEl.play().catch(e => console.error("Play error on resume:", e));
+                    startTimer();
+                    if (!state.isMuted && elements.audioPlayer.src) {
+                        elements.audioPlayer.play().catch(e => console.error("Error playing audio on resume:", e));
                     }
                 }
                 updateUI();
+                saveGameState();
             });
-            
-            audioBtn.addEventListener('click', () => {
-                isMuted = !isMuted;
-                if (!isMuted && audioEl.src) {
-                     audioEl.play().catch(e => console.error("Play error on unmute:", e));
+
+            elements.audioBtn.addEventListener('click', () => {
+                state.isMuted = !state.isMuted;
+                if (!state.isMuted && elements.audioPlayer.src) {
+                    elements.audioPlayer.play().catch(e => console.error("Error playing audio on unmute:", e));
                 } else {
-                    audioEl.pause();
+                    elements.audioPlayer.pause();
                 }
                 updateUI();
-                if(gameInProgress) saveGameState();
+                if (state.gameInProgress) saveGameState();
+            });
+
+            elements.audioPlayer.addEventListener('canplaythrough', () => {
+                elements.audioBtn.disabled = false;
+            });
+
+            elements.scoresBtn.addEventListener('click', () => {
+                renderHighScores();
+                elements.scoresModal.classList.add('visible');
+            });
+
+            elements.closeScoresBtn.addEventListener('click', () => {
+                elements.scoresModal.classList.remove('visible');
             });
             
-            scoresBtn.addEventListener('click', () => highScoresModal.classList.add('show'));
-            closeScoresBtn.addEventListener('click', () => highScoresModal.classList.remove('show'));
-            window.addEventListener('click', (event) => {
-                if (event.target == highScoresModal) {
-                    highScoresModal.classList.remove('show');
+            elements.highScoresList.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.score-delete-btn');
+                if (deleteBtn) {
+                    const scoreId = parseInt(deleteBtn.dataset.id, 10);
+                    deleteScore(scoreId);
                 }
             });
             
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden' && gameInProgress) {
-                    isPaused = true;
-                    audioEl.pause();
-                    updateUI();
+            window.addEventListener('beforeunload', () => {
+                if (state.gameInProgress) {
                     saveGameState();
                 }
             });
