@@ -427,8 +427,13 @@
 
             function saveGameState() {
                 if (!currentAlbum || !gameInProgress) return;
+                // Create an array where index = currentIndex and value = originalIndex
+                const boardState = new Array(SIZE * SIZE);
+                pieces.forEach(p => {
+                    boardState[p.currentIndex] = p.originalIndex;
+                });
                 const state = {
-                    pieces: pieces.map(p => p.originalIndex),
+                    pieces: boardState,
                     moves,
                     time,
                     isPaused,
@@ -442,12 +447,18 @@
                 const savedState = localStorage.getItem('puzzletunesGameState');
                 if (savedState) {
                     const state = JSON.parse(savedState);
-                    pieces = state.pieces.map((originalIndex, currentIndex) => ({
+                    const savedBoardState = state.pieces;
+
+                    // Reconstruct the `pieces` array from the saved state.
+                    // The new `pieces` array will have objects where the array index
+                    // corresponds to the `currentIndex` of the piece.
+                    pieces = savedBoardState.map((originalIndex, currentIndex) => ({
                         el: null,
-                        originalIndex,
-                        currentIndex,
+                        originalIndex: originalIndex,
+                        currentIndex: currentIndex,
                         isEmpty: originalIndex === SIZE * SIZE - 1
                     }));
+
                     moves = state.moves;
                     time = state.time;
                     isMuted = state.isMuted;
@@ -470,6 +481,9 @@
                 const imageUrl = currentAlbum.proxiedArtworkUrl;
                 
                 for (let i = 0; i < SIZE * SIZE; i++) {
+                    // Find the piece that should be at the current position `i`.
+                    // The data structure from `loadGameState` or the modified `prepareNewGameData` might differ.
+                    // This find method is robust enough for both.
                     const pieceData = pieces.find(p => p.currentIndex === i);
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece');
@@ -485,7 +499,7 @@
                     
                     pieceEl.dataset.index = i;
                     pieceEl.addEventListener('click', () => onPieceClick(i));
-                    pieceData.el = pieceEl;
+                    pieceData.el = pieceEl; // This might be problematic if pieces structure changes.
                     puzzleContainer.appendChild(pieceEl);
                 }
             }
@@ -672,28 +686,31 @@
                     
                     img.onload = () => {
                         hideOverlay();
-                        const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        const initialPieces = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        let shuffledIndices = [];
                         
                         let solvable = false;
                         while (!solvable) {
-                             for (let i = indices.length - 2; i > 0; i--) { // -2 because we dont shuffle the empty slot
+                            shuffledIndices = [...initialPieces];
+                             for (let i = shuffledIndices.length - 2; i > 0; i--) { // -2 to not shuffle the empty slot
                                 const j = Math.floor(Math.random() * (i + 1));
-                                [indices[i], indices[j]] = [indices[j], indices[i]];
+                                [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
                             }
                             let inversions = 0;
-                            for (let i = 0; i < SIZE * SIZE - 1; i++) {
-                                for (let j = i + 1; j < SIZE * SIZE - 1; j++) {
-                                    if (indices[i] > indices[j]) inversions++;
+                            const boardWithoutEmpty = shuffledIndices.filter(p => p !== SIZE * SIZE -1);
+                            for (let i = 0; i < boardWithoutEmpty.length; i++) {
+                                for (let j = i + 1; j < boardWithoutEmpty.length; j++) {
+                                    if (boardWithoutEmpty[i] > boardWithoutEmpty[j]) inversions++;
                                 }
                             }
                             if (inversions % 2 === 0) solvable = true;
                         }
                         
-                        pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                        pieces = shuffledIndices.map((originalIndex, currentIndex) => ({
                             el: null,
-                            originalIndex: i,
-                            currentIndex: indices.indexOf(i),
-                            isEmpty: i === SIZE * SIZE - 1
+                            originalIndex: originalIndex,
+                            currentIndex: currentIndex,
+                            isEmpty: originalIndex === SIZE * SIZE - 1
                         }));
 
                         time = 0;
