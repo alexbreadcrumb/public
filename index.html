@@ -322,11 +322,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .score-artist-name {
+            font-size: 0.9rem;
+            color: var(--on-surface-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 0.1rem;
+        }
         .score-stats {
             display: flex;
             gap: 1rem;
             font-size: 0.9rem;
             color: var(--on-surface-secondary);
+            margin-top: 0.25rem;
         }
         .score-delete-btn {
             background: none;
@@ -386,7 +395,7 @@
                 </button>
                 <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido" disabled>
                     <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
-                    <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+                    <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C2.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
                 </button>
                 <button id="scores-btn" class="control-button" title="Mejores Tiempos">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
@@ -421,7 +430,7 @@
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.5</footer>
+    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.6</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -489,6 +498,9 @@
                 if (currentAlbum) {
                     albumNameEl.textContent = currentAlbum.collectionName;
                     artistNameEl.textContent = currentAlbum.artistName;
+                } else {
+                    albumNameEl.textContent = '';
+                    artistNameEl.textContent = '';
                 }
             }
 
@@ -602,13 +614,11 @@
                 let indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let inversions = 0;
                 
-                // Fisher-Yates shuffle
                 for (let i = indices.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [indices[i], indices[j]] = [indices[j], indices[i]];
                 }
 
-                // Check for solvability (for a 3x3 grid)
                 for (let i = 0; i < indices.length - 1; i++) {
                     for (let j = i + 1; j < indices.length; j++) {
                         if (indices[i] !== SIZE * SIZE - 1 && indices[j] !== SIZE * SIZE - 1 && indices[i] > indices[j]) {
@@ -617,13 +627,10 @@
                     }
                 }
                 
-                // If not solvable, swap two pieces to make it solvable
                 if (inversions % 2 !== 0) {
-                    if (indices.indexOf(SIZE * SIZE -1) > 1) { // ensure we don't swap with empty piece if it's at start
-                        [indices[0], indices[1]] = [indices[1], indices[0]];
-                    } else {
-                        [indices[2], indices[3]] = [indices[3], indices[2]];
-                    }
+                     const first = indices[0] === SIZE * SIZE - 1 ? 2 : 0;
+                     const second = indices[1] === SIZE * SIZE - 1 ? 2 : 1;
+                    [indices[first], indices[second]] = [indices[second], indices[first]];
                 }
                 
                 return indices;
@@ -737,9 +744,9 @@
                         
                         pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                             el: null,
-                            originalIndex: shuffledIndices.indexOf(i),
-                            currentIndex: i,
-                            isEmpty: shuffledIndices.indexOf(i) === SIZE * SIZE - 1
+                            originalIndex: i,
+                            currentIndex: shuffledIndices[i],
+                            isEmpty: i === SIZE * SIZE - 1
                         }));
 
                         time = 0;
@@ -758,46 +765,13 @@
                         showOverlay('Error al cargar imagen.<br>Intenta de nuevo.');
                     };
                 } else {
-                    const errorMessage = album.error || 'No se pudo cargar una portada.';
+                    const errorMessage = album ? album.error : 'No se pudo cargar una portada.';
                     showOverlay(`${errorMessage}<br>Revisa tu conexión e intenta de nuevo.`);
                 }
                 newGameBtn.disabled = false;
                 artistSearchInput.disabled = false;
             }
             
-            // Correction in puzzle initialization logic
-            function createSolvablePuzzle() {
-                let indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                let inversions = 0;
-
-                // Fisher-Yates shuffle
-                for (let i = indices.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [indices[i], indices[j]] = [indices[j], indices[i]];
-                }
-                
-                // For a 3x3 grid, an odd number of inversions is unsolvable.
-                // We calculate inversions to ensure the puzzle is solvable.
-                const emptyTileValue = SIZE * SIZE - 1;
-                for (let i = 0; i < indices.length - 1; i++) {
-                    for (let j = i + 1; j < indices.length; j++) {
-                        if (indices[i] !== emptyTileValue && indices[j] !== emptyTileValue && indices[i] > indices[j]) {
-                            inversions++;
-                        }
-                    }
-                }
-                
-                // If inversions are odd, swap two tiles to make it even (solvable).
-                if (inversions % 2 !== 0) {
-                     // Simple swap of the first two non-empty tiles
-                    const first = indices[0] === emptyTileValue ? 2 : 0;
-                    const second = indices[1] === emptyTileValue ? 2 : 1;
-                    [indices[first], indices[second]] = [indices[second], indices[first]];
-                }
-
-                return indices;
-            }
-
             function initGame() {
                 if (!loadGameState()) {
                     prepareNewGameData();
@@ -847,6 +821,7 @@
             function renderHighScores() {
                 const highScores = JSON.parse(localStorage.getItem('puzzleHighScores')) || [];
                 highScoresList.innerHTML = highScores.map((item, index) => {
+                    if (!item.album) return ''; // Safety check for corrupted data
                     const thumbUrl = item.album.artworkUrl;
                     const proxiedThumbUrl = `https://corsproxy.io/?${thumbUrl}`;
                     return `
@@ -854,6 +829,7 @@
                             <img src="${proxiedThumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
                             <div class="score-details">
                                 <div class="score-song-name">${item.album.collectionName}</div>
+                                <div class="score-artist-name">${item.album.artistName}</div>
                                 <div class="score-stats">
                                     <span>${formatTime(item.time)}</span>
                                     <span>${item.moves} movs</span>
@@ -883,6 +859,7 @@
                 audioEl.pause();
                 audioEl.src = '';
                 currentAlbum = null;
+                // DO NOT CLEAR artistSearchInput.value
                 prepareNewGameData();
             });
 
