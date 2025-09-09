@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -450,7 +449,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.12</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.13</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -550,7 +549,7 @@
                 elements.puzzleContainer.innerHTML = '';
                 if (!state.currentAlbum) return;
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceData = state.pieces.find(p => p.currentIndex === i);
@@ -647,7 +646,10 @@
             function renderHighScores() {
                 const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
                 elements.highScoresList.innerHTML = highScores.map(item => {
-                    const proxiedThumbUrl = `https://corsproxy.io/?${item.album.artworkUrl}`;
+                    if (!item || !item.album || !item.album.artworkUrl) {
+                        return '';
+                    }
+                    const proxiedThumbUrl = `https://corsproxy.io/?${encodeURIComponent(item.album.artworkUrl)}`;
                     const wrapperId = `marquee-wrapper-${item.id}`;
                     
                     const html = `
@@ -723,7 +725,7 @@
                 
                 const searchAttribute = isArtistSearch ? '&attribute=artistTerm' : '';
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=200${searchAttribute}`;
-                const proxyUrl = `https://corsproxy.io/?${searchUrl}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
 
                 try {
                     const response = await fetch(proxyUrl);
@@ -777,7 +779,7 @@
             
             async function findSuggestions(searchTerm) {
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`;
-                const proxyUrl = `https://corsproxy.io/?${searchUrl}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
                 try {
                     const response = await fetch(proxyUrl);
                     if (!response.ok) return [];
@@ -818,7 +820,7 @@
                 if (album) {
                     state.currentAlbum = album;
                     const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -885,7 +887,7 @@
 
             function initGame() {
                 if (loadGameState() && state.gameInProgress) {
-                    const proxiedImageUrl = `https://corsproxy.io/?${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(state.currentAlbum.artworkUrl.replace('100x100', '600x600'))}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
@@ -903,6 +905,7 @@
                         showOverlay('Error al cargar imagen guardada.');
                      };
                 } else {
+                    clearGameState();
                     prepareNewGame();
                 }
                 renderHighScores();
@@ -967,7 +970,18 @@
 
             elements.audioPlayer.addEventListener('canplaythrough', () => {
                 elements.audioBtn.disabled = false;
+                if (!state.isMuted && !state.isPaused) {
+                     elements.audioPlayer.play().catch(e => console.error("Autoplay failed:", e));
+                }
             });
+            
+            elements.audioPlayer.addEventListener('play', () => {
+                if(state.isMuted) {
+                    state.isMuted = false;
+                    updateUI();
+                }
+            });
+
 
             elements.scoresBtn.addEventListener('click', () => {
                 renderHighScores();
