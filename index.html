@@ -450,7 +450,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -496,7 +496,7 @@
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.10</footer>
+    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.11</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -573,7 +573,10 @@
             function saveGameState() {
                 if (!currentAlbum || !gameInProgress) return;
                 
-                const pieceMap = pieces.map(p => p.originalIndex);
+                const pieceMap = Array(SIZE * SIZE).fill(null);
+                pieces.forEach(p => {
+                    pieceMap[p.currentIndex] = p.originalIndex;
+                });
                 
                 const state = {
                     pieceMap: pieceMap,
@@ -601,7 +604,7 @@
                         }));
                         
                         pieceMap.forEach((originalIndex, currentIndex) => {
-                            const piece = pieces.find(p => p.currentIndex === currentIndex);
+                            const piece = pieces[currentIndex];
                             if(piece) {
                                 piece.originalIndex = originalIndex;
                                 if(originalIndex === SIZE * SIZE - 1) {
@@ -771,7 +774,7 @@
                             </div>
                             <div class="score-stats">
                                 <div><svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor; vertical-align:middle;"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg><span>${formatTime(item.score)}</span></div>
-                                <div><svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor; vertical-align:middle;"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg><span>${item.moves}</span></div>
+                                <div><svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor; vertical-align:middle;"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5-.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg><span>${item.moves}</span></div>
                             </div>
                             <button class="delete-score-btn" data-index="${index}" title="Eliminar Récord">
                                 <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
