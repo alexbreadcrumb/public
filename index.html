@@ -336,15 +336,23 @@
             white-space: nowrap;
             overflow: hidden;
         }
-        /* Marquee for long song titles */
+        
         .score-song-name span {
             display: inline-block;
             animation: marquee 15s linear infinite;
-            animation-play-state: paused; /* Pause by default */
+            animation-play-state: running; /* Run by default for touch devices */
         }
-        .score-item:hover .score-song-name span {
-            animation-play-state: running; /* Run on hover */
+        
+        /* For devices that support hover (like desktops), pause the animation until hovered */
+        @media (hover: hover) {
+            .score-song-name span {
+                animation-play-state: paused;
+            }
+            .score-item:hover .score-song-name span {
+                animation-play-state: running;
+            }
         }
+
         /* JS will add this class if text overflows */
         .score-song-name.overflowing span {
              padding-left: 100%; /* Only add padding if needed */
@@ -462,7 +470,7 @@
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.7</footer>
+    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.8</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
