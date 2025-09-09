@@ -223,6 +223,21 @@
                 flex-direction: column;
             }
         }
+
+        /* Vertical space optimization for short screens */
+        @media (max-height: 740px) {
+            .main-container {
+                gap: 0.75rem;
+            }
+            .album-info {
+                margin-top: -0.5rem;
+            }
+             #artist-search, #new-game-btn {
+                padding-top: 0.6rem;
+                padding-bottom: 0.6rem;
+                font-size: 0.9rem;
+            }
+        }
         
         /* Modal Styles */
         .modal {
@@ -320,8 +335,25 @@
             color: var(--on-surface);
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
+        /* Marquee for long song titles */
+        .score-song-name span {
+            display: inline-block;
+            animation: marquee 15s linear infinite;
+            animation-play-state: paused; /* Pause by default */
+        }
+        .score-item:hover .score-song-name span {
+            animation-play-state: running; /* Run on hover */
+        }
+        /* JS will add this class if text overflows */
+        .score-song-name.overflowing span {
+             padding-left: 100%; /* Only add padding if needed */
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
         .score-artist-name {
             font-size: 0.9rem;
             color: var(--on-surface-secondary);
@@ -384,7 +416,7 @@
                     <span id="timer">00:00</span>
                 </div>
                 <div class="stat-item" title="Movimientos">
-                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
             </div>
@@ -395,7 +427,7 @@
                 </button>
                 <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido" disabled>
                     <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
-                    <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C2.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+                    <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
                 </button>
                 <button id="scores-btn" class="control-button" title="Mejores Tiempos">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
@@ -430,7 +462,7 @@
         </div>
     </div>
     
-    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.6</footer>
+    <footer id="footer">Game By: Ale Fernández PY-2025 - v1.7</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -558,7 +590,7 @@
                 if (!currentAlbum) return;
 
                 const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
-                const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceData = pieces.find(p => p.currentIndex === i);
@@ -614,24 +646,24 @@
                 let indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let inversions = 0;
                 
-                for (let i = indices.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [indices[i], indices[j]] = [indices[j], indices[i]];
-                }
-
-                for (let i = 0; i < indices.length - 1; i++) {
-                    for (let j = i + 1; j < indices.length; j++) {
-                        if (indices[i] !== SIZE * SIZE - 1 && indices[j] !== SIZE * SIZE - 1 && indices[i] > indices[j]) {
-                            inversions++;
+                do {
+                    // Fisher-Yates shuffle
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+                    
+                    // Check for solvability
+                    inversions = 0;
+                    for (let i = 0; i < indices.length - 1; i++) {
+                        for (let j = i + 1; j < indices.length; j++) {
+                            // Don't count the empty tile
+                            if (indices[i] !== SIZE * SIZE - 1 && indices[j] !== SIZE * SIZE - 1 && indices[i] > indices[j]) {
+                                inversions++;
+                            }
                         }
                     }
-                }
-                
-                if (inversions % 2 !== 0) {
-                     const first = indices[0] === SIZE * SIZE - 1 ? 2 : 0;
-                     const second = indices[1] === SIZE * SIZE - 1 ? 2 : 1;
-                    [indices[first], indices[second]] = [indices[second], indices[first]];
-                }
+                } while (inversions % 2 !== 0); // Re-shuffle if not solvable
                 
                 return indices;
             }
@@ -680,7 +712,7 @@
                 const searchTerm = artist ? artist : ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk'][Math.floor(Math.random() * 10)];
                 
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=100`;
-                const proxyUrl = `https://corsproxy.io/?${searchUrl}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
                 
                 try {
                     const response = await fetch(proxyUrl);
@@ -722,6 +754,7 @@
             async function prepareNewGameData() {
                 newGameBtn.disabled = true;
                 artistSearchInput.disabled = true;
+                audioBtn.disabled = true;
                 stopTimer();
                 hideOverlay();
                 const artist = artistSearchInput.value.trim();
@@ -732,7 +765,7 @@
                 if (album && !album.error) {
                     currentAlbum = album;
                     const imageUrl = album.artworkUrl.replace('100x100', '600x600');
-                    const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -742,12 +775,13 @@
                         hideOverlay();
                         const shuffledIndices = createSolvablePuzzle();
                         
-                        pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                        pieces = shuffledIndices.map((shuffledIndex, originalIndex) => ({
                             el: null,
-                            originalIndex: i,
-                            currentIndex: shuffledIndices[i],
-                            isEmpty: i === SIZE * SIZE - 1
+                            originalIndex: shuffledIndex,
+                            currentIndex: originalIndex,
+                            isEmpty: shuffledIndex === SIZE * SIZE - 1,
                         }));
+
 
                         time = 0;
                         moves = 0;
@@ -777,7 +811,7 @@
                     prepareNewGameData();
                 } else {
                     const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    const proxiedImageUrl = `https://corsproxy.io/?${imageUrl}`;
+                    const proxiedImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = proxiedImageUrl;
@@ -823,12 +857,12 @@
                 highScoresList.innerHTML = highScores.map((item, index) => {
                     if (!item.album) return ''; // Safety check for corrupted data
                     const thumbUrl = item.album.artworkUrl;
-                    const proxiedThumbUrl = `https://corsproxy.io/?${thumbUrl}`;
+                    const proxiedThumbUrl = `https://corsproxy.io/?${encodeURIComponent(thumbUrl)}`;
                     return `
                         <li class="score-item">
                             <img src="${proxiedThumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
                             <div class="score-details">
-                                <div class="score-song-name">${item.album.collectionName}</div>
+                                <div class="score-song-name"><span>${item.album.collectionName}</span></div>
                                 <div class="score-artist-name">${item.album.artistName}</div>
                                 <div class="score-stats">
                                     <span>${formatTime(item.time)}</span>
@@ -845,6 +879,16 @@
                 if (highScores.length === 0) {
                      highScoresList.innerHTML = '<li>Aún no hay récords. ¡Juega una partida!</li>';
                 }
+
+                // Check for marquee
+                document.querySelectorAll('.score-song-name').forEach(el => {
+                    const span = el.querySelector('span');
+                    if (span.scrollWidth > el.clientWidth) {
+                        el.classList.add('overflowing');
+                    } else {
+                        el.classList.remove('overflowing');
+                    }
+                });
             }
 
             // --- Event Listeners ---
@@ -900,7 +944,10 @@
                 if (gameInProgress) saveGameState();
             });
 
-            scoresBtn.addEventListener('click', () => highScoresModal.classList.add('show'));
+            scoresBtn.addEventListener('click', () => {
+                renderHighScores(); // Rerender to check marquee on open
+                highScoresModal.classList.add('show');
+            });
             modalCloseBtn.addEventListener('click', () => highScoresModal.classList.remove('show'));
             window.addEventListener('click', (event) => {
                 if (event.target === highScoresModal) {
