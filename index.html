@@ -15,7 +15,6 @@
             --on-surface-secondary: #B3B3B3;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --modal-backdrop: rgba(0, 0, 0, 0.7);
         }
 
         html, body {
@@ -35,6 +34,7 @@
             box-sizing: border-box;
             gap: 1rem;
             -webkit-tap-highlight-color: transparent;
+            padding-bottom: 60px; /* Space for the footer */
         }
 
         h1 {
@@ -50,66 +50,6 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
-        }
-        
-        .controls-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-        }
-        
-        .stats, .controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background-color: var(--surface);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-        }
-        
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--on-surface);
-        }
-        
-        .stat-item svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--on-surface-secondary);
-        }
-
-        .control-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s ease;
-        }
-
-        .control-button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .control-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: transparent;
-        }
-
-        .control-button svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--on-surface);
         }
 
         .puzzle-container {
@@ -146,23 +86,6 @@
             transform: scale(0.95);
             opacity: 0.9;
         }
-        
-        #album-info {
-            text-align: center;
-            margin-top: -0.5rem;
-        }
-
-        #album-info h2 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--on-surface);
-        }
-
-        #album-info p {
-            margin: 0.25rem 0 0;
-            color: var(--on-surface-secondary);
-            font-size: 0.9rem;
-        }
 
         .overlay {
             position: absolute;
@@ -170,7 +93,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: var(--modal-backdrop);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
             display: flex;
             flex-direction: column;
@@ -180,7 +103,71 @@
             font-size: 1.5rem;
             font-weight: 600;
             z-index: 10;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .controls-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        
+        .stats, .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--on-surface);
+        }
+        
+        .stat-item svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--on-surface-secondary);
+        }
+
+        .control-button {
+            background: none;
+            border: none;
             cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .control-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-button:disabled svg {
+            fill: #555;
+        }
+        
+        .control-button:disabled {
+            cursor: not-allowed;
+            background-color: transparent;
+        }
+
+        .control-button svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface);
         }
         
         #new-game-btn {
@@ -192,65 +179,70 @@
             font-size: 1rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            width: 100%;
+            transition: background-color 0.2s ease;
         }
-        
+
         #new-game-btn:hover {
             background-color: var(--primary-hover);
-            transform: scale(1.02);
         }
 
-        /* High Scores Modal */
-        .modal-backdrop {
+        .album-info {
+            text-align: center;
+            color: var(--on-surface);
+        }
+        .album-info h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        .album-info p {
+            margin: 0.25rem 0 0;
+            font-size: 1rem;
+            color: var(--on-surface-secondary);
+        }
+
+        /* Modal Styles */
+        .modal {
             position: fixed;
-            top: 0;
+            z-index: 100;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background-color: var(--modal-backdrop);
-            z-index: 20;
-            display: flex;
-            align-items: center;
+            background-color: rgba(0,0,0,0.6);
+            display: none; /* Hidden by default */
             justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            align-items: center;
         }
-
-        .modal-backdrop.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
         .modal-content {
             background-color: var(--surface);
             padding: 1.5rem;
             border-radius: 12px;
             width: 90%;
-            max-width: 480px;
+            max-width: 400px;
             box-shadow: 0 8px 32px var(--shadow-color);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
         }
-        
-        .modal-backdrop.visible .modal-content {
-            transform: scale(1);
-        }
-        
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
-        
         .modal-header h2 {
-             color: var(--on-surface);
-             margin: 0;
+            margin: 0;
+            color: var(--on-surface);
         }
-
-        .high-scores ol {
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .close-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface-secondary);
+        }
+        .high-scores-list {
             list-style-type: none;
             padding: 0;
             margin: 0;
@@ -258,27 +250,24 @@
             flex-direction: column;
             gap: 0.5rem;
         }
-
-        .high-scores li {
+        .high-scores-list li {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0.75rem;
-            border-radius: 8px;
+            border-radius: 4px;
             background-color: rgba(0,0,0,0.2);
             color: var(--on-surface-secondary);
         }
-        
-        .high-scores li:nth-child(1) { color: #FFD700; font-weight: 600; }
-        .high-scores li:nth-child(2) { color: #C0C0C0; }
-        .high-scores li:nth-child(3) { color: #CD7F32; }
-        
-        .high-scores .score-details {
+        .high-scores-list li .score-details {
             display: flex;
             gap: 1rem;
             align-items: center;
         }
-
+        .high-scores-list li:nth-child(1) { color: #FFD700; font-weight: 600; }
+        .high-scores-list li:nth-child(2) { color: #C0C0C0; }
+        .high-scores-list li:nth-child(3) { color: #CD7F32; }
+        
         .delete-score-btn {
             background: none;
             border: none;
@@ -292,24 +281,38 @@
             transition: fill 0.2s ease;
         }
         .delete-score-btn:hover svg {
-            fill: #ff6b6b;
+            fill: #f44336;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--surface);
+            color: var(--on-surface-secondary);
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            box-shadow: 0 -2px 10px var(--shadow-color);
+            z-index: 50;
         }
 
     </style>
 </head>
 <body>
-    <audio id="audio-player" loop crossorigin="anonymous"></audio>
+    <audio id="audio-player" loop crossorigin="anonymous" playsinline></audio>
 
     <div class="main-container">
         <h1>Puzzletunes</h1>
 
         <div class="controls-stats">
             <div class="stats">
-                <div class="stat-item">
+                <div class="stat-item" title="Tiempo">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg>
                     <span id="timer">00:00</span>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" title="Movimientos">
                     <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
                     <span id="moves">0</span>
                 </div>
@@ -331,40 +334,32 @@
 
         <div class="puzzle-container" id="puzzle-container"></div>
         
-        <div id="album-info">
+        <div class="album-info">
             <h2 id="album-name">&nbsp;</h2>
             <p id="artist-name"></p>
         </div>
 
         <button id="new-game-btn">Nuevo Juego</button>
+
     </div>
-    
-    <div id="scores-modal" class="modal-backdrop">
+
+    <!-- High Scores Modal -->
+    <div id="scores-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Mejores Tiempos</h2>
-                <button id="close-scores-btn" class="control-button" title="Cerrar">
+                <button id="close-modal-btn" class="close-btn">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
             </div>
-            <div class="high-scores">
-                <ol id="high-scores-list"></ol>
-            </div>
+            <ol id="high-scores-list" class="high-scores-list"></ol>
         </div>
     </div>
+    
+    <footer>Game By: Ale Fernández PY-2025 - v01</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const SIZE = 3;
-            let pieces = [];
-            let moves = 0;
-            let time = 0;
-            let timerInterval = null;
-            let isPaused = false;
-            let isMuted = true;
-            let currentAlbum = null;
-
-            // DOM Elements
             const puzzleContainer = document.getElementById('puzzle-container');
             const timerEl = document.getElementById('timer');
             const movesEl = document.getElementById('moves');
@@ -373,17 +368,27 @@
             const audioBtn = document.getElementById('audio-btn');
             const scoresBtn = document.getElementById('scores-btn');
             const scoresModal = document.getElementById('scores-modal');
-            const closeScoresBtn = document.getElementById('close-scores-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
             const highScoresList = document.getElementById('high-scores-list');
             const audioEl = document.getElementById('audio-player');
             const albumNameEl = document.getElementById('album-name');
             const artistNameEl = document.getElementById('artist-name');
+
             const pauseIcon = document.getElementById('pause-icon');
             const playIcon = document.getElementById('play-icon');
             const muteIcon = document.getElementById('mute-icon');
             const unmuteIcon = document.getElementById('unmute-icon');
-            
-            // --- Game State & Timer ---
+
+            const SIZE = 3;
+            let pieces = [];
+            let moves = 0;
+            let time = 0;
+            let timerInterval = null;
+            let isPaused = false;
+            let isMuted = true;
+            let currentAlbum = null;
+            let gameInProgress = false;
+
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
                 const secs = (seconds % 60).toString().padStart(2, '0');
@@ -396,6 +401,7 @@
                     if (!isPaused) {
                         time++;
                         timerEl.textContent = formatTime(time);
+                        if(gameInProgress) saveGameState();
                     }
                 }, 1000);
             }
@@ -404,15 +410,29 @@
                 clearInterval(timerInterval);
                 timerInterval = null;
             }
-            
-            // --- Local Storage ---
+
+            function updateUI() {
+                timerEl.textContent = formatTime(time);
+                movesEl.textContent = moves;
+                pauseIcon.style.display = isPaused ? 'none' : 'block';
+                playIcon.style.display = isPaused ? 'block' : 'none';
+                muteIcon.style.display = isMuted ? 'block' : 'none';
+                unmuteIcon.style.display = isMuted ? 'none' : 'block';
+                if(currentAlbum) {
+                    albumNameEl.textContent = currentAlbum.collectionName;
+                    artistNameEl.textContent = currentAlbum.artistName;
+                }
+                renderHighScores();
+            }
+
             function saveGameState() {
-                if (!currentAlbum) return;
+                if (!currentAlbum || !gameInProgress) return;
                 const state = {
                     pieces: pieces.map(p => p.originalIndex),
-                    indices: pieces.map(p => p.currentIndex),
                     moves,
                     time,
+                    isPaused,
+                    isMuted,
                     album: currentAlbum
                 };
                 localStorage.setItem('puzzletunesGameState', JSON.stringify(state));
@@ -422,16 +442,18 @@
                 const savedState = localStorage.getItem('puzzletunesGameState');
                 if (savedState) {
                     const state = JSON.parse(savedState);
-                    pieces = state.pieces.map((originalIndex, i) => ({
+                    pieces = state.pieces.map((originalIndex, currentIndex) => ({
                         el: null,
                         originalIndex,
-                        currentIndex: state.indices[i],
+                        currentIndex,
                         isEmpty: originalIndex === SIZE * SIZE - 1
                     }));
                     moves = state.moves;
                     time = state.time;
+                    isMuted = state.isMuted;
                     currentAlbum = state.album;
-                    isPaused = true; 
+                    isPaused = true;
+                    gameInProgress = true;
                     return true;
                 }
                 return false;
@@ -440,52 +462,15 @@
             function clearGameState() {
                 localStorage.removeItem('puzzletunesGameState');
             }
-            
-            // --- UI Updates ---
-            function updateUI() {
-                timerEl.textContent = formatTime(time);
-                movesEl.textContent = moves;
-                pauseIcon.style.display = isPaused ? 'none' : 'block';
-                playIcon.style.display = isPaused ? 'block' : 'none';
-                muteIcon.style.display = isMuted ? 'block' : 'none';
-                unmuteIcon.style.display = isMuted ? 'none' : 'block';
-                
-                if (currentAlbum) {
-                    albumNameEl.textContent = currentAlbum.collectionName;
-                    artistNameEl.textContent = currentAlbum.artistName;
-                } else {
-                    albumNameEl.innerHTML = '&nbsp;';
-                    artistNameEl.textContent = '';
-                }
-                renderHighScores();
-            }
 
-            function showOverlay(text, clickable = false) {
-                hideOverlay();
-                const overlay = document.createElement('div');
-                overlay.className = 'overlay';
-                overlay.innerHTML = text;
-                if (clickable) {
-                     overlay.style.cursor = "pointer";
-                     overlay.addEventListener('click', () => togglePause(), { once: true });
-                }
-                puzzleContainer.appendChild(overlay);
-            }
-
-            function hideOverlay() {
-                const overlay = puzzleContainer.querySelector('.overlay');
-                if (overlay) overlay.remove();
-            }
-
-            // --- Board Logic ---
             function renderBoard() {
                 puzzleContainer.innerHTML = '';
-                const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
-                const proxyImageUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
-                
-                let sortedPieces = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
+                if (!currentAlbum) return;
 
-                for (const pieceData of sortedPieces) {
+                const imageUrl = currentAlbum.proxiedArtworkUrl;
+                
+                for (let i = 0; i < SIZE * SIZE; i++) {
+                    const pieceData = pieces.find(p => p.currentIndex === i);
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece');
                     
@@ -494,19 +479,19 @@
                     } else {
                         const row = Math.floor(pieceData.originalIndex / SIZE);
                         const col = pieceData.originalIndex % SIZE;
-                        pieceEl.style.backgroundImage = `url(${proxyImageUrl})`;
+                        pieceEl.style.backgroundImage = `url(${imageUrl})`;
                         pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
                     }
                     
-                    pieceEl.dataset.index = pieceData.currentIndex;
-                    pieceEl.addEventListener('click', () => onPieceClick(pieceData.currentIndex));
+                    pieceEl.dataset.index = i;
+                    pieceEl.addEventListener('click', () => onPieceClick(i));
                     pieceData.el = pieceEl;
                     puzzleContainer.appendChild(pieceEl);
                 }
             }
             
             function onPieceClick(clickedIndex) {
-                if (isPaused || checkWin()) return;
+                if (isPaused || !gameInProgress) return;
 
                 const emptyPiece = pieces.find(p => p.isEmpty);
                 const clickedPiece = pieces.find(p => p.currentIndex === clickedIndex);
@@ -524,10 +509,9 @@
                     swapPieces(clickedPiece, emptyPiece);
                     moves++;
                     updateUI();
+                    saveGameState();
                     if (checkWin()) {
                         handleWin();
-                    } else {
-                        saveGameState();
                     }
                 }
             }
@@ -544,261 +528,278 @@
             }
 
             function checkWin() {
-                if (!pieces || pieces.length === 0) return false;
                 return pieces.every(p => p.currentIndex === p.originalIndex);
             }
 
             function handleWin() {
                 stopTimer();
                 isPaused = true;
-                setTimeout(() => { 
-                     showOverlay(`¡Ganaste!<br>${formatTime(time)} / ${moves} movs`);
-                }, 200);
+                gameInProgress = false;
+                showOverlay(`¡Ganaste!<br>${formatTime(time)} / ${moves} mov.`);
                 saveScore(time, moves);
                 clearGameState();
                 audioEl.pause();
-                updateUI();
             }
 
-            // --- High Scores ---
-            function saveScore(score, moveCount) {
-                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
-                const date = new Date().toISOString();
-                highScores.push({ score, moves: moveCount, date });
-                highScores.sort((a, b) => a.score - b.score || a.moves - b.moves);
+            function saveScore(score, moves) {
+                const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                const date = new Date().toLocaleDateString('es-ES');
+                highScores.push({ score, moves, date });
+                highScores.sort((a, b) => {
+                    if (a.score !== b.score) {
+                        return a.score - b.score;
+                    }
+                    return a.moves - b.moves;
+                });
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores.slice(0, 10)));
-                renderHighScores();
-            }
-
-            function deleteScore(date) {
-                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
-                highScores = highScores.filter(item => item.date !== date);
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
             }
 
             function renderHighScores() {
                 const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
-                highScoresList.innerHTML = highScores.map((item, index) => `
-                    <li>
-                        <span class="score-details">
-                            <span>#${index + 1}</span>
-                            <span>${new Date(item.date).toLocaleDateString('es-ES')}</span>
-                        </span>
-                        <span class="score-details">
-                             <span>${formatTime(item.score)}</span>
-                             <span>(${item.moves} movs)</span>
-                        </span>
-                        <button class="delete-score-btn" data-date="${item.date}" title="Eliminar Récord">
-                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
-                        </button>
-                    </li>`
-                ).join('');
+                highScoresList.innerHTML = highScores
+                    .map((item, index) => `
+                        <li>
+                            <div class="score-details">
+                               <span>#${index + 1}</span>
+                               <span>${item.date}</span>
+                               <span>${formatTime(item.score)}</span>
+                               <span>${item.moves} mov.</span>
+                            </div>
+                            <button class="delete-score-btn" data-index="${index}" title="Eliminar Récord">
+                                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                            </button>
+                        </li>`)
+                    .join('');
                 if (highScores.length === 0) {
-                     highScoresList.innerHTML = '<li><span>Aún no hay récords. ¡Juega una partida!</span></li>';
+                     highScoresList.innerHTML = '<li><span>Aún no hay récords.</span></li>';
                 }
+
+                document.querySelectorAll('.delete-score-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const index = e.currentTarget.dataset.index;
+                        deleteScore(index);
+                    });
+                });
             }
 
-            // --- API Fetching ---
-            async function fetchRandomAlbum() {
-                const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae', 'metal', 'funk'];
-                let albumData = null;
-                for (let i = 0; i < 5; i++) { // Retry loop
-                    try {
-                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-                        const searchUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
-                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
-                        const response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error('Network response was not ok.');
-                        const data = await response.json();
-                        if (data && data.results && data.results.length > 0) {
-                            const validResults = data.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
-                            if (validResults.length > 0) {
-                                albumData = validResults[Math.floor(Math.random() * validResults.length)];
-                                break;
-                            }
-                        }
-                    } catch (error) { console.error(`Error fetching album (attempt ${i + 1}):`, error); }
-                }
-                return albumData;
+            function deleteScore(index) {
+                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                highScores.splice(index, 1);
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
+                renderHighScores();
             }
 
-            async function fetchAndSetAudio(artist, album) {
-                 try {
-                    const searchTerm = `${artist} ${album}`;
-                    const apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&entity=song&limit=10`;
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+            function showOverlay(text) {
+                hideOverlay();
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+                overlay.innerHTML = text;
+                puzzleContainer.appendChild(overlay);
+            }
+
+            function hideOverlay() {
+                const overlay = puzzleContainer.querySelector('.overlay');
+                if (overlay) overlay.remove();
+            }
+
+            async function fetchAndSetAudio() {
+                audioBtn.disabled = true;
+                if (!currentAlbum) return;
+
+                try {
+                    const searchTerm = `${currentAlbum.artistName} ${currentAlbum.collectionName}`;
+                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=10`;
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
+
                     const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error('Network response for audio was not ok');
+                    if (!response.ok) throw new Error('Network response was not ok');
+
                     const data = await response.json();
-                    // More reliable find: just get the first song with a preview
                     const songWithPreview = data.results.find(song => song.previewUrl);
+
                     if (songWithPreview) {
                         currentAlbum.previewUrl = songWithPreview.previewUrl;
                         audioEl.src = currentAlbum.previewUrl;
-                        audioBtn.disabled = false;
                     } else {
                         console.log('No audio preview found for this album.');
-                        audioBtn.disabled = true;
                     }
                 } catch (error) {
                     console.error('Error fetching audio data:', error);
-                    audioBtn.disabled = true;
                 }
             }
 
-            // --- Game Initialization & Flow ---
+
             async function prepareNewGameData() {
                 stopTimer();
                 hideOverlay();
                 showOverlay('Cargando portada...');
                 
-                const album = await fetchRandomAlbum();
-                if (album) {
+                const genres = ['rock', 'pop', 'jazz', 'classical', 'hip-hop', 'electronic', 'country', 'reggae'];
+                let albumData = null;
+                let attempts = 5;
+
+                while (attempts > 0 && !albumData) {
+                    try {
+                        const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                        const apiUrl = `https://itunes.apple.com/search?term=${randomGenre}&media=music&entity=album&limit=50`;
+                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+                        const response = await fetch(proxyUrl);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+                        
+                        const validResults = data.results.filter(r => r.artworkUrl100 && r.artistName && r.collectionName);
+                        if (validResults.length > 0) {
+                            albumData = validResults[Math.floor(Math.random() * validResults.length)];
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching album data (attempt ${6 - attempts}):`, error);
+                    }
+                    attempts--;
+                }
+
+                if (albumData) {
                     currentAlbum = {
-                        artistName: album.artistName,
-                        collectionName: album.collectionName,
-                        artworkUrl: album.artworkUrl100
+                        artistName: albumData.artistName,
+                        collectionName: albumData.collectionName,
+                        artworkUrl: albumData.artworkUrl100.replace('100x100', '600x600'),
+                        proxiedArtworkUrl: `https://corsproxy.io/?${encodeURIComponent(albumData.artworkUrl100.replace('100x100', '600x600'))}`
                     };
-                    
+
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    img.src = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
+                    img.src = currentAlbum.proxiedArtworkUrl;
                     
                     img.onload = () => {
                         hideOverlay();
-                        const finalIndex = SIZE * SIZE - 1;
-                        let indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                        const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                         
-                        // Proper shuffle algorithm to ensure solvability
                         let solvable = false;
                         while (!solvable) {
-                            indices = Array.from({ length: SIZE * SIZE }, (_, i) => i)
-                                .map(value => ({ value, sort: Math.random() }))
-                                .sort((a, b) => a.sort - b.sort)
-                                .map(({ value }) => value);
-
+                             for (let i = indices.length - 2; i > 0; i--) { // -2 because we dont shuffle the empty slot
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [indices[i], indices[j]] = [indices[j], indices[i]];
+                            }
                             let inversions = 0;
-                            for (let i = 0; i < indices.length - 1; i++) {
-                                for (let j = i + 1; j < indices.length; j++) {
-                                    if (indices[i] !== finalIndex && indices[j] !== finalIndex && indices[i] > indices[j]) {
-                                        inversions++;
-                                    }
+                            for (let i = 0; i < SIZE * SIZE - 1; i++) {
+                                for (let j = i + 1; j < SIZE * SIZE - 1; j++) {
+                                    if (indices[i] > indices[j]) inversions++;
                                 }
                             }
-                             solvable = inversions % 2 === 0;
+                            if (inversions % 2 === 0) solvable = true;
                         }
-
+                        
                         pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                             el: null,
                             originalIndex: i,
                             currentIndex: indices.indexOf(i),
-                            isEmpty: i === finalIndex
+                            isEmpty: i === SIZE * SIZE - 1
                         }));
 
                         time = 0;
                         moves = 0;
                         isPaused = false;
-                        
+                        gameInProgress = true;
+
                         renderBoard();
                         startTimer();
                         updateUI();
+                        fetchAndSetAudio();
                         saveGameState();
-                        fetchAndSetAudio(currentAlbum.artistName, currentAlbum.collectionName);
                     };
-                    img.onerror = () => { showOverlay('Error al cargar imagen. Intenta de nuevo.'); };
+                    img.onerror = () => {
+                        showOverlay('Error al cargar imagen. Intenta de nuevo.');
+                        gameInProgress = false;
+                    };
                 } else {
                     showOverlay('No se pudo cargar una portada.<br>Revisa tu conexión e intenta de nuevo.');
+                    gameInProgress = false;
                 }
             }
-
+            
             function initGame() {
                 if (!loadGameState()) {
                     prepareNewGameData();
                 } else {
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    const imageUrl = currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    img.src = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
+                    img.src = currentAlbum.proxiedArtworkUrl;
                     img.onload = () => {
                         renderBoard();
                         startTimer();
                         updateUI();
                         if(isPaused) {
-                           showOverlay("Pausado. ¡Toca para reanudar!", true);
+                           showOverlay("Pausado");
                         }
-                        // Use saved audio URL if available, otherwise fetch it
                         if (currentAlbum.previewUrl) {
                             audioEl.src = currentAlbum.previewUrl;
-                            audioBtn.disabled = false;
                         } else {
-                            fetchAndSetAudio(currentAlbum.artistName, currentAlbum.collectionName);
+                            fetchAndSetAudio(); // Fetch if not present in saved state
                         }
                     };
                      img.onerror = () => {
-                        showOverlay('Error al cargar.<br>Inicia un nuevo juego.');
+                        showOverlay('Error al cargar imagen guardada. Inicia un nuevo juego.');
                      };
                 }
             }
             
-            // --- Event Listeners ---
-            function togglePause() {
-                if(!currentAlbum || checkWin()) return;
+            newGameBtn.addEventListener('click', () => {
+                if (gameInProgress) {
+                    if (!confirm("¿Estás seguro de que quieres empezar un nuevo juego? Perderás tu progreso actual.")) {
+                        return;
+                    }
+                }
+                clearGameState();
+                audioEl.pause();
+                audioEl.src = '';
+                audioBtn.disabled = true;
+                currentAlbum = null;
+                gameInProgress = false;
+                prepareNewGameData();
+            });
+
+            pauseBtn.addEventListener('click', () => {
+                if(!currentAlbum || !gameInProgress) return;
                 isPaused = !isPaused;
                 if(isPaused) {
                     stopTimer();
-                    showOverlay("Pausado", false);
+                    showOverlay("Pausado");
                     audioEl.pause();
                 } else {
                     hideOverlay();
                     startTimer();
-                    if (!isMuted && audioEl.src) {
-                        audioEl.play().catch(e => console.error("Audio resume failed:", e));
+                    if (!isMuted && audioEl.src && audioEl.readyState >= 3) {
+                       audioEl.play().catch(e => console.error("Error playing on resume:", e));
                     }
                 }
                 updateUI();
-            }
-
-            newGameBtn.addEventListener('click', () => {
-                if (confirm('¿Estás seguro de que quieres empezar un nuevo juego? Se perderá tu progreso actual.')) {
-                    clearGameState();
-                    audioEl.pause();
-                    audioEl.src = '';
-                    currentAlbum = null;
-                    audioBtn.disabled = true;
-                    prepareNewGameData();
-                }
+                saveGameState();
             });
 
-            pauseBtn.addEventListener('click', togglePause);
-
+            audioEl.addEventListener('canplaythrough', () => {
+                audioBtn.disabled = false;
+            });
+            
             audioBtn.addEventListener('click', () => {
+                if(audioBtn.disabled) return;
                 isMuted = !isMuted;
                 if (!isMuted && audioEl.src) {
                     audioEl.play().catch(error => {
-                        console.error("Audio playback failed on unmute:", error);
-                        isMuted = true;
+                        console.error("Audio playback failed on user interaction:", error);
+                        isMuted = true; // Revert state if play fails
                     });
                 } else {
                     audioEl.pause();
                 }
                 updateUI();
+                if(currentAlbum) saveGameState();
             });
             
-            scoresBtn.addEventListener('click', () => scoresModal.classList.add('visible'));
-            closeScoresBtn.addEventListener('click', () => scoresModal.classList.remove('visible'));
-            scoresModal.addEventListener('click', (e) => {
-                if(e.target === scoresModal) scoresModal.classList.remove('visible');
-            });
-
-            highScoresList.addEventListener('click', (e) => {
-                const button = e.target.closest('.delete-score-btn');
-                if (button) {
-                    const dateToDelete = button.dataset.date;
-                    if(confirm('¿Estás seguro de que quieres eliminar este récord?')) {
-                       deleteScore(dateToDelete);
-                    }
+            scoresBtn.addEventListener('click', () => scoresModal.style.display = 'flex');
+            closeModalBtn.addEventListener('click', () => scoresModal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === scoresModal) {
+                    scoresModal.style.display = 'none';
                 }
             });
 
