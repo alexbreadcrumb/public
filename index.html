@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -186,6 +187,7 @@
             color: var(--on-background);
             outline: none;
             transition: border-color 0.2s ease;
+            min-width: 0; /* Fix for flexbox shrinking issue */
         }
         #artist-search-input:focus {
             border-color: var(--primary);
@@ -361,6 +363,14 @@
             z-index: 50;
         }
 
+        /* Responsive Styles for Mobile */
+        @media (max-width: 480px) {
+            .search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -421,7 +431,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.3</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v01.4</footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -749,11 +759,14 @@
 
                 if (playableData) {
                     const { albumInfo, songInfo } = playableData;
+                    const artworkUrl = albumInfo.artworkUrl100.replace('100x100', '600x600');
+                    const proxiedArtworkUrl = `https://corsproxy.io/?${encodeURIComponent(artworkUrl)}`;
+                    
                     currentAlbum = {
                         artistName: albumInfo.artistName,
                         collectionName: albumInfo.collectionName,
-                        artworkUrl: albumInfo.artworkUrl100.replace('100x100', '600x600'),
-                        proxiedArtworkUrl: `https://corsproxy.io/?${encodeURIComponent(albumInfo.artworkUrl100.replace('100x100', '600x600'))}`,
+                        artworkUrl: artworkUrl,
+                        proxiedArtworkUrl: proxiedArtworkUrl,
                         previewUrl: songInfo.previewUrl,
                         trackName: songInfo.trackName
                     };
@@ -784,11 +797,12 @@
                            if (inversions % 2 === 0) break;
                         } while (true);
                         
-                        pieces = shuffledIndices.map((originalIndex, currentIndex) => ({
+                        // CORRECTED: Simplified and correct piece initialization
+                        pieces = shuffledIndices.map((originalIdx, currentIdx) => ({
                             el: null,
-                            originalIndex: originalIndex,
-                            currentIndex: currentIndex,
-                            isEmpty: originalIndex === SIZE * SIZE - 1
+                            originalIndex: originalIdx,
+                            currentIndex: currentIdx,
+                            isEmpty: originalIdx === SIZE * SIZE - 1
                         }));
 
                         time = 0;
