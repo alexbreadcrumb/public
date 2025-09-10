@@ -137,7 +137,7 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
-            transition: box-shadow 0.5s ease-out;
+            transition: box-shadow 0.1s ease-out;
         }
         
         .puzzle-container.neon-border {
@@ -148,12 +148,6 @@
                 0 0 35px var(--neon-color-2),
                 0 0 50px var(--neon-color-3);
         }
-
-        .puzzle-container.beat {
-             transform: scale(1.015);
-             transition: transform 0.1s ease-out;
-        }
-
 
         .puzzle-piece {
             width: 100%;
@@ -999,19 +993,44 @@
             }
 
             function pulseAnimationLoop() {
+                if (!state.analyser) return;
+
                 const bufferLength = state.analyser.frequencyBinCount;
                 const dataArray = new Uint8Array(bufferLength);
                 state.analyser.getByteFrequencyData(dataArray);
 
-                const bass = dataArray.slice(0, 5).reduce((a, b) => a + b) / 5;
-                if (bass > 180) { // Threshold for beat detection
-                    elements.puzzleContainer.classList.add('beat');
-                    setTimeout(() => {
-                        elements.puzzleContainer.classList.remove('beat');
-                    }, 100);
-                } else {
-                     elements.puzzleContainer.style.transform = 'scale(1)';
+                const bassFrequencies = dataArray.slice(1, 4);
+                const bassIntensity = bassFrequencies.reduce((sum, value) => sum + value, 0) / bassFrequencies.length;
+
+                const threshold = 120;
+                const maxIntensity = 255;
+                let pulseFactor = 0;
+
+                if (bassIntensity > threshold) {
+                    pulseFactor = (bassIntensity - threshold) / (maxIntensity - threshold);
+                    pulseFactor = Math.min(pulseFactor, 1);
                 }
+
+                const c1 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-1').trim();
+                const c2 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-2').trim();
+                const c3 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-3').trim();
+                
+                if (!c1) { // No need to check all, if one is missing the effect is off
+                    state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
+                    return;
+                }
+
+                const pulseMultiplier = 1 + (pulseFactor * 0.8);
+
+                const newBoxShadow = `
+                    0 0 ${5 * pulseMultiplier}px ${c1},
+                    0 0 ${10 * pulseMultiplier}px ${c1},
+                    0 0 ${20 * pulseMultiplier}px ${c2},
+                    0 0 ${35 * pulseMultiplier}px ${c2},
+                    0 0 ${50 * pulseMultiplier}px ${c3}
+                `;
+
+                elements.puzzleContainer.style.boxShadow = newBoxShadow;
                 
                 state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
             }
@@ -1028,8 +1047,7 @@
                     state.animationFrameId = null;
                 }
                 elements.puzzleContainer.classList.remove('neon-border');
-                elements.puzzleContainer.classList.remove('beat');
-                elements.puzzleContainer.style.transform = 'scale(1)';
+                elements.puzzleContainer.style.boxShadow = ''; // Reset inline style
             }
             // --- End Audio Analysis ---
 
