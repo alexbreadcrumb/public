@@ -363,11 +363,19 @@
         .score-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
             padding: 0.75rem;
             border-radius: 8px;
             background-color: rgba(0,0,0,0.2);
             margin-bottom: 0.5rem;
+        }
+        .score-rank {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--on-surface-secondary);
+            width: 2rem;
+            text-align: center;
+            flex-shrink: 0;
         }
         .score-item:last-child { margin-bottom: 0; }
         .score-thumbnail {
@@ -504,7 +512,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.34</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.36</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -721,24 +729,28 @@
                 const colors = paletteColors.length > 0 ? paletteColors : ['#1DB954', '#FFFFFF', '#1ED760'];
 
                 const defaults = {
-                    origin: { x: 0.5, y: 0.5 }, // Center of the screen
+                    origin: { x: 0.5, y: 0.5 },
                     shapes: ['♪', '♫', '♬'],
-                    scalar: 1.5, // Make notes a bit smaller and sharper
                     colors: colors,
-                    disableForReducedMotion: true
+                    disableForReducedMotion: true,
+                    gravity: 0.5, // give them a bit of weight
+                    scalar: 2.5, // Make notes bigger
                 };
 
                 function fire(particleCount, options) {
                     confetti({
                         ...defaults,
                         ...options,
-                        particleCount: particleCount
+                        particleCount: Math.floor(particleCount)
                     });
                 }
                 
-                fire(100, { spread: 120, startVelocity: 45, decay: 0.92 });
-                fire(80, { spread: 80, startVelocity: 35, decay: 0.9 });
-                fire(120, { spread: 180, startVelocity: 25, decay: 0.94, scalar: 1 });
+                // Big initial burst
+                fire(200, { spread: 180, startVelocity: 55, decay: 0.9 });
+                // A second wave for more depth
+                fire(150, { spread: 120, startVelocity: 45, decay: 0.91, scalar: 2 });
+                // A wider, slower burst for background fill
+                fire(250, { spread: 360, startVelocity: 30, decay: 0.92, scalar: 1.5 });
             }
 
             function handleWin() {
@@ -757,21 +769,22 @@
             }
 
             function saveScore() {
-                // 1. Get current scores or initialize an empty array.
+                if (!state.currentAlbum) {
+                    console.error("Attempted to save score without a valid album.");
+                    return;
+                }
+                
                 let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
                 
-                // 2. Create the new score object.
                 const newScore = {
                     time: state.time,
                     moves: state.moves,
-                    album: { ...state.currentAlbum }, // Use spread to avoid reference issues
+                    album: { ...state.currentAlbum },
                     id: Date.now()
                 };
 
-                // 3. Add the new score to the list.
                 highScores.push(newScore);
 
-                // 4. Sort the list to have the best scores first (lowest time, then lowest moves).
                 highScores.sort((a, b) => {
                     if (a.time !== b.time) {
                         return a.time - b.time;
@@ -779,19 +792,16 @@
                     return a.moves - b.moves;
                 });
 
-                // 5. Keep only the top 10 scores.
                 const topTenScores = highScores.slice(0, 10);
 
-                // 6. Save the updated list back to localStorage.
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(topTenScores));
                 
-                // 7. Re-render the high scores list in the modal.
                 renderHighScores();
             }
 
             function renderHighScores() {
                 const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
-                elements.highScoresList.innerHTML = highScores.map(item => {
+                elements.highScoresList.innerHTML = highScores.map((item, index) => {
                     if (!item || !item.album || !item.album.artworkUrl) {
                         console.error('Invalid score item found:', item);
                         return '';
@@ -801,6 +811,7 @@
                     
                     const html = `
                         <li class="score-item">
+                            <span class="score-rank">${index + 1}</span>
                             <img src="${thumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
                             <div class="score-info">
                                 <p class="score-artist">${item.album.artistName}</p>
