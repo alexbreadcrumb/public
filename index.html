@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -476,7 +477,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.19</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.20</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -582,7 +583,6 @@
                 elements.puzzleContainer.innerHTML = '';
                 if (!state.currentAlbum) return;
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                const proxiedImageUrl = `https://corsproxy.io/?${(imageUrl)}`;
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceData = state.pieces.find(p => p.currentIndex === i);
@@ -596,7 +596,7 @@
                     } else {
                         const row = Math.floor(pieceData.originalIndex / SIZE);
                         const col = pieceData.originalIndex % SIZE;
-                        pieceEl.style.backgroundImage = `url(${proxiedImageUrl})`;
+                        pieceEl.style.backgroundImage = `url(${imageUrl})`;
                         pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
                     }
                     
@@ -685,12 +685,12 @@
                         console.error('Invalid score item found:', item);
                         return '';
                     }
-                    const proxiedThumbUrl = `https://corsproxy.io/?${(item.album.artworkUrl)}`;
+                    const thumbUrl = item.album.artworkUrl;
                     const wrapperId = `marquee-wrapper-${item.id}`;
                     
                     const html = `
                         <li class="score-item">
-                            <img src="${proxiedThumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
+                            <img src="${thumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
                             <div class="score-info">
                                 <p class="score-artist">${item.album.artistName}</p>
                                 <div class="marquee-wrapper" id="${wrapperId}">
@@ -762,7 +762,7 @@
                 
                 const searchAttribute = isArtistSearch ? '&attribute=artistTerm' : '';
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=200${searchAttribute}`;
-                const proxyUrl = `https://corsproxy.io/?${(searchUrl)}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
 
                 try {
                     const response = await fetch(proxyUrl);
@@ -816,7 +816,7 @@
             
             async function findSuggestions(searchTerm) {
                 const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`;
-                const proxyUrl = `https://corsproxy.io/?${(searchUrl)}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
                 try {
                     const response = await fetch(proxyUrl);
                     if (!response.ok) return [];
@@ -858,11 +858,10 @@
                 if (album) {
                     state.currentAlbum = album;
                     const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    const proxiedImageUrl = `https://corsproxy.io/?${(imageUrl)}`;
                     
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    img.src = proxiedImageUrl;
+                    img.src = imageUrl;
                     
                     img.onload = () => {
                         const colorThief = new ColorThief();
@@ -935,10 +934,10 @@
 
             function initGame() {
                 if (loadGameState() && state.gameInProgress) {
-                    const proxiedImageUrl = `https://corsproxy.io/?${(state.currentAlbum.artworkUrl.replace('100x100', '600x600'))}`;
+                    const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    img.src = proxiedImageUrl;
+                    img.src = imageUrl;
                     img.onload = () => {
                          const colorThief = new ColorThief();
                         const palette = colorThief.getPalette(img, 3);
@@ -1005,24 +1004,34 @@
                 const dataArray = new Uint8Array(bufferLength);
                 state.analyser.getByteFrequencyData(dataArray);
                 
-                const currentEnergy = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-
                 // --- NEW Beat Detection Logic ---
-                const averageEnergy = energyHistory.reduce((sum, value) => sum + value, 0) / energyHistory.length;
+                // 1. Focus on bass frequencies for more reliable beat detection.
+                const bassData = dataArray.slice(0, 10); 
+                const currentEnergy = bassData.reduce((sum, value) => sum + value, 0) / bassData.length;
 
+                // 2. Update energy history buffer
                 energyHistory[historyIndex] = currentEnergy;
                 historyIndex = (historyIndex + 1) % energyHistory.length;
-                
-                const beatThreshold = 1.35; // A 35% jump above the recent average energy qualifies as a beat.
+
+                // 3. Calculate local average energy over the history buffer
+                const averageEnergy = energyHistory.reduce((sum, value) => sum + value, 0) / energyHistory.length;
+
+                // 4. Calculate the variance of the energy history. Variance helps determine how dynamic the sound is.
+                const variance = energyHistory.reduce((sum, value) => sum + Math.pow(value - averageEnergy, 2), 0) / energyHistory.length;
+
+                // 5. Calculate a dynamic threshold constant based on variance.
+                const dynamicThreshold = Math.max(1.3, -0.0025714 * variance + 1.5142857);
+
+                // 6. Check for a beat
                 const minEnergyThreshold = 15; // Ignore beats in very quiet sections.
                 const cooldown = 200; // Minimum ms between beats to feel rhythmic.
                 const now = Date.now();
 
-                if (now - lastBeatTime > cooldown && currentEnergy > averageEnergy * beatThreshold && currentEnergy > minEnergyThreshold) {
+                if (now - lastBeatTime > cooldown && currentEnergy > averageEnergy * dynamicThreshold && currentEnergy > minEnergyThreshold) {
                     pulseMultiplier = 3.5;
                     lastBeatTime = now;
                 } else {
-                    // Decay the multiplier back to the base value (1) for the "return to base" effect.
+                    // Decay the multiplier back to the base value
                     pulseMultiplier = Math.max(1, pulseMultiplier * 0.90); 
                 }
                 // --- End NEW Beat Detection ---
