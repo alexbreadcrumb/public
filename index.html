@@ -137,7 +137,6 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
-            transition: box-shadow 0.1s ease-out;
         }
         
         .puzzle-container.neon-border {
@@ -476,7 +475,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.17</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.18</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -982,6 +981,9 @@
             }
 
             // --- Audio Analysis Functions ---
+            let pulseMultiplier = 1;
+            let lastEnergy = 0;
+
             function initAudioAnalysis() {
                 if (state.audioContext) return;
                 state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -998,19 +1000,26 @@
                 const bufferLength = state.analyser.frequencyBinCount;
                 const dataArray = new Uint8Array(bufferLength);
                 state.analyser.getByteFrequencyData(dataArray);
-
-                const bassFrequencies = dataArray.slice(1, 4);
-                const bassIntensity = bassFrequencies.reduce((sum, value) => sum + value, 0) / bassFrequencies.length;
-
-                const threshold = 90; // Lowered for more sensitivity
-                const maxIntensity = 255;
-                let pulseFactor = 0;
-
-                if (bassIntensity > threshold) {
-                    pulseFactor = (bassIntensity - threshold) / (maxIntensity - threshold);
-                    pulseFactor = Math.min(pulseFactor, 1);
+                
+                // Calculate the average energy across the entire frequency spectrum.
+                const currentEnergy = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+                
+                // --- Beat Detection Logic ---
+                // We're looking for a sharp increase in energy compared to the last frame.
+                const beatThreshold = 1.25; // A 25% energy jump qualifies as a beat.
+                const minEnergyThreshold = 20; // Ignore small fluctuations in quiet passages.
+                
+                if (currentEnergy > lastEnergy * beatThreshold && currentEnergy > minEnergyThreshold) {
+                    // BEAT DETECTED: Set the multiplier to its peak value. This creates the "pulse".
+                    pulseMultiplier = 3.5;
+                } else {
+                    // NO BEAT: Rapidly decay the multiplier back to the base value (1).
+                    // This creates the "return to base" effect.
+                    pulseMultiplier = Math.max(1, pulseMultiplier * 0.85); 
                 }
-
+                lastEnergy = currentEnergy; // Remember this frame's energy for the next frame.
+                // --- End Beat Detection ---
+                
                 const c1 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-1').trim();
                 const c2 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-2').trim();
                 const c3 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-3').trim();
@@ -1020,9 +1029,8 @@
                     return;
                 }
 
-                // Increased multiplier for a more dramatic pulse effect
-                const pulseMultiplier = 1 + (pulseFactor * 2.5);
-
+                // The box-shadow values are the "base thickness". 
+                // We multiply them by the pulseMultiplier to make the glow expand on a beat.
                 const newBoxShadow = `
                     0 0 ${5 * pulseMultiplier}px ${c1},
                     0 0 ${10 * pulseMultiplier}px ${c1},
@@ -1038,6 +1046,8 @@
 
             function startAudioAnalysis() {
                 if (state.animationFrameId || !state.audioContext) return;
+                pulseMultiplier = 1; // Reset on start
+                lastEnergy = 0; // Reset on start
                 elements.puzzleContainer.classList.add('neon-border');
                 state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
             }
