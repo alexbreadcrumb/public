@@ -476,7 +476,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.16</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.17</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1002,7 +1002,7 @@
                 const bassFrequencies = dataArray.slice(1, 4);
                 const bassIntensity = bassFrequencies.reduce((sum, value) => sum + value, 0) / bassFrequencies.length;
 
-                const threshold = 120;
+                const threshold = 90; // Lowered for more sensitivity
                 const maxIntensity = 255;
                 let pulseFactor = 0;
 
@@ -1015,12 +1015,13 @@
                 const c2 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-2').trim();
                 const c3 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-3').trim();
                 
-                if (!c1) { // No need to check all, if one is missing the effect is off
+                if (!c1) { 
                     state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
                     return;
                 }
 
-                const pulseMultiplier = 1 + (pulseFactor * 0.8);
+                // Increased multiplier for a more dramatic pulse effect
+                const pulseMultiplier = 1 + (pulseFactor * 2.5);
 
                 const newBoxShadow = `
                     0 0 ${5 * pulseMultiplier}px ${c1},
