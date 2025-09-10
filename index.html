@@ -159,7 +159,7 @@
         .puzzle-container.animated-gradient-border::before {
             content: '';
             position: absolute;
-            inset: -2px; /* Increased spread */
+            inset: -5px; /* Increased spread */
             z-index: -2;
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
@@ -170,9 +170,9 @@
                 var(--gradient-color-1)
             );
             background-size: 400% 400%;
-            animation: gradient-flow 10s ease infinite;
+            animation: gradient-flow 8s ease infinite;
             border-radius: 16px; 
-            filter: blur(10px); /* Increased blur */
+            filter: blur(15px); /* Increased blur for a softer glow */
         }
 
 
@@ -503,7 +503,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.31</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.32</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -714,27 +714,26 @@
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 
-                const duration = 3 * 1000;
-                const animationEnd = Date.now() + duration;
+                const rootStyles = getComputedStyle(document.documentElement);
+                const paletteColors = [
+                    rootStyles.getPropertyValue('--gradient-color-1').trim(),
+                    rootStyles.getPropertyValue('--gradient-color-2').trim(),
+                    rootStyles.getPropertyValue('--gradient-color-3').trim(),
+                    rootStyles.getPropertyValue('--gradient-color-4').trim(),
+                    rootStyles.getPropertyValue('--gradient-color-5').trim()
+                ].filter(Boolean);
 
-                (function frame() {
-                    confetti({
-                        particleCount: 7,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 }
-                    });
-                    confetti({
-                        particleCount: 7,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 }
-                    });
-
-                    if (Date.now() < animationEnd) {
-                        requestAnimationFrame(frame);
-                    }
-                }());
+                const noteShapes = ['♪', '♫', '♬'];
+                
+                confetti({
+                    particleCount: 150,
+                    spread: 180,
+                    origin: { x: 0.5, y: 0.5 },
+                    shapes: noteShapes,
+                    scalar: 2,
+                    gravity: 0.5,
+                    colors: paletteColors.length > 0 ? paletteColors : ['#1DB954', '#FFFFFF', '#1ED760']
+                });
 
                 state.isPaused = true;
                 state.gameInProgress = false;
