@@ -355,7 +355,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
         .modal-header h2 {
             margin: 0;
@@ -372,13 +371,84 @@
             height: 24px;
             fill: var(--on-surface-secondary);
         }
+
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--on-surface-secondary);
+            margin-bottom: 1rem;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .tab-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface-secondary);
+            transition: fill 0.2s ease;
+        }
+        .tab-btn:hover svg {
+            fill: var(--on-surface);
+        }
+        .tab-btn.active {
+            border-bottom-color: var(--primary);
+        }
+        .tab-btn.active svg {
+            fill: var(--primary);
+        }
+
+        .modal-panels {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .modal-panel {
+            display: none;
+        }
+        .modal-panel.active {
+            display: block;
+        }
         
+        .language-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            text-align: left;
+            color: var(--on-surface);
+            transition: all 0.2s ease;
+        }
+        .lang-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .lang-btn.active {
+            border-color: var(--primary);
+            background-color: rgba(29, 185, 84, 0.1);
+        }
+
+        #info-panel p {
+            line-height: 1.6;
+            color: var(--on-surface);
+        }
+
         #high-scores-list {
             list-style-type: none;
             padding: 0;
             margin: 0;
-            overflow-y: auto;
-            flex-grow: 1;
         }
         #high-scores-list::-webkit-scrollbar { width: 5px; }
         #high-scores-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -505,7 +575,7 @@
                 <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
                 <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
             </button>
-            <button id="scores-btn" class="control-button" data-translate-title="highScoresTitle">
+            <button id="menu-btn" class="control-button" data-translate-title="menuTitle">
                 <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
             </button>
         </div>
@@ -521,26 +591,50 @@
         </div>
     </div>
     
-    <div id="scores-modal" class="modal-overlay">
+    <div id="menu-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 data-translate-key="highScoresTitle">Mejores Tiempos</h2>
-                <button class="close-btn" id="close-scores-btn">
+                <h2 id="modal-title" data-translate-key="highScoresTitle">Mejores Tiempos</h2>
+                <button class="close-btn" id="close-menu-btn">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
             </div>
-            <ol id="high-scores-list"></ol>
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="records">
+                    <svg viewBox="0 0 24 24"><path d="M20.2 6H19V4c0-1.1-.9-2-2-2h-3c-1.1 0-2 .9-2 2v2H8V4c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v2H.8C.3 6 0 6.3 0 6.8v14.4c0 .4.3.8.8.8h22.4c.5 0 .8-.4.8-.8V6.8c0-.5-.4-.8-.8-.8zM14 4h3v6h-3V4zM3 4h3v6H3V4zm18 16H3V8h18v12zM9 11h6v2H9zm0 4h6v2H9z"></path></svg>
+                </button>
+                <button class="tab-btn" data-tab="language">
+                    <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17c-.47 1.72-1.25 3.25-2.27 4.56-1.15-1.3-1.87-2.7-2.21-4.12H1V12h6.12c.18 1.4.67 2.72 1.34 3.87l-3.42 3.42 1.41 1.41L12.87 15.07zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+                </button>
+                <button class="tab-btn" data-tab="info">
+                    <svg viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg>
+                </button>
+            </div>
+            <div class="modal-panels">
+                <div id="records-panel" class="modal-panel active">
+                    <ol id="high-scores-list"></ol>
+                </div>
+                <div id="language-panel" class="modal-panel">
+                    <div class="language-options">
+                        <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish">English</span></button>
+                        <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish">Español</span></button>
+                        <button class="lang-btn" data-lang="pt"><span>🇧🇷</span> <span data-translate-key="langPortuguese">Português</span></button>
+                        <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench">Français</span></button>
+                    </div>
+                </div>
+                <div id="info-panel" class="modal-panel">
+                    <p data-translate-key="aboutGameText"></p>
+                </div>
+            </div>
         </div>
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.50</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.51</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
-    <script type="module">
-        import { GoogleGenAI } from 'https://esm.run/@google/genai';
-
+    <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const SIZE = 3;
             const elements = {
@@ -550,7 +644,7 @@
                 newGameBtn: document.getElementById('new-game-btn'),
                 pauseBtn: document.getElementById('pause-btn'),
                 audioBtn: document.getElementById('audio-btn'),
-                scoresBtn: document.getElementById('scores-btn'),
+                menuBtn: document.getElementById('menu-btn'),
                 artistSearch: document.getElementById('artist-search'),
                 trackInfo: document.getElementById('current-track-info'),
                 audioPlayer: document.getElementById('audio-player'),
@@ -558,8 +652,9 @@
                 playIcon: document.getElementById('play-icon'),
                 muteIcon: document.getElementById('mute-icon'),
                 unmuteIcon: document.getElementById('unmute-icon'),
-                scoresModal: document.getElementById('scores-modal'),
-                closeScoresBtn: document.getElementById('close-scores-btn'),
+                menuModal: document.getElementById('menu-modal'),
+                closeMenuBtn: document.getElementById('close-menu-btn'),
+                modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
             };
 
@@ -581,117 +676,142 @@
             ];
             
             // --- I18n & Translation ---
-            const textStrings = {
-                pageTitle: "Puzzletunes",
-                pauseResumeTitle: "Pausar/Reanudar",
-                toggleSoundTitle: "Activar/Desactivar Sonido",
-                highScoresTitle: "Mejores Tiempos",
-                artistSearchPlaceholder: "Buscar por artista (opcional)",
-                newGame: "Nuevo Juego",
-                gameBy: "Juego por:",
-                winMessage: "¡Ganaste!<br>{time}",
-                paused: "Pausado",
-                startMessage: "Haz clic en 'Nuevo Juego' para empezar",
-                translatingUI: "Traduciendo interfaz...",
-                searchingMusic: "Buscando música...",
-                searchingMusicFor: "Buscando música de {searchTerm}...",
-                didYouMean: "Quisiste decir:",
-                imageError: "Error al cargar la imagen. Por favor, intenta de nuevo.",
-                noMusicFoundFor: "No se encontró música para \"{searchTerm}\"",
-                noRandomMusic: "No se encontró música aleatoria. Por favor, intenta de nuevo.",
-                loadSavedImageError: "Error al cargar la imagen guardada.",
-                newGameConfirm: "¿Seguro que quieres empezar un nuevo juego? Tu progreso se perderá.",
-                deleteRecordTitle: "Eliminar récord",
-                movesSuffix: "mov."
+            const translations = {
+                es: {
+                    pageTitle: "Puzzletunes",
+                    pauseResumeTitle: "Pausar/Reanudar",
+                    toggleSoundTitle: "Activar/Desactivar Sonido",
+                    menuTitle: "Menú",
+                    highScoresTitle: "Mejores Tiempos",
+                    languageTitle: "Idioma",
+                    aboutTitle: "Acerca de",
+                    artistSearchPlaceholder: "Buscar por artista (opcional)",
+                    newGame: "Nuevo Juego",
+                    gameBy: "Juego por:",
+                    winMessage: "¡Ganaste!<br>{time}",
+                    paused: "Pausado",
+                    startMessage: "Haz clic en 'Nuevo Juego' para empezar",
+                    searchingMusic: "Buscando música...",
+                    searchingMusicFor: "Buscando música de {searchTerm}...",
+                    didYouMean: "Quisiste decir:",
+                    imageError: "Error al cargar la imagen. Por favor, intenta de nuevo.",
+                    noMusicFoundFor: "No se encontró música para \"{searchTerm}\"",
+                    noRandomMusic: "No se encontró música aleatoria. Por favor, intenta de nuevo.",
+                    loadSavedImageError: "Error al cargar la imagen guardada.",
+                    newGameConfirm: "¿Seguro que quieres empezar un nuevo juego? Tu progreso se perderá.",
+                    deleteRecordTitle: "Eliminar récord",
+                    movesSuffix: "mov.",
+                    langEnglish: "Inglés",
+                    langSpanish: "Español",
+                    langPortuguese: "Portugués",
+                    langFrench: "Francés",
+                    aboutGameText: "En un mundo de gratificación instantánea, Puzzletunes ofrece un respiro. Resolver este puzzle no solo pone a prueba tu ingenio, sino que también entrena tu paciencia y concentración. Cada pieza que mueves es un paso para calmar tu mente y fortalecer tu enfoque. Disfruta de la música, del desafío y del momento de calma que este juego te regala. Tómate tu tiempo, el viaje es tan importante como la victoria final."
+                },
+                en: {
+                    pageTitle: "Puzzletunes",
+                    pauseResumeTitle: "Pause/Resume",
+                    toggleSoundTitle: "Toggle Sound",
+                    menuTitle: "Menu",
+                    highScoresTitle: "High Scores",
+                    languageTitle: "Language",
+                    aboutTitle: "About",
+                    artistSearchPlaceholder: "Search by artist (optional)",
+                    newGame: "New Game",
+                    gameBy: "Game by:",
+                    winMessage: "You Win!<br>{time}",
+                    paused: "Paused",
+                    startMessage: "Click 'New Game' to start",
+                    searchingMusic: "Searching for music...",
+                    searchingMusicFor: "Searching for music by {searchTerm}...",
+                    didYouMean: "Did you mean:",
+                    imageError: "Error loading image. Please try again.",
+                    noMusicFoundFor: "No music found for \"{searchTerm}\"",
+                    noRandomMusic: "No random music found. Please try again.",
+                    loadSavedImageError: "Error loading saved image.",
+                    newGameConfirm: "Are you sure you want to start a new game? Your progress will be lost.",
+                    deleteRecordTitle: "Delete record",
+                    movesSuffix: "moves",
+                    langEnglish: "English",
+                    langSpanish: "Spanish",
+                    langPortuguese: "Portuguese",
+                    langFrench: "French",
+                    aboutGameText: "In a world of instant gratification, Puzzletunes offers a respite. Solving this puzzle not only tests your wits but also trains your patience and concentration. Every piece you move is a step towards calming your mind and strengthening your focus. Enjoy the music, the challenge, and the moment of calm this game gives you. Take your time; the journey is as important as the final victory."
+                },
+                pt: {
+                    pageTitle: "Puzzletunes",
+                    pauseResumeTitle: "Pausar/Retomar",
+                    toggleSoundTitle: "Ativar/Desativar Som",
+                    menuTitle: "Menu",
+                    highScoresTitle: "Melhores Tempos",
+                    languageTitle: "Idioma",
+                    aboutTitle: "Sobre",
+                    artistSearchPlaceholder: "Pesquisar por artista (opcional)",
+                    newGame: "Novo Jogo",
+                    gameBy: "Jogo por:",
+                    winMessage: "Você Venceu!<br>{time}",
+                    paused: "Pausado",
+                    startMessage: "Clique em 'Novo Jogo' para começar",
+                    searchingMusic: "Procurando música...",
+                    searchingMusicFor: "Procurando música de {searchTerm}...",
+                    didYouMean: "Você quis dizer:",
+                    imageError: "Erro ao carregar a imagem. Por favor, tente novamente.",
+                    noMusicFoundFor: "Nenhuma música encontrada para \"{searchTerm}\"",
+                    noRandomMusic: "Nenhuma música aleatória encontrada. Por favor, tente novamente.",
+                    loadSavedImageError: "Erro ao carregar a imagem salva.",
+                    newGameConfirm: "Tem certeza que deseja iniciar um novo jogo? Seu progresso será perdido.",
+                    deleteRecordTitle: "Excluir recorde",
+                    movesSuffix: "mov.",
+                    langEnglish: "Inglês",
+                    langSpanish: "Espanhol",
+                    langPortuguese: "Português",
+                    langFrench: "Francês",
+                    aboutGameText: "Em um mundo de gratificação instantânea, Puzzletunes oferece um respiro. Resolver este quebra-cabeça não apenas testa sua inteligência, mas também treina sua paciência e concentração. Cada peça que você move é um passo para acalmar sua mente e fortalecer seu foco. Aproveite a música, o desafio e o momento de calma que este jogo lhe proporciona. Leve o seu tempo; a jornada é tão importante quanto a vitória final."
+                },
+                fr: {
+                    pageTitle: "Puzzletunes",
+                    pauseResumeTitle: "Pause/Reprendre",
+                    toggleSoundTitle: "Activer/Désactiver le son",
+                    menuTitle: "Menu",
+                    highScoresTitle: "Meilleurs Scores",
+                    languageTitle: "Langue",
+                    aboutTitle: "À propos",
+                    artistSearchPlaceholder: "Rechercher par artiste (optionnel)",
+                    newGame: "Nouveau Jeu",
+                    gameBy: "Jeu par :",
+                    winMessage: "Vous avez gagné !<br>{time}",
+                    paused: "En pause",
+                    startMessage: "Cliquez sur 'Nouveau Jeu' pour commencer",
+                    searchingMusic: "Recherche de musique...",
+                    searchingMusicFor: "Recherche de musique de {searchTerm}...",
+                    didYouMean: "Vouliez-vous dire :",
+                    imageError: "Erreur de chargement de l'image. Veuillez réessayer.",
+                    noMusicFoundFor: "Aucune musique trouvée pour \"{searchTerm}\"",
+                    noRandomMusic: "Aucune musique aléatoire trouvée. Veuillez réessayer.",
+                    loadSavedImageError: "Erreur de chargement de l'image sauvegardée.",
+                    newGameConfirm: "Êtes-vous sûr de vouloir commencer une nouvelle partie ? Votre progression sera perdue.",
+                    deleteRecordTitle: "Supprimer le record",
+                    movesSuffix: "mouv.",
+                    langEnglish: "Anglais",
+                    langSpanish: "Espagnol",
+                    langPortuguese: "Portugais",
+                    langFrench: "Français",
+                    aboutGameText: "Dans un monde de gratification instantanée, Puzzletunes offre un répit. Résoudre ce puzzle ne teste pas seulement votre intelligence, mais entraîne également votre patience et votre concentration. Chaque pièce que vous déplacez est un pas vers l'apaisement de votre esprit et le renforcement de votre concentration. Profitez de la musique, du défi et du moment de calme que ce jeu vous offre. Prenez votre temps ; le voyage est aussi important que la victoire finale."
+                }
             };
-            
-            const englishTextStrings = {
-                pageTitle: "Puzzletunes",
-                pauseResumeTitle: "Pause/Resume",
-                toggleSoundTitle: "Toggle Sound",
-                highScoresTitle: "High Scores",
-                artistSearchPlaceholder: "Search by artist (optional)",
-                newGame: "New Game",
-                gameBy: "Game by:",
-                winMessage: "You Win!<br>{time}",
-                paused: "Paused",
-                startMessage: "Click 'New Game' to start",
-                translatingUI: "Translating UI...",
-                searchingMusic: "Searching for music...",
-                searchingMusicFor: "Searching for music by {searchTerm}...",
-                didYouMean: "Did you mean:",
-                imageError: "Error loading image. Please try again.",
-                noMusicFoundFor: "No music found for \"{searchTerm}\"",
-                noRandomMusic: "No random music found. Please try again.",
-                loadSavedImageError: "Error loading saved image.",
-                newGameConfirm: "Are you sure you want to start a new game? Your progress will be lost.",
-                deleteRecordTitle: "Delete record",
-                movesSuffix: "moves"
-            };
 
-            let currentStrings = { ...textStrings };
-            let translationCache = {};
-            let ai;
-            try {
-                if (process.env.API_KEY) {
-                    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-                }
-            } catch (e) {
-                console.error("Could not initialize Gemini AI.", e);
-            }
+            let currentStrings = { ...translations.es };
 
-            function getTranslatedString(key, replacements = {}) {
-                let str = currentStrings[key] || textStrings[key] || '';
-                for (const placeholder in replacements) {
-                    str = str.replace(`{${placeholder}}`, replacements[placeholder]);
-                }
-                return str;
-            }
-
-            function detectLanguage() {
-                const lang = navigator.language || navigator.userLanguage || 'en';
-                const langCode = lang.split('-')[0];
-
-                if (langCode === 'pt') return 'pt-BR';
-                if (langCode === 'es') return 'es';
-                return 'en';
-            }
-            
-            async function translateTexts(textsToTranslate, targetLang) {
-                if (!ai) return {};
-                const cacheKey = `${targetLang}-${textsToTranslate.join('|')}`;
-                if (translationCache[cacheKey]) return translationCache[cacheKey];
-
-                const languageMap = { 'en': 'English', 'pt-BR': 'Brazilian Portuguese' };
-                const targetLanguageName = languageMap[targetLang] || 'English';
-
-                const prompt = `Translate the values in the following JSON array of strings from Spanish into ${targetLanguageName}. Return a JSON object where keys are the original Spanish strings and values are their translations. Ensure the response is only the JSON object, without markdown formatting. The JSON array is: ${JSON.stringify(textsToTranslate)}`;
-
-                try {
-                    const response = await ai.models.generateContent({
-                        model: "gemini-2.5-flash",
-                        contents: prompt,
-                        config: { responseMimeType: "application/json" }
-                    });
-                    const translatedObject = JSON.parse(response.text);
-                    translationCache[cacheKey] = translatedObject;
-                    return translatedObject;
-                } catch (error) {
-                    console.error('Gemini translation failed:', error);
-                    return {};
-                }
-            }
-            
             function applyTranslations() {
+                const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
+                currentStrings = translations[lang];
+
+                document.documentElement.lang = lang;
                 document.title = currentStrings.pageTitle;
+                
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
                     if (currentStrings[key]) {
-                        if (el.tagName === 'FOOTER') {
-                             el.innerHTML = `<span data-translate-key="gameBy">${currentStrings.gameBy}</span> Ale Fernández PY-2025 - v1.32`;
-                        } else {
-                            el.textContent = currentStrings[key];
-                        }
+                        el.innerHTML = currentStrings[key];
                     }
                 });
                 document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
@@ -702,48 +822,45 @@
                     const key = el.dataset.translateTitle;
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
+                // Special case for footer to preserve structure
+                const gameBySpan = document.querySelector('footer > span');
+                if (gameBySpan) gameBySpan.textContent = currentStrings.gameBy;
+            }
+            
+            function setLanguage(lang) {
+                if (!translations[lang]) lang = 'en'; // Default to English if lang is invalid
+                localStorage.setItem('puzzletunesLanguage', lang);
+                applyTranslations();
+                updateActiveLanguageButton(lang);
+                // Also update high scores list if it's open
+                if (elements.menuModal.classList.contains('visible')) {
+                    renderHighScores();
+                }
+            }
+            
+            function updateActiveLanguageButton(lang) {
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
             }
 
-            async function initializeLocalization() {
-                const targetLang = detectLanguage(); // Now synchronous
-
-                if (targetLang === 'es') {
-                    // Default is Spanish, nothing to do besides applying
-                    applyTranslations();
+            function initializeLocalization() {
+                const savedLang = localStorage.getItem('puzzletunesLanguage');
+                if (savedLang) {
+                    setLanguage(savedLang);
                     return;
                 }
-
-                if (targetLang === 'en') {
-                    currentStrings = { ...englishTextStrings };
-                    applyTranslations();
-                    return;
-                }
-
-                if (targetLang === 'pt-BR') {
-                    // Set English as a fallback while we try to translate to Portuguese
-                    currentStrings = { ...englishTextStrings };
-                    applyTranslations();
-                    
-                    if (ai) {
-                        showOverlay(currentStrings.translatingUI);
-                        const spanishTexts = Object.values(textStrings);
-                        const translatedMap = await translateTexts(spanishTexts, 'pt-BR');
-
-                        if (Object.keys(translatedMap).length > 0) {
-                            const newStrings = {};
-                            for (const key in textStrings) {
-                                const spanishText = textStrings[key];
-                                newStrings[key] = translatedMap[spanishText] || currentStrings[key]; // Fallback to English if a specific string fails
-                            }
-                            currentStrings = newStrings;
-                            applyTranslations();
-                        }
-                        hideOverlay();
-                    }
-                }
+                
+                const browserLang = (navigator.language || navigator.userLanguage || 'en').slice(0, 2);
+                const supportedLangs = ['es', 'en', 'pt', 'fr'];
+                const initialLang = supportedLangs.includes(browserLang) ? browserLang : 'en';
+                setLanguage(initialLang);
             }
             // --- End I18n ---
-
 
             async function fetchWithProxyFallback(url) {
                 let lastError = null;
@@ -1131,7 +1248,7 @@
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
-                showOverlay(isArtistSearch ? getTranslatedString('searchingMusicFor', {searchTerm}) : getTranslatedString('searchingMusic'));
+                showOverlay(getTranslatedString('searchingMusicFor', {searchTerm}) || getTranslatedString('searchingMusic'));
 
                 let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
                 
@@ -1176,21 +1293,14 @@
                 const MAX_ATTEMPTS = 100;
 
                 do {
-                    // Create a new shuffled array in each iteration
                     shuffled = [...indices].sort(() => Math.random() - 0.5);
-                    
-                    // A shuffle is "perfect" if it's solvable AND no image piece is in its solved position.
-                    // We don't check the last piece (the empty one), as it's fine if it starts in the solved position.
                     const hasPiecesInPlace = shuffled.some((value, index) => value === index && index < SIZE * SIZE - 1);
-                    
                     if (isSolvable(shuffled) && !hasPiecesInPlace) {
-                        break; // Found a good shuffle, exit the loop
+                        break; 
                     }
-
                     attempts++;
                 } while (attempts < MAX_ATTEMPTS);
                 
-                // Fallback in case a perfect shuffle isn't found quickly
                 if (attempts >= MAX_ATTEMPTS) {
                     console.warn("Could not generate a perfectly shuffled puzzle in time. Using a standard solvable shuffle.");
                     do {
@@ -1277,6 +1387,32 @@
                 state.timerInterval = null;
             }
 
+            // --- Modal & Tabs Logic ---
+            function switchTab(tabName) {
+                const modal = elements.menuModal;
+                modal.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+                modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${tabName}-panel`));
+                
+                let titleKey;
+                if(tabName === 'records') titleKey = 'highScoresTitle';
+                else if (tabName === 'language') titleKey = 'languageTitle';
+                else if (tabName === 'info') titleKey = 'aboutTitle';
+                elements.modalTitle.textContent = getTranslatedString(titleKey);
+                elements.modalTitle.dataset.translateKey = titleKey;
+            }
+
+            elements.menuModal.addEventListener('click', (e) => {
+                const tabBtn = e.target.closest('.tab-btn');
+                if (tabBtn) {
+                    switchTab(tabBtn.dataset.tab);
+                }
+                const langBtn = e.target.closest('.lang-btn');
+                if(langBtn) {
+                    setLanguage(langBtn.dataset.lang);
+                }
+            });
+
+
             elements.newGameBtn.addEventListener('click', () => {
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) {
                     return;
@@ -1328,11 +1464,14 @@
                 updateUI();
             });
             elements.audioPlayer.addEventListener('pause', () => elements.puzzleContainer.classList.remove('animated-gradient-border'));
-            elements.scoresBtn.addEventListener('click', () => {
+            
+            elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
-                elements.scoresModal.classList.add('visible');
+                switchTab('records'); // Default to records tab
+                elements.menuModal.classList.add('visible');
             });
-            elements.closeScoresBtn.addEventListener('click', () => elements.scoresModal.classList.remove('visible'));
+            elements.closeMenuBtn.addEventListener('click', () => elements.menuModal.classList.remove('visible'));
+
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
                 if (deleteBtn) {
@@ -1341,7 +1480,7 @@
             });
             window.addEventListener('beforeunload', () => state.gameInProgress && saveGameState());
             
-            await initializeLocalization();
+            initializeLocalization();
             initGame();
         });
     </script>
