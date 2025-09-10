@@ -534,7 +534,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.47</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.48</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1150,9 +1150,31 @@
                 
                 const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let shuffled;
+                let attempts = 0;
+                const MAX_ATTEMPTS = 100;
+
                 do {
-                    shuffled = indices.sort(() => Math.random() - 0.5);
-                } while (!isSolvable(shuffled));
+                    // Create a new shuffled array in each iteration
+                    shuffled = [...indices].sort(() => Math.random() - 0.5);
+                    
+                    // A shuffle is "perfect" if it's solvable AND no image piece is in its solved position.
+                    // We don't check the last piece (the empty one), as it's fine if it starts in the solved position.
+                    const hasPiecesInPlace = shuffled.some((value, index) => value === index && index < SIZE * SIZE - 1);
+                    
+                    if (isSolvable(shuffled) && !hasPiecesInPlace) {
+                        break; // Found a good shuffle, exit the loop
+                    }
+
+                    attempts++;
+                } while (attempts < MAX_ATTEMPTS);
+                
+                // Fallback in case a perfect shuffle isn't found quickly
+                if (attempts >= MAX_ATTEMPTS) {
+                    console.warn("Could not generate a perfectly shuffled puzzle in time. Using a standard solvable shuffle.");
+                    do {
+                        shuffled = [...indices].sort(() => Math.random() - 0.5);
+                    } while (!isSolvable(shuffled));
+                }
 
                 state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                     el: null,
