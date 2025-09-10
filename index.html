@@ -534,7 +534,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.48</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.49</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -604,6 +604,31 @@
                 deleteRecordTitle: "Eliminar récord",
                 movesSuffix: "mov."
             };
+            
+            const englishTextStrings = {
+                pageTitle: "Puzzletunes",
+                pauseResumeTitle: "Pause/Resume",
+                toggleSoundTitle: "Toggle Sound",
+                highScoresTitle: "High Scores",
+                artistSearchPlaceholder: "Search by artist (optional)",
+                newGame: "New Game",
+                gameBy: "Game by:",
+                winMessage: "You Win!<br>{time}",
+                paused: "Paused",
+                startMessage: "Click 'New Game' to start",
+                translatingUI: "Translating UI...",
+                searchingMusic: "Searching for music...",
+                searchingMusicFor: "Searching for music by {searchTerm}...",
+                didYouMean: "Did you mean:",
+                imageError: "Error loading image. Please try again.",
+                noMusicFoundFor: "No music found for \"{searchTerm}\"",
+                noRandomMusic: "No random music found. Please try again.",
+                loadSavedImageError: "Error loading saved image.",
+                newGameConfirm: "Are you sure you want to start a new game? Your progress will be lost.",
+                deleteRecordTitle: "Delete record",
+                movesSuffix: "moves"
+            };
+
             let currentStrings = { ...textStrings };
             let translationCache = {};
             let ai;
@@ -679,7 +704,6 @@
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
                     if (currentStrings[key]) {
-                         // Handle potential HTML content in translations like the win message
                         if (el.tagName === 'FOOTER') {
                              el.innerHTML = `<span data-translate-key="gameBy">${currentStrings.gameBy}</span> Ale Fernández PY-2025 - v1.32`;
                         } else {
@@ -699,26 +723,38 @@
 
             async function initializeLocalization() {
                 const targetLang = await detectLanguage();
-                
-                // If the target language is Spanish (the default), or AI is not available, just apply the default strings.
-                if (targetLang === 'es' || !ai) {
-                    applyTranslations();
+
+                if (targetLang === 'es') {
+                    applyTranslations(); // Apply default Spanish
                     return;
                 }
                 
-                // For other languages, perform translation.
-                showOverlay(getTranslatedString('translatingUI'));
-                const spanishTexts = Object.values(textStrings);
-                const translatedMap = await translateTexts(spanishTexts, targetLang);
-                
-                const newStrings = {};
-                for (const key in textStrings) {
-                    const spanishText = textStrings[key];
-                    newStrings[key] = translatedMap[spanishText] || spanishText; // Fallback to Spanish if translation fails
+                // For non-Spanish languages, set a reliable English fallback immediately.
+                // This solves the issue where the UI remains in Spanish if AI fails or is unavailable.
+                if (targetLang === 'en' || targetLang === 'pt-BR') {
+                    currentStrings = { ...englishTextStrings };
+                    applyTranslations();
                 }
-                currentStrings = newStrings;
-                applyTranslations();
-                hideOverlay();
+
+                // If the target is Portuguese and AI is available, try to translate.
+                // If it fails, the UI will remain in English (the fallback).
+                if (ai && targetLang === 'pt-BR') {
+                    showOverlay(currentStrings.translatingUI); // Now shows "Translating UI..."
+                    const spanishTexts = Object.values(textStrings);
+                    const translatedMap = await translateTexts(spanishTexts, 'pt-BR');
+
+                    if (Object.keys(translatedMap).length > 0) {
+                        const newStrings = {};
+                        for (const key in textStrings) {
+                            const spanishText = textStrings[key];
+                            // Use the translation if available, otherwise keep the English fallback
+                            newStrings[key] = translatedMap[spanishText] || currentStrings[key];
+                        }
+                        currentStrings = newStrings;
+                        applyTranslations(); // Apply the final Portuguese translations
+                    }
+                    hideOverlay();
+                }
             }
             // --- End I18n ---
 
