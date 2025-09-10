@@ -515,7 +515,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Game By:</span> Ale Fernández PY-2025 - v1.44</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.45</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -564,25 +564,25 @@
             // --- I18n & Translation ---
             const textStrings = {
                 pageTitle: "Puzzletunes",
-                pauseResumeTitle: "Pause/Resume",
-                toggleSoundTitle: "Toggle Sound",
-                highScoresTitle: "High Scores",
-                artistSearchPlaceholder: "Search by artist (optional)",
-                newGame: "New Game",
-                gameBy: "Game By:",
-                winMessage: "You Won!<br>{time}",
-                paused: "Paused",
-                startMessage: "Click 'New Game' to start",
-                translatingUI: "Translating UI...",
-                searchingMusic: "Searching for music...",
-                searchingMusicFor: "Searching for music by {searchTerm}...",
-                didYouMean: "Did you mean:",
-                imageError: "Error loading image. Please try again.",
-                noMusicFoundFor: "No music found for \"{searchTerm}\"",
-                noRandomMusic: "Random music not found. Please try again.",
-                loadSavedImageError: "Error loading saved image.",
-                newGameConfirm: "Are you sure you want to start a new game? Your progress will be lost.",
-                deleteRecordTitle: "Delete record",
+                pauseResumeTitle: "Pausar/Reanudar",
+                toggleSoundTitle: "Activar/Desactivar Sonido",
+                highScoresTitle: "Mejores Tiempos",
+                artistSearchPlaceholder: "Buscar por artista (opcional)",
+                newGame: "Nuevo Juego",
+                gameBy: "Juego por:",
+                winMessage: "¡Ganaste!<br>{time}",
+                paused: "Pausado",
+                startMessage: "Haz clic en 'Nuevo Juego' para empezar",
+                translatingUI: "Traduciendo interfaz...",
+                searchingMusic: "Buscando música...",
+                searchingMusicFor: "Buscando música de {searchTerm}...",
+                didYouMean: "Quisiste decir:",
+                imageError: "Error al cargar la imagen. Por favor, intenta de nuevo.",
+                noMusicFoundFor: "No se encontró música para \"{searchTerm}\"",
+                noRandomMusic: "No se encontró música aleatoria. Por favor, intenta de nuevo.",
+                loadSavedImageError: "Error al cargar la imagen guardada.",
+                newGameConfirm: "¿Seguro que quieres empezar un nuevo juego? Tu progreso se perderá.",
+                deleteRecordTitle: "Eliminar récord",
                 movesSuffix: "mov."
             };
             let currentStrings = { ...textStrings };
@@ -607,17 +607,23 @@
             async function detectLanguage() {
                 try {
                     const response = await fetch('https://ip-api.com/json/?fields=countryCode');
-                    if (!response.ok) return 'en';
+                    if (!response.ok) return 'en'; // Default to English on API failure
                     const data = await response.json();
                     const country = data.countryCode;
 
                     if (country === 'BR') return 'pt-BR';
 
+                    const englishSpeaking = ['US', 'CA', 'GB', 'AU', 'NZ', 'IE'];
+                    if (englishSpeaking.includes(country)) {
+                        return 'en';
+                    }
+                    
                     const spanishSpeakingLATAM = ['AR', 'BO', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'SV', 'GT', 'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'UY', 'VE'];
                     if (country === 'ES' || spanishSpeakingLATAM.includes(country)) {
                         return 'es';
                     }
-                    return 'en';
+                    
+                    return 'en'; // Default to English for all other regions
                 } catch (error) {
                     console.warn('Could not detect country, defaulting to English.', error);
                     return 'en';
@@ -629,10 +635,10 @@
                 const cacheKey = `${targetLang}-${textsToTranslate.join('|')}`;
                 if (translationCache[cacheKey]) return translationCache[cacheKey];
 
-                const languageMap = { 'es': 'Spanish', 'pt-BR': 'Brazilian Portuguese' };
+                const languageMap = { 'en': 'English', 'pt-BR': 'Brazilian Portuguese' };
                 const targetLanguageName = languageMap[targetLang] || 'English';
 
-                const prompt = `Translate the values in the following JSON array of strings into ${targetLanguageName}. Return a JSON object where keys are the original English strings and values are their translations. Ensure the response is only the JSON object, without markdown formatting. The JSON array is: ${JSON.stringify(textsToTranslate)}`;
+                const prompt = `Translate the values in the following JSON array of strings from Spanish into ${targetLanguageName}. Return a JSON object where keys are the original Spanish strings and values are their translations. Ensure the response is only the JSON object, without markdown formatting. The JSON array is: ${JSON.stringify(textsToTranslate)}`;
 
                 try {
                     const response = await ai.models.generateContent({
@@ -653,7 +659,14 @@
                 document.title = currentStrings.pageTitle;
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
-                    if (currentStrings[key]) el.textContent = currentStrings[key];
+                    if (currentStrings[key]) {
+                         // Handle potential HTML content in translations like the win message
+                        if (el.tagName === 'FOOTER') {
+                             el.innerHTML = `<span data-translate-key="gameBy">${currentStrings.gameBy}</span> Ale Fernández PY-2025 - v1.32`;
+                        } else {
+                            el.textContent = currentStrings[key];
+                        }
+                    }
                 });
                 document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
                     const key = el.dataset.translatePlaceholder;
@@ -667,19 +680,22 @@
 
             async function initializeLocalization() {
                 const targetLang = await detectLanguage();
-                if (targetLang === 'en' || !ai) {
+                
+                // If the target language is Spanish (the default), or AI is not available, just apply the default strings.
+                if (targetLang === 'es' || !ai) {
                     applyTranslations();
                     return;
                 }
-
+                
+                // For other languages, perform translation.
                 showOverlay(getTranslatedString('translatingUI'));
-                const englishTexts = Object.values(textStrings);
-                const translatedMap = await translateTexts(englishTexts, targetLang);
+                const spanishTexts = Object.values(textStrings);
+                const translatedMap = await translateTexts(spanishTexts, targetLang);
                 
                 const newStrings = {};
                 for (const key in textStrings) {
-                    const englishText = textStrings[key];
-                    newStrings[key] = translatedMap[englishText] || englishText;
+                    const spanishText = textStrings[key];
+                    newStrings[key] = translatedMap[spanishText] || spanishText; // Fallback to Spanish if translation fails
                 }
                 currentStrings = newStrings;
                 applyTranslations();
@@ -878,7 +894,11 @@
 
                 state.isPaused = true;
                 state.gameInProgress = false;
-                setTimeout(() => showOverlay(getTranslatedString('winMessage', {time: formatTime(state.time)})), 500);
+                setTimeout(() => {
+                    const winMsgDiv = document.createElement('div');
+                    winMsgDiv.innerHTML = getTranslatedString('winMessage', {time: formatTime(state.time)});
+                    showOverlay(winMsgDiv.innerHTML);
+                }, 500);
                 saveScore();
                 clearGameState();
                 elements.audioPlayer.pause();
