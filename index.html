@@ -23,9 +23,11 @@
             --on-surface-secondary: #B3B3B3;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --neon-color-1: #1DB954;
-            --neon-color-2: #1ED760;
-            --neon-color-3: #FFFFFF;
+            --gradient-color-1: #1DB954;
+            --gradient-color-2: #1ED760;
+            --gradient-color-3: #FFFFFF;
+            --gradient-color-4: #1DB954;
+            --gradient-color-5: #1ED760;
         }
 
         html {
@@ -137,17 +139,33 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
-            transition: box-shadow 0.1s ease-out; /* Smooth transition for the glow */
         }
         
-        .puzzle-container.neon-border {
-            box-shadow:
-                0 0 5px var(--neon-color-1),
-                0 0 10px var(--neon-color-1),
-                0 0 20px var(--neon-color-2),
-                0 0 35px var(--neon-color-2),
-                0 0 50px var(--neon-color-3);
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
+
+        .puzzle-container.animated-gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            z-index: -1;
+            background: linear-gradient(45deg,
+                var(--gradient-color-1),
+                var(--gradient-color-2),
+                var(--gradient-color-3),
+                var(--gradient-color-4),
+                var(--gradient-color-5),
+                var(--gradient-color-1)
+            );
+            background-size: 400% 400%;
+            animation: gradient-flow 10s ease infinite;
+            border-radius: 16px; /* slightly larger than parent */
+            filter: blur(8px);
+        }
+
 
         .puzzle-piece {
             width: 100%;
@@ -476,7 +494,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.22</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.23</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -512,10 +530,6 @@
                 isMuted: true,
                 currentAlbum: null,
                 gameInProgress: false,
-                audioContext: null,
-                analyser: null,
-                sourceNode: null,
-                animationFrameId: null,
             };
 
             const PROXIES = [
@@ -672,7 +686,7 @@
 
             function handleWin() {
                 stopTimer();
-                stopAudioAnalysis();
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
                 confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                 state.isPaused = true;
                 state.gameInProgress = false;
@@ -857,7 +871,7 @@
 
             async function prepareNewGame() {
                 stopTimer();
-                stopAudioAnalysis();
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
                 hideOverlay();
                 
                 const searchTerm = elements.artistSearch.value.trim();
@@ -885,11 +899,12 @@
                     
                     img.onload = () => {
                         const colorThief = new ColorThief();
-                        const palette = colorThief.getPalette(img, 3);
-                        const rootStyle = elements.puzzleContainer.style;
-                        rootStyle.setProperty('--neon-color-1', `rgb(${palette[0][0]}, ${palette[0][1]}, ${palette[0][2]})`);
-                        rootStyle.setProperty('--neon-color-2', `rgb(${palette[1][0]}, ${palette[1][1]}, ${palette[1][2]})`);
-                        rootStyle.setProperty('--neon-color-3', `rgb(${palette[2][0]}, ${palette[2][1]}, ${palette[2][2]})`);
+                        const palette = colorThief.getPalette(img, 5);
+                        const rootStyle = document.documentElement.style;
+                        for (let i = 0; i < palette.length; i++) {
+                            const [r, g, b] = palette[i];
+                            rootStyle.setProperty(`--gradient-color-${i + 1}`, `rgb(${r}, ${g}, ${b})`);
+                        }
 
                         hideOverlay();
                         resetGame();
@@ -959,12 +974,13 @@
                     img.crossOrigin = "Anonymous";
                     img.src = imageUrl;
                     img.onload = () => {
-                         const colorThief = new ColorThief();
-                        const palette = colorThief.getPalette(img, 3);
-                        const rootStyle = elements.puzzleContainer.style;
-                        rootStyle.setProperty('--neon-color-1', `rgb(${palette[0][0]}, ${palette[0][1]}, ${palette[0][2]})`);
-                        rootStyle.setProperty('--neon-color-2', `rgb(${palette[1][0]}, ${palette[1][1]}, ${palette[1][2]})`);
-                        rootStyle.setProperty('--neon-color-3', `rgb(${palette[2][0]}, ${palette[2][1]}, ${palette[2][2]})`);
+                        const colorThief = new ColorThief();
+                        const palette = colorThief.getPalette(img, 5);
+                        const rootStyle = document.documentElement.style;
+                        for (let i = 0; i < palette.length; i++) {
+                            const [r, g, b] = palette[i];
+                            rootStyle.setProperty(`--gradient-color-${i + 1}`, `rgb(${r}, ${g}, ${b})`);
+                        }
                         
                         renderBoard();
                         startTimer();
@@ -1000,106 +1016,6 @@
                 state.timerInterval = null;
             }
 
-            // --- Audio Analysis Functions ---
-            let pulseMultiplier = 1;
-            let energyHistory = new Array(60).fill(0); // ~1 second history at 60fps
-            let historyIndex = 0;
-            let lastBeatTime = 0;
-
-            function initAudioAnalysis() {
-                if (state.audioContext) return;
-                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                state.analyser = state.audioContext.createAnalyser();
-                state.analyser.fftSize = 1024; // Aumentado para mayor resolución de frecuencia
-                state.sourceNode = state.audioContext.createMediaElementSource(elements.audioPlayer);
-                state.sourceNode.connect(state.analyser);
-                state.analyser.connect(state.audioContext.destination);
-            }
-
-            function pulseAnimationLoop() {
-                if (!state.analyser) return;
-
-                // --- NUEVO ALGORITMO DE DETECCIÓN DE RITMO ---
-                const bufferLength = state.analyser.frequencyBinCount; // 512 con fftSize = 1024
-                const dataArray = new Uint8Array(bufferLength);
-                state.analyser.getByteFrequencyData(dataArray);
-
-                // 1. Calcular la energía en la banda de frecuencias graves (aprox. 60-250Hz)
-                const sampleRate = state.audioContext.sampleRate;
-                const binWidth = sampleRate / state.analyser.fftSize;
-                const bassStartIndex = Math.max(1, Math.floor(60 / binWidth));
-                const bassEndIndex = Math.min(bufferLength, Math.ceil(250 / binWidth));
-
-                let currentEnergy = 0;
-                for (let i = bassStartIndex; i < bassEndIndex; i++) {
-                    const normalizedValue = dataArray[i] / 255;
-                    currentEnergy += normalizedValue * normalizedValue;
-                }
-
-                // 2. Actualizar el buffer de historial de energía
-                energyHistory[historyIndex] = currentEnergy;
-                historyIndex = (historyIndex + 1) % energyHistory.length;
-
-                // 3. Calcular la energía promedio local sobre el buffer de historial
-                const averageEnergy = energyHistory.reduce((sum, value) => sum + value, 0) / energyHistory.length;
-
-                // 4. Establecer un umbral y un período de enfriamiento (cooldown)
-                const BEAT_THRESHOLD_MULTIPLIER = 2.0; // Ajustado para picos más claros
-                const BEAT_COOLDOWN_MS = 150; 
-                const now = Date.now();
-
-                // 5. Comprobar si hay un beat
-                if (now - lastBeatTime > BEAT_COOLDOWN_MS && currentEnergy > averageEnergy * BEAT_THRESHOLD_MULTIPLIER && currentEnergy > 0.01) {
-                    pulseMultiplier = 3.5; // Activar el pulso
-                    lastBeatTime = now;
-                } else {
-                    // Decaer el multiplicador de vuelta al valor base
-                    pulseMultiplier = Math.max(1, pulseMultiplier * 0.92); 
-                }
-                // --- FIN DEL NUEVO ALGORITMO ---
-                
-                const c1 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-1').trim();
-                const c2 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-2').trim();
-                const c3 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-3').trim();
-                
-                if (!c1) { 
-                    state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
-                    return;
-                }
-
-                const newBoxShadow = `
-                    0 0 ${5 * pulseMultiplier}px ${c1},
-                    0 0 ${10 * pulseMultiplier}px ${c1},
-                    0 0 ${20 * pulseMultiplier}px ${c2},
-                    0 0 ${35 * pulseMultiplier}px ${c2},
-                    0 0 ${50 * pulseMultiplier}px ${c3}
-                `;
-
-                elements.puzzleContainer.style.boxShadow = newBoxShadow;
-                
-                state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
-            }
-
-            function startAudioAnalysis() {
-                if (state.animationFrameId || !state.audioContext) return;
-                pulseMultiplier = 1;
-                energyHistory.fill(0);
-                historyIndex = 0;
-                lastBeatTime = 0;
-                elements.puzzleContainer.classList.add('neon-border');
-                state.animationFrameId = requestAnimationFrame(pulseAnimationLoop);
-            }
-
-            function stopAudioAnalysis() {
-                if (state.animationFrameId) {
-                    cancelAnimationFrame(state.animationFrameId);
-                    state.animationFrameId = null;
-                }
-                elements.puzzleContainer.classList.remove('neon-border');
-                elements.puzzleContainer.style.boxShadow = ''; // Reset inline style
-            }
-            // --- End Audio Analysis ---
-
             elements.newGameBtn.addEventListener('click', () => {
                 if (state.gameInProgress) {
                     if (!confirm('¿Seguro que quieres empezar un nuevo juego? Se perderá tu progreso.')) {
@@ -1132,12 +1048,6 @@
             });
 
             elements.audioBtn.addEventListener('click', () => {
-                // AudioContext must be resumed after user interaction
-                if (!state.audioContext) initAudioAnalysis();
-                if (state.audioContext.state === 'suspended') {
-                    state.audioContext.resume();
-                }
-
                 state.isMuted = !state.isMuted;
                 if (!state.isMuted && elements.audioPlayer.src) {
                     elements.audioPlayer.play().catch(e => {
@@ -1160,13 +1070,13 @@
                     state.isMuted = false;
                 }
                 if (!state.isPaused) {
-                    startAudioAnalysis();
+                    elements.puzzleContainer.classList.add('animated-gradient-border');
                 }
                 updateUI();
             });
 
             elements.audioPlayer.addEventListener('pause', () => {
-                stopAudioAnalysis();
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
             });
 
 
