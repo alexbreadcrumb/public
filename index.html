@@ -515,7 +515,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.45</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.46</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -761,12 +761,15 @@
                     state.isPaused = true;
                     
                     const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
-                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
-                        el: null,
-                        originalIndex: pieceMap.get(i),
-                        currentIndex: i,
-                        isEmpty: originalIndex === SIZE * SIZE - 1
-                    }));
+                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
+                        const originalIndex = pieceMap.get(i);
+                        return {
+                           el: null,
+                           originalIndex: originalIndex,
+                           currentIndex: i,
+                           isEmpty: originalIndex === SIZE * SIZE - 1
+                        };
+                    });
                     return true;
                 }
                 return false;
