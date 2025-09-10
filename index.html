@@ -476,7 +476,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.21</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.22</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1006,12 +1006,11 @@
             let historyIndex = 0;
             let lastBeatTime = 0;
 
-
             function initAudioAnalysis() {
                 if (state.audioContext) return;
                 state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 state.analyser = state.audioContext.createAnalyser();
-                state.analyser.fftSize = 256;
+                state.analyser.fftSize = 1024; // Aumentado para mayor resolución de frecuencia
                 state.sourceNode = state.audioContext.createMediaElementSource(elements.audioPlayer);
                 state.sourceNode.connect(state.analyser);
                 state.analyser.connect(state.audioContext.destination);
@@ -1020,41 +1019,44 @@
             function pulseAnimationLoop() {
                 if (!state.analyser) return;
 
-                const bufferLength = state.analyser.frequencyBinCount;
+                // --- NUEVO ALGORITMO DE DETECCIÓN DE RITMO ---
+                const bufferLength = state.analyser.frequencyBinCount; // 512 con fftSize = 1024
                 const dataArray = new Uint8Array(bufferLength);
                 state.analyser.getByteFrequencyData(dataArray);
-                
-                // --- NEW Beat Detection Logic ---
-                // 1. Focus on bass frequencies for more reliable beat detection.
-                const bassData = dataArray.slice(0, 10); 
-                const currentEnergy = bassData.reduce((sum, value) => sum + value, 0) / bassData.length;
 
-                // 2. Update energy history buffer
+                // 1. Calcular la energía en la banda de frecuencias graves (aprox. 60-250Hz)
+                const sampleRate = state.audioContext.sampleRate;
+                const binWidth = sampleRate / state.analyser.fftSize;
+                const bassStartIndex = Math.max(1, Math.floor(60 / binWidth));
+                const bassEndIndex = Math.min(bufferLength, Math.ceil(250 / binWidth));
+
+                let currentEnergy = 0;
+                for (let i = bassStartIndex; i < bassEndIndex; i++) {
+                    const normalizedValue = dataArray[i] / 255;
+                    currentEnergy += normalizedValue * normalizedValue;
+                }
+
+                // 2. Actualizar el buffer de historial de energía
                 energyHistory[historyIndex] = currentEnergy;
                 historyIndex = (historyIndex + 1) % energyHistory.length;
 
-                // 3. Calculate local average energy over the history buffer
+                // 3. Calcular la energía promedio local sobre el buffer de historial
                 const averageEnergy = energyHistory.reduce((sum, value) => sum + value, 0) / energyHistory.length;
 
-                // 4. Calculate the variance of the energy history. Variance helps determine how dynamic the sound is.
-                const variance = energyHistory.reduce((sum, value) => sum + Math.pow(value - averageEnergy, 2), 0) / energyHistory.length;
-
-                // 5. Calculate a dynamic threshold constant based on variance.
-                const dynamicThreshold = Math.max(1.3, -0.0025714 * variance + 1.5142857);
-
-                // 6. Check for a beat
-                const minEnergyThreshold = 15; // Ignore beats in very quiet sections.
-                const cooldown = 200; // Minimum ms between beats to feel rhythmic.
+                // 4. Establecer un umbral y un período de enfriamiento (cooldown)
+                const BEAT_THRESHOLD_MULTIPLIER = 2.0; // Ajustado para picos más claros
+                const BEAT_COOLDOWN_MS = 150; 
                 const now = Date.now();
 
-                if (now - lastBeatTime > cooldown && currentEnergy > averageEnergy * dynamicThreshold && currentEnergy > minEnergyThreshold) {
-                    pulseMultiplier = 3.5;
+                // 5. Comprobar si hay un beat
+                if (now - lastBeatTime > BEAT_COOLDOWN_MS && currentEnergy > averageEnergy * BEAT_THRESHOLD_MULTIPLIER && currentEnergy > 0.01) {
+                    pulseMultiplier = 3.5; // Activar el pulso
                     lastBeatTime = now;
                 } else {
-                    // Decay the multiplier back to the base value
-                    pulseMultiplier = Math.max(1, pulseMultiplier * 0.90); 
+                    // Decaer el multiplicador de vuelta al valor base
+                    pulseMultiplier = Math.max(1, pulseMultiplier * 0.92); 
                 }
-                // --- End NEW Beat Detection ---
+                // --- FIN DEL NUEVO ALGORITMO ---
                 
                 const c1 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-1').trim();
                 const c2 = getComputedStyle(elements.puzzleContainer).getPropertyValue('--neon-color-2').trim();
