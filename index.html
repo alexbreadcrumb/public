@@ -504,7 +504,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.33</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.34</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -672,16 +672,13 @@
                     swapPieces(clickedPiece, emptyPiece);
                     state.moves++;
 
-                    // Unmute audio on the very first move of a new game
                     if (state.moves === 1 && state.isMuted) {
                         state.isMuted = false;
                         elements.audioPlayer.muted = false;
 
-                        // Ensure audio plays if it was paused for any reason
                         if (elements.audioPlayer.paused) {
                             elements.audioPlayer.play().catch(e => {
                                 console.error("Error playing audio on first move:", e);
-                                // If play fails, revert state to avoid UI inconsistency
                                 state.isMuted = true;
                                 elements.audioPlayer.muted = true;
                             });
@@ -710,11 +707,8 @@
             function checkWin() {
                 return state.pieces.every(p => p.currentIndex === p.originalIndex);
             }
-
-            function handleWin() {
-                stopTimer();
-                elements.puzzleContainer.classList.remove('animated-gradient-border');
-                
+            
+            function triggerWinCelebration() {
                 const rootStyles = getComputedStyle(document.documentElement);
                 const paletteColors = [
                     rootStyles.getPropertyValue('--gradient-color-1').trim(),
@@ -724,17 +718,34 @@
                     rootStyles.getPropertyValue('--gradient-color-5').trim()
                 ].filter(Boolean);
 
-                const noteShapes = ['♪', '♫', '♬'];
+                const colors = paletteColors.length > 0 ? paletteColors : ['#1DB954', '#FFFFFF', '#1ED760'];
+
+                const defaults = {
+                    origin: { x: 0.5, y: 0.5 }, // Center of the screen
+                    shapes: ['♪', '♫', '♬'],
+                    scalar: 1.5, // Make notes a bit smaller and sharper
+                    colors: colors,
+                    disableForReducedMotion: true
+                };
+
+                function fire(particleCount, options) {
+                    confetti({
+                        ...defaults,
+                        ...options,
+                        particleCount: particleCount
+                    });
+                }
                 
-                confetti({
-                    particleCount: 150,
-                    spread: 180,
-                    origin: { x: 0.5, y: 0.5 },
-                    shapes: noteShapes,
-                    scalar: 2,
-                    gravity: 0.5,
-                    colors: paletteColors.length > 0 ? paletteColors : ['#1DB954', '#FFFFFF', '#1ED760']
-                });
+                fire(100, { spread: 120, startVelocity: 45, decay: 0.92 });
+                fire(80, { spread: 80, startVelocity: 35, decay: 0.9 });
+                fire(120, { spread: 180, startVelocity: 25, decay: 0.94, scalar: 1 });
+            }
+
+            function handleWin() {
+                stopTimer();
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
+                
+                triggerWinCelebration();
 
                 state.isPaused = true;
                 state.gameInProgress = false;
@@ -746,20 +757,35 @@
             }
 
             function saveScore() {
+                // 1. Get current scores or initialize an empty array.
                 let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                
+                // 2. Create the new score object.
                 const newScore = {
                     time: state.time,
                     moves: state.moves,
-                    album: state.currentAlbum,
+                    album: { ...state.currentAlbum }, // Use spread to avoid reference issues
                     id: Date.now()
                 };
+
+                // 3. Add the new score to the list.
                 highScores.push(newScore);
+
+                // 4. Sort the list to have the best scores first (lowest time, then lowest moves).
                 highScores.sort((a, b) => {
-                    if (a.time !== b.time) return a.time - b.time;
+                    if (a.time !== b.time) {
+                        return a.time - b.time;
+                    }
                     return a.moves - b.moves;
                 });
-                highScores = highScores.slice(0, 10);
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
+
+                // 5. Keep only the top 10 scores.
+                const topTenScores = highScores.slice(0, 10);
+
+                // 6. Save the updated list back to localStorage.
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(topTenScores));
+                
+                // 7. Re-render the high scores list in the modal.
                 renderHighScores();
             }
 
