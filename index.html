@@ -46,6 +46,25 @@
             padding-top: 5rem; /* Space for fixed top-bar */
             box-sizing: border-box;
             min-height: 100%;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: var(--bg-image, none);
+            background-size: cover;
+            background-position: center;
+            filter: blur(30px) brightness(0.4);
+            transform: scale(1.1);
+            z-index: -1;
+            opacity: var(--bg-opacity, 0);
+            transition: opacity 0.7s ease-in-out;
+            will-change: opacity, background-image;
         }
 
         h1 {
@@ -515,7 +534,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.46</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.47</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -723,6 +742,15 @@
                 const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
                 const secs = (seconds % 60).toString().padStart(2, '0');
                 return `${mins}:${secs}`;
+            }
+
+            function updateBackground(imageUrl) {
+                document.body.style.setProperty('--bg-image', `url('${imageUrl}')`);
+                document.body.style.setProperty('--bg-opacity', '1');
+            }
+
+            function clearBackground() {
+                document.body.style.setProperty('--bg-opacity', '0');
             }
 
             function updateUI() {
@@ -1101,6 +1129,7 @@
                     img.onload = () => {
                         const palette = new ColorThief().getPalette(img, 5);
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        updateBackground(img.src);
                         hideOverlay();
                         resetGame();
                         startNewGame();
@@ -1164,6 +1193,7 @@
                     img.onload = () => {
                         const palette = new ColorThief().getPalette(img, 5);
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        updateBackground(img.src);
                         
                         renderBoard();
                         startTimer();
@@ -1177,6 +1207,7 @@
                      img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
                     clearGameState();
+                    clearBackground();
                     state.gameInProgress = false;
                     state.isPaused = true;
                     elements.puzzleContainer.innerHTML = '';
