@@ -630,7 +630,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.51</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.52</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -800,6 +800,15 @@
             };
 
             let currentStrings = { ...translations.es };
+
+            function getTranslatedString(key, replacements = {}) {
+                // Fallback chain: current language -> Spanish (base) -> key name
+                let str = currentStrings[key] || translations.es[key] || key;
+                for (const placeholder in replacements) {
+                    str = str.replace(`{${placeholder}}`, replacements[placeholder]);
+                }
+                return str;
+            }
 
             function applyTranslations() {
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
@@ -1248,7 +1257,10 @@
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
-                showOverlay(getTranslatedString('searchingMusicFor', {searchTerm}) || getTranslatedString('searchingMusic'));
+                const overlayMessage = isArtistSearch 
+                    ? getTranslatedString('searchingMusicFor', { searchTerm }) 
+                    : getTranslatedString('searchingMusic');
+                showOverlay(overlayMessage);
 
                 let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
                 
