@@ -534,7 +534,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.49</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.50</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -648,30 +648,13 @@
                 return str;
             }
 
-            async function detectLanguage() {
-                try {
-                    const response = await fetch('https://ip-api.com/json/?fields=countryCode');
-                    if (!response.ok) return 'en'; // Default to English on API failure
-                    const data = await response.json();
-                    const country = data.countryCode;
+            function detectLanguage() {
+                const lang = navigator.language || navigator.userLanguage || 'en';
+                const langCode = lang.split('-')[0];
 
-                    if (country === 'BR') return 'pt-BR';
-
-                    const englishSpeaking = ['US', 'CA', 'GB', 'AU', 'NZ', 'IE'];
-                    if (englishSpeaking.includes(country)) {
-                        return 'en';
-                    }
-                    
-                    const spanishSpeakingLATAM = ['AR', 'BO', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'SV', 'GT', 'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'UY', 'VE'];
-                    if (country === 'ES' || spanishSpeakingLATAM.includes(country)) {
-                        return 'es';
-                    }
-                    
-                    return 'en'; // Default to English for all other regions
-                } catch (error) {
-                    console.warn('Could not detect country, defaulting to English.', error);
-                    return 'en';
-                }
+                if (langCode === 'pt') return 'pt-BR';
+                if (langCode === 'es') return 'es';
+                return 'en';
             }
             
             async function translateTexts(textsToTranslate, targetLang) {
@@ -722,38 +705,41 @@
             }
 
             async function initializeLocalization() {
-                const targetLang = await detectLanguage();
+                const targetLang = detectLanguage(); // Now synchronous
 
                 if (targetLang === 'es') {
-                    applyTranslations(); // Apply default Spanish
+                    // Default is Spanish, nothing to do besides applying
+                    applyTranslations();
                     return;
                 }
-                
-                // For non-Spanish languages, set a reliable English fallback immediately.
-                // This solves the issue where the UI remains in Spanish if AI fails or is unavailable.
-                if (targetLang === 'en' || targetLang === 'pt-BR') {
+
+                if (targetLang === 'en') {
                     currentStrings = { ...englishTextStrings };
                     applyTranslations();
+                    return;
                 }
 
-                // If the target is Portuguese and AI is available, try to translate.
-                // If it fails, the UI will remain in English (the fallback).
-                if (ai && targetLang === 'pt-BR') {
-                    showOverlay(currentStrings.translatingUI); // Now shows "Translating UI..."
-                    const spanishTexts = Object.values(textStrings);
-                    const translatedMap = await translateTexts(spanishTexts, 'pt-BR');
+                if (targetLang === 'pt-BR') {
+                    // Set English as a fallback while we try to translate to Portuguese
+                    currentStrings = { ...englishTextStrings };
+                    applyTranslations();
+                    
+                    if (ai) {
+                        showOverlay(currentStrings.translatingUI);
+                        const spanishTexts = Object.values(textStrings);
+                        const translatedMap = await translateTexts(spanishTexts, 'pt-BR');
 
-                    if (Object.keys(translatedMap).length > 0) {
-                        const newStrings = {};
-                        for (const key in textStrings) {
-                            const spanishText = textStrings[key];
-                            // Use the translation if available, otherwise keep the English fallback
-                            newStrings[key] = translatedMap[spanishText] || currentStrings[key];
+                        if (Object.keys(translatedMap).length > 0) {
+                            const newStrings = {};
+                            for (const key in textStrings) {
+                                const spanishText = textStrings[key];
+                                newStrings[key] = translatedMap[spanishText] || currentStrings[key]; // Fallback to English if a specific string fails
+                            }
+                            currentStrings = newStrings;
+                            applyTranslations();
                         }
-                        currentStrings = newStrings;
-                        applyTranslations(); // Apply the final Portuguese translations
+                        hideOverlay();
                     }
-                    hideOverlay();
                 }
             }
             // --- End I18n ---
