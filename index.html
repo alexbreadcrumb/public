@@ -478,15 +478,15 @@
             </div>
         </div>
         <div class="controls-group">
-            <button id="pause-btn" class="control-button" title="Pausar/Reanudar">
+            <button id="pause-btn" class="control-button" data-translate-title="pauseResumeTitle">
                 <svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 7h3v10H8zm5 0h3v10h-3z"></path></svg>
                 <svg id="play-icon" viewBox="0 0 24 24" style="display: none;"><path d="M7 6v12l10-6z"></path></svg>
             </button>
-            <button id="audio-btn" class="control-button" title="Activar/Silenciar Sonido" disabled>
+            <button id="audio-btn" class="control-button" data-translate-title="toggleSoundTitle" disabled>
                 <svg id="unmute-icon" viewBox="0 0 24 24" style="display:none;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
                 <svg id="mute-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
             </button>
-            <button id="scores-btn" class="control-button" title="Mejores Tiempos">
+            <button id="scores-btn" class="control-button" data-translate-title="highScoresTitle">
                 <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
             </button>
         </div>
@@ -497,15 +497,15 @@
         <div class="current-track-info" id="current-track-info"></div>
 
         <div class="new-game-controls">
-            <input type="text" id="artist-search" placeholder="Buscar por artista (opcional)">
-            <button id="new-game-btn">Nuevo Juego</button>
+            <input type="text" id="artist-search" data-translate-placeholder="artistSearchPlaceholder">
+            <button id="new-game-btn" data-translate-key="newGame">Nuevo Juego</button>
         </div>
     </div>
     
     <div id="scores-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Mejores Tiempos</h2>
+                <h2 data-translate-key="highScoresTitle">Mejores Tiempos</h2>
                 <button class="close-btn" id="close-scores-btn">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
@@ -515,12 +515,14 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer>Game By: Ale Fernández PY-2025 - v1.43</footer>
+    <footer><span data-translate-key="gameBy">Game By:</span> Ale Fernández PY-2025 - v1.44</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import { GoogleGenAI } from 'https://esm.run/@google/genai';
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const SIZE = 3;
             const elements = {
                 puzzleContainer: document.getElementById('puzzle-container'),
@@ -558,16 +560,140 @@
                 'https://cors-anywhere.poldisoft.com/',
                 'https://thingproxy.freeboard.io/fetch/'
             ];
+            
+            // --- I18n & Translation ---
+            const textStrings = {
+                pageTitle: "Puzzletunes",
+                pauseResumeTitle: "Pause/Resume",
+                toggleSoundTitle: "Toggle Sound",
+                highScoresTitle: "High Scores",
+                artistSearchPlaceholder: "Search by artist (optional)",
+                newGame: "New Game",
+                gameBy: "Game By:",
+                winMessage: "You Won!<br>{time}",
+                paused: "Paused",
+                startMessage: "Click 'New Game' to start",
+                translatingUI: "Translating UI...",
+                searchingMusic: "Searching for music...",
+                searchingMusicFor: "Searching for music by {searchTerm}...",
+                didYouMean: "Did you mean:",
+                imageError: "Error loading image. Please try again.",
+                noMusicFoundFor: "No music found for \"{searchTerm}\"",
+                noRandomMusic: "Random music not found. Please try again.",
+                loadSavedImageError: "Error loading saved image.",
+                newGameConfirm: "Are you sure you want to start a new game? Your progress will be lost.",
+                deleteRecordTitle: "Delete record",
+                movesSuffix: "mov."
+            };
+            let currentStrings = { ...textStrings };
+            let translationCache = {};
+            let ai;
+            try {
+                if (process.env.API_KEY) {
+                    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                }
+            } catch (e) {
+                console.error("Could not initialize Gemini AI.", e);
+            }
+
+            function getTranslatedString(key, replacements = {}) {
+                let str = currentStrings[key] || textStrings[key] || '';
+                for (const placeholder in replacements) {
+                    str = str.replace(`{${placeholder}}`, replacements[placeholder]);
+                }
+                return str;
+            }
+
+            async function detectLanguage() {
+                try {
+                    const response = await fetch('https://ip-api.com/json/?fields=countryCode');
+                    if (!response.ok) return 'en';
+                    const data = await response.json();
+                    const country = data.countryCode;
+
+                    if (country === 'BR') return 'pt-BR';
+
+                    const spanishSpeakingLATAM = ['AR', 'BO', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'SV', 'GT', 'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'UY', 'VE'];
+                    if (country === 'ES' || spanishSpeakingLATAM.includes(country)) {
+                        return 'es';
+                    }
+                    return 'en';
+                } catch (error) {
+                    console.warn('Could not detect country, defaulting to English.', error);
+                    return 'en';
+                }
+            }
+            
+            async function translateTexts(textsToTranslate, targetLang) {
+                if (!ai) return {};
+                const cacheKey = `${targetLang}-${textsToTranslate.join('|')}`;
+                if (translationCache[cacheKey]) return translationCache[cacheKey];
+
+                const languageMap = { 'es': 'Spanish', 'pt-BR': 'Brazilian Portuguese' };
+                const targetLanguageName = languageMap[targetLang] || 'English';
+
+                const prompt = `Translate the values in the following JSON array of strings into ${targetLanguageName}. Return a JSON object where keys are the original English strings and values are their translations. Ensure the response is only the JSON object, without markdown formatting. The JSON array is: ${JSON.stringify(textsToTranslate)}`;
+
+                try {
+                    const response = await ai.models.generateContent({
+                        model: "gemini-2.5-flash",
+                        contents: prompt,
+                        config: { responseMimeType: "application/json" }
+                    });
+                    const translatedObject = JSON.parse(response.text);
+                    translationCache[cacheKey] = translatedObject;
+                    return translatedObject;
+                } catch (error) {
+                    console.error('Gemini translation failed:', error);
+                    return {};
+                }
+            }
+            
+            function applyTranslations() {
+                document.title = currentStrings.pageTitle;
+                document.querySelectorAll('[data-translate-key]').forEach(el => {
+                    const key = el.dataset.translateKey;
+                    if (currentStrings[key]) el.textContent = currentStrings[key];
+                });
+                document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+                    const key = el.dataset.translatePlaceholder;
+                    if (currentStrings[key]) el.placeholder = currentStrings[key];
+                });
+                document.querySelectorAll('[data-translate-title]').forEach(el => {
+                    const key = el.dataset.translateTitle;
+                    if (currentStrings[key]) el.title = currentStrings[key];
+                });
+            }
+
+            async function initializeLocalization() {
+                const targetLang = await detectLanguage();
+                if (targetLang === 'en' || !ai) {
+                    applyTranslations();
+                    return;
+                }
+
+                showOverlay(getTranslatedString('translatingUI'));
+                const englishTexts = Object.values(textStrings);
+                const translatedMap = await translateTexts(englishTexts, targetLang);
+                
+                const newStrings = {};
+                for (const key in textStrings) {
+                    const englishText = textStrings[key];
+                    newStrings[key] = translatedMap[englishText] || englishText;
+                }
+                currentStrings = newStrings;
+                applyTranslations();
+                hideOverlay();
+            }
+            // --- End I18n ---
+
 
             async function fetchWithProxyFallback(url) {
                 let lastError = null;
                 for (const proxy of PROXIES) {
                     try {
-                        const proxyUrl = `${proxy}${url}`;
-                        const response = await fetch(proxyUrl);
-                        if (response.ok) {
-                            return response;
-                        }
+                        const response = await fetch(`${proxy}${url}`);
+                        if (response.ok) return response;
                         lastError = new Error(`Proxy ${proxy} returned status ${response.status}`);
                     } catch (error) {
                         lastError = error;
@@ -619,15 +745,12 @@
                     state.isPaused = true;
                     
                     const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
-                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
-                        const originalIndex = pieceMap.get(i);
-                        return {
-                            el: null,
-                            originalIndex: originalIndex,
-                            currentIndex: i,
-                            isEmpty: originalIndex === SIZE * SIZE - 1
-                        };
-                    });
+                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                        el: null,
+                        originalIndex: pieceMap.get(i),
+                        currentIndex: i,
+                        isEmpty: originalIndex === SIZE * SIZE - 1
+                    }));
                     return true;
                 }
                 return false;
@@ -736,23 +859,14 @@
                     shapes: ['♪', '♫', '♬'],
                     colors: colors,
                     disableForReducedMotion: true,
-                    gravity: 0.5, // give them a bit of weight
-                    scalar: 2.5, // Make notes bigger
+                    gravity: 0.5,
+                    scalar: 2.5,
                 };
 
-                function fire(particleCount, options) {
-                    confetti({
-                        ...defaults,
-                        ...options,
-                        particleCount: Math.floor(particleCount)
-                    });
-                }
+                const fire = (particleCount, options) => confetti({ ...defaults, ...options, particleCount: Math.floor(particleCount) });
                 
-                // Big initial burst
                 fire(200, { spread: 180, startVelocity: 55, decay: 0.9 });
-                // A second wave for more depth
                 fire(150, { spread: 120, startVelocity: 45, decay: 0.91, scalar: 2 });
-                // A wider, slower burst for background fill
                 fire(250, { spread: 360, startVelocity: 30, decay: 0.92, scalar: 1.5 });
             }
 
@@ -764,7 +878,7 @@
 
                 state.isPaused = true;
                 state.gameInProgress = false;
-                setTimeout(() => showOverlay(`¡Ganaste!<br>${formatTime(state.time)}`), 500);
+                setTimeout(() => showOverlay(getTranslatedString('winMessage', {time: formatTime(state.time)})), 500);
                 saveScore();
                 clearGameState();
                 elements.audioPlayer.pause();
@@ -775,10 +889,8 @@
                 try {
                     const storedScores = localStorage.getItem('puzzletunesHighScores');
                     if (!storedScores) return [];
-                    
                     const parsedScores = JSON.parse(storedScores);
                     if (Array.isArray(parsedScores)) {
-                        // Filter out any invalid entries just in case
                         return parsedScores.filter(s => s && typeof s.time === 'number' && s.album);
                     }
                 } catch (e) {
@@ -788,44 +900,21 @@
             }
 
             function saveScore() {
-                if (!state.currentAlbum) {
-                    console.error("Attempted to save score without a valid album.");
-                    return;
-                }
-                
+                if (!state.currentAlbum) return;
                 let highScores = getHighScores();
-                
-                const newScore = {
-                    time: state.time,
-                    moves: state.moves,
-                    album: { ...state.currentAlbum },
-                    id: Date.now()
-                };
-
-                highScores.push(newScore);
-
-                highScores.sort((a, b) => {
-                    if (a.time !== b.time) {
-                        return a.time - b.time;
-                    }
-                    return a.moves - b.moves;
-                });
-
-                const topTenScores = highScores.slice(0, 10);
-
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(topTenScores));
+                highScores.push({ time: state.time, moves: state.moves, album: { ...state.currentAlbum }, id: Date.now() });
+                highScores.sort((a, b) => a.time !== b.time ? a.time - b.time : a.moves - b.moves);
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores.slice(0, 10)));
             }
 
             function renderHighScores() {
                 const highScores = getHighScores();
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
-                    const thumbUrl = item.album.artworkUrl;
                     const wrapperId = `marquee-wrapper-${item.id}`;
-                    
                     const html = `
                         <li class="score-item">
                             <span class="score-rank">${index + 1}</span>
-                            <img src="${thumbUrl}" class="score-thumbnail" alt="Portada de ${item.album.collectionName}">
+                            <img src="${item.album.artworkUrl}" class="score-thumbnail" alt="Artwork for ${item.album.collectionName}">
                             <div class="score-info">
                                 <p class="score-artist">${item.album.artistName}</p>
                                 <div class="marquee-wrapper" id="${wrapperId}">
@@ -833,39 +922,36 @@
                                 </div>
                                 <div class="score-stats">
                                     <span>${formatTime(item.time)}</span>
-                                    <span>${item.moves} mov.</span>
+                                    <span>${item.moves} ${getTranslatedString('movesSuffix')}</span>
                                 </div>
                             </div>
-                            <button class="score-delete-btn" data-id="${item.id}" title="Eliminar récord">
+                            <button class="score-delete-btn" data-id="${item.id}" title="${getTranslatedString('deleteRecordTitle')}">
                                 <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
                             </button>
                         </li>`;
                     
                     setTimeout(() => {
                         const wrapper = document.getElementById(wrapperId);
-                        const content = wrapper ? wrapper.querySelector('.marquee-content') : null;
+                        const content = wrapper?.querySelector('.marquee-content');
                         if (wrapper && content && content.scrollWidth > wrapper.clientWidth) {
                             wrapper.classList.add('animate');
                         }
                     }, 0);
-                    
                     return html;
-
                 }).join('');
             }
             
             function deleteScore(id) {
-                let highScores = getHighScores();
-                highScores = highScores.filter(score => score.id !== id);
+                let highScores = getHighScores().filter(score => score.id !== id);
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
             }
 
-            function showOverlay(text, suggestions = []) {
+            function showOverlay(htmlContent, suggestions = []) {
                 hideOverlay();
                 const overlay = document.createElement('div');
                 overlay.className = 'overlay';
-                overlay.innerHTML = `<div>${text}</div>`;
+                overlay.innerHTML = `<div>${htmlContent}</div>`;
                 
                 if (suggestions.length > 0) {
                     const suggestionsContainer = document.createElement('div');
@@ -882,7 +968,6 @@
                     });
                     overlay.appendChild(suggestionsContainer);
                 }
-
                 elements.puzzleContainer.appendChild(overlay);
             }
 
@@ -899,7 +984,6 @@
                     try {
                         const response = await fetchWithProxyFallback(url);
                         const data = await response.json();
-
                         const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100);
                         if (songsWithPreview.length === 0) return null;
 
@@ -916,9 +1000,7 @@
                         }, {});
 
                         const albumArray = Object.values(albums);
-                        if (albumArray.length === 0) return null;
-                        
-                        return albumArray[Math.floor(Math.random() * albumArray.length)];
+                        return albumArray.length > 0 ? albumArray[Math.floor(Math.random() * albumArray.length)] : null;
                     } catch (error) {
                         console.error('Error in searchAndProcess:', error);
                         return null;
@@ -928,54 +1010,40 @@
                 if (isArtistSearch) {
                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
                     return await searchAndProcess(searchUrl);
-                } else {
-                    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-                        const genre = genres[Math.floor(Math.random() * genres.length)];
-                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
-                        const result = await searchAndProcess(searchUrl);
-                        if (result) {
-                            return result;
-                        }
-                        console.warn(`Random search attempt ${i + 1} with genre "${genre}" failed. Retrying...`);
-                    }
-                    console.error('All random search attempts failed.');
-                    return null;
                 }
+                for (let i = 0; i < MAX_ATTEMPTS; i++) {
+                    const genre = genres[Math.floor(Math.random() * genres.length)];
+                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                    const result = await searchAndProcess(searchUrl);
+                    if (result) return result;
+                    console.warn(`Random search attempt ${i + 1} failed. Retrying...`);
+                }
+                return null;
             }
             
-            function calculateLevenshteinDistance(a, b) {
-                if (a.length === 0) return b.length;
-                if (b.length === 0) return a.length;
+            const calculateLevenshteinDistance = (a, b) => {
                 const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
                 for (let i = 0; i <= a.length; i++) { matrix[0][i] = i; }
                 for (let j = 0; j <= b.length; j++) { matrix[j][0] = j; }
                 for (let j = 1; j <= b.length; j++) {
                     for (let i = 1; i <= a.length; i++) {
                         const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-                        matrix[j][i] = Math.min(
-                            matrix[j][i - 1] + 1, // deletion
-                            matrix[j - 1][i] + 1, // insertion
-                            matrix[j - 1][i - 1] + cost, // substitution
-                        );
+                        matrix[j][i] = Math.min(matrix[j][i - 1] + 1, matrix[j - 1][i] + 1, matrix[j - 1][i - 1] + cost);
                     }
                 }
                 return matrix[b.length][a.length];
-            }
+            };
             
             async function findSuggestions(searchTerm) {
-                const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`;
                 try {
-                    const response = await fetchWithProxyFallback(searchUrl);
+                    const response = await fetchWithProxyFallback(`https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50`);
                     const data = await response.json();
-                    
-                    const artistNames = [...new Set(data.results.map(r => r.artistName))];
-                    const suggestions = artistNames
+                    return [...new Set(data.results.map(r => r.artistName))]
                         .map(name => ({ name, distance: calculateLevenshteinDistance(searchTerm.toLowerCase(), name.toLowerCase()) }))
-                        .filter(item => item.distance < 4) // Only suggest close matches
+                        .filter(item => item.distance < 4)
                         .sort((a, b) => a.distance - b.distance)
                         .map(item => item.name)
                         .slice(0, 3);
-                    return suggestions;
                 } catch (error) {
                     console.error('Error finding suggestions:', error);
                     return [];
@@ -990,44 +1058,34 @@
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
-                showOverlay(`Buscando música${isArtistSearch ? ` de ${searchTerm}` : ''}...`);
+                showOverlay(isArtistSearch ? getTranslatedString('searchingMusicFor', {searchTerm}) : getTranslatedString('searchingMusic'));
 
                 let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
                 
                 if (!album && isArtistSearch && !isFromSuggestion) {
                     const suggestions = await findSuggestions(searchTerm);
                     if (suggestions.length > 0) {
-                        showOverlay(`Quisiste decir:`, suggestions);
+                        showOverlay(getTranslatedString('didYouMean'), suggestions);
                         return;
                     }
                 }
 
                 if (album) {
                     state.currentAlbum = album;
-                    const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
-                    
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    img.src = imageUrl;
-                    
+                    img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const colorThief = new ColorThief();
-                        const palette = colorThief.getPalette(img, 5);
-                        const rootStyle = document.documentElement.style;
-                        for (let i = 0; i < palette.length; i++) {
-                            const [r, g, b] = palette[i];
-                            rootStyle.setProperty(`--gradient-color-${i + 1}`, `rgb(${r}, ${g}, ${b})`);
-                        }
-
+                        const palette = new ColorThief().getPalette(img, 5);
+                        palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         hideOverlay();
                         resetGame();
                         startNewGame();
                     };
-                    img.onerror = () => {
-                        showOverlay('Error al cargar imagen. Intenta de nuevo.');
-                    };
+                    img.onerror = () => showOverlay(getTranslatedString('imageError'));
                 } else {
-                    showOverlay(`No se encontró música ${isArtistSearch ? ` para "${searchTerm}"` : 'aleatoria'}.`);
+                    const message = isArtistSearch ? getTranslatedString('noMusicFoundFor', {searchTerm}) : getTranslatedString('noRandomMusic');
+                    showOverlay(message);
                 }
             }
 
@@ -1039,84 +1097,67 @@
                 state.gameInProgress = true;
                 
                 const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                let shuffledIndices;
+                let shuffled;
                 do {
-                    shuffledIndices = indices.sort(() => Math.random() - 0.5);
-                } while (!isSolvable(shuffledIndices));
+                    shuffled = indices.sort(() => Math.random() - 0.5);
+                } while (!isSolvable(shuffled));
 
                 state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                     el: null,
                     originalIndex: i,
-                    currentIndex: shuffledIndices.indexOf(i),
+                    currentIndex: shuffled.indexOf(i),
                     isEmpty: i === SIZE * SIZE - 1
                 }));
             }
             
-            function isSolvable(shuffled) {
+            const isSolvable = (shuffled) => {
                 let inversions = 0;
                 const puzzle = shuffled.filter(i => i !== SIZE * SIZE - 1);
                 for (let i = 0; i < puzzle.length - 1; i++) {
                     for (let j = i + 1; j < puzzle.length; j++) {
-                        if (puzzle[i] > puzzle[j]) {
-                            inversions++;
-                        }
+                        if (puzzle[i] > puzzle[j]) inversions++;
                     }
                 }
                 return inversions % 2 === 0;
-            }
+            };
 
             function startNewGame() {
                 renderBoard();
                 startTimer();
                 elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
-                
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
-
-                // Start muted to comply with browser autoplay policies.
                 state.isMuted = true;
                 elements.audioPlayer.muted = true;
                 updateUI();
-                
-                // We will not attempt to play() here. 
-                // Playback will be initiated by the first user move in onPieceClick.
-                
                 saveGameState();
             }
 
             function initGame() {
                 if (loadGameState() && state.gameInProgress) {
-                    const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    img.src = imageUrl;
+                    img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const colorThief = new ColorThief();
-                        const palette = colorThief.getPalette(img, 5);
-                        const rootStyle = document.documentElement.style;
-                        for (let i = 0; i < palette.length; i++) {
-                            const [r, g, b] = palette[i];
-                            rootStyle.setProperty(`--gradient-color-${i + 1}`, `rgb(${r}, ${g}, ${b})`);
-                        }
+                        const palette = new ColorThief().getPalette(img, 5);
+                        palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         
                         renderBoard();
                         startTimer();
                         updateUI();
-                        showOverlay("Pausado");
+                        showOverlay(getTranslatedString('paused'));
                         elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
                         if (state.currentAlbum.previewUrl) {
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
                         }
                     };
-                     img.onerror = () => {
-                        showOverlay('Error al cargar imagen guardada.');
-                     };
+                     img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
                     clearGameState();
                     state.gameInProgress = false;
                     state.isPaused = true;
                     elements.puzzleContainer.innerHTML = '';
-                    showOverlay("Haz clic en 'Nuevo Juego' para comenzar");
+                    showOverlay(getTranslatedString('startMessage'));
                     elements.trackInfo.innerHTML = '';
                     updateUI();
                 }
@@ -1139,10 +1180,8 @@
             }
 
             elements.newGameBtn.addEventListener('click', () => {
-                if (state.gameInProgress) {
-                    if (!confirm('¿Seguro que quieres empezar un nuevo juego? Se perderá tu progreso.')) {
-                        return;
-                    }
+                if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) {
+                    return;
                 }
                 clearGameState();
                 elements.audioPlayer.pause();
@@ -1156,13 +1195,13 @@
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
                     stopTimer();
-                    showOverlay("Pausado");
+                    showOverlay(getTranslatedString('paused'));
                     elements.audioPlayer.pause();
                 } else {
                     hideOverlay();
                     startTimer();
                     if (!state.isMuted && elements.audioPlayer.src) {
-                        elements.audioPlayer.play().catch(e => console.error("Error playing audio on resume:", e));
+                        elements.audioPlayer.play().catch(e => console.error("Error on resume:", e));
                     }
                 }
                 updateUI();
@@ -1172,66 +1211,39 @@
             elements.audioBtn.addEventListener('click', () => {
                 state.isMuted = !state.isMuted;
                 elements.audioPlayer.muted = state.isMuted;
-
                 if (elements.audioPlayer.paused && !state.isMuted) {
                     elements.audioPlayer.play().catch(e => {
-                        console.error("Error playing audio on unmute:", e);
+                        console.error("Error on unmute:", e);
                         state.isMuted = true;
                         elements.audioPlayer.muted = true;
                     });
                 }
-                
-                if (!state.isMuted && !elements.audioPlayer.paused && !state.isPaused) {
-                    elements.puzzleContainer.classList.add('animated-gradient-border');
-                } else {
-                    elements.puzzleContainer.classList.remove('animated-gradient-border');
-                }
-
                 updateUI();
                 if (state.gameInProgress) saveGameState();
             });
 
-            elements.audioPlayer.addEventListener('canplaythrough', () => {
-                elements.audioBtn.disabled = false;
-            });
-            
+            elements.audioPlayer.addEventListener('canplaythrough', () => elements.audioBtn.disabled = false);
             elements.audioPlayer.addEventListener('play', () => {
                 if (!state.isMuted && !state.isPaused) {
                     elements.puzzleContainer.classList.add('animated-gradient-border');
                 }
                 updateUI();
             });
-
-            elements.audioPlayer.addEventListener('pause', () => {
-                elements.puzzleContainer.classList.remove('animated-gradient-border');
-            });
-
-
+            elements.audioPlayer.addEventListener('pause', () => elements.puzzleContainer.classList.remove('animated-gradient-border'));
             elements.scoresBtn.addEventListener('click', () => {
                 renderHighScores();
                 elements.scoresModal.classList.add('visible');
             });
-
-
-
-            elements.closeScoresBtn.addEventListener('click', () => {
-                elements.scoresModal.classList.remove('visible');
-});
-
+            elements.closeScoresBtn.addEventListener('click', () => elements.scoresModal.classList.remove('visible'));
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
                 if (deleteBtn) {
-                    const scoreId = parseInt(deleteBtn.dataset.id, 10);
-                    deleteScore(scoreId);
+                    deleteScore(parseInt(deleteBtn.dataset.id, 10));
                 }
             });
+            window.addEventListener('beforeunload', () => state.gameInProgress && saveGameState());
             
-            window.addEventListener('beforeunload', () => {
-                if (state.gameInProgress) {
-                    saveGameState();
-                }
-            });
-            
+            await initializeLocalization();
             initGame();
         });
     </script>
