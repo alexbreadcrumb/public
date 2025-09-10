@@ -512,7 +512,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.37</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.38</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -768,13 +768,29 @@
                 updateUI();
             }
 
+            function getHighScores() {
+                try {
+                    const storedScores = localStorage.getItem('puzzletunesHighScores');
+                    if (!storedScores) return [];
+                    
+                    const parsedScores = JSON.parse(storedScores);
+                    if (Array.isArray(parsedScores)) {
+                        // Filter out any invalid entries just in case
+                        return parsedScores.filter(s => s && typeof s.time === 'number' && s.album);
+                    }
+                } catch (e) {
+                    console.error("Could not parse high scores, returning empty list.", e);
+                }
+                return [];
+            }
+
             function saveScore() {
                 if (!state.currentAlbum) {
                     console.error("Attempted to save score without a valid album.");
                     return;
                 }
                 
-                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                let highScores = getHighScores();
                 
                 const newScore = {
                     time: state.time,
@@ -795,17 +811,11 @@
                 const topTenScores = highScores.slice(0, 10);
 
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(topTenScores));
-                
-                renderHighScores();
             }
 
             function renderHighScores() {
-                const highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                const highScores = getHighScores();
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
-                    if (!item || !item.album || !item.album.artworkUrl) {
-                        console.error('Invalid score item found:', item);
-                        return '';
-                    }
                     const thumbUrl = item.album.artworkUrl;
                     const wrapperId = `marquee-wrapper-${item.id}`;
                     
@@ -842,7 +852,7 @@
             }
             
             function deleteScore(id) {
-                let highScores = JSON.parse(localStorage.getItem('puzzletunesHighScores')) || [];
+                let highScores = getHighScores();
                 highScores = highScores.filter(score => score.id !== id);
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
@@ -1198,7 +1208,7 @@
 
             elements.closeScoresBtn.addEventListener('click', () => {
                 elements.scoresModal.classList.remove('visible');
-});
+            });
 
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
