@@ -512,7 +512,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.38</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.39</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1110,7 +1110,12 @@
                      };
                 } else {
                     clearGameState();
-                    prepareNewGame();
+                    state.gameInProgress = false;
+                    state.isPaused = true;
+                    elements.puzzleContainer.innerHTML = '';
+                    showOverlay("Haz clic en 'Nuevo Juego' para comenzar");
+                    elements.trackInfo.innerHTML = '';
+                    updateUI();
                 }
                 renderHighScores();
             }
@@ -1208,7 +1213,7 @@
 
             elements.closeScoresBtn.addEventListener('click', () => {
                 elements.scoresModal.classList.remove('visible');
-            });
+});
 
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
