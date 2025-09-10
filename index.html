@@ -45,7 +45,7 @@
             padding: 1rem;
             box-sizing: border-box;
             min-height: 100%;
-            zoom: 0.9;
+            zoom: 1;
         }
 
         .main-container {
@@ -128,7 +128,8 @@
         }
 
         .puzzle-container {
-            width: 100%;
+            width: 95%;
+            margin: 0 auto;
             aspect-ratio: 1 / 1;
             position: relative;
             background-color: transparent;
@@ -503,7 +504,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.32</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.33</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -842,37 +843,52 @@
             
             async function findAlbumWithMusic(searchTerm, isArtistSearch = false) {
                 const genres = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk'];
-                const query = searchTerm || genres[Math.floor(Math.random() * genres.length)];
-                
-                const searchAttribute = isArtistSearch ? '&attribute=artistTerm' : '';
-                const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=200${searchAttribute}`;
+                const MAX_ATTEMPTS = 5;
 
-                try {
-                    const response = await fetchWithProxyFallback(searchUrl);
-                    const data = await response.json();
-                    
-                    const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100);
-                    if (songsWithPreview.length === 0) return null;
+                const searchAndProcess = async (url) => {
+                    try {
+                        const response = await fetchWithProxyFallback(url);
+                        const data = await response.json();
 
-                    const albums = songsWithPreview.reduce((acc, song) => {
-                        if (!acc[song.collectionId]) {
-                            acc[song.collectionId] = {
-                                artistName: song.artistName,
-                                collectionName: song.collectionName,
-                                artworkUrl: song.artworkUrl100,
-                                previewUrl: song.previewUrl
-                            };
+                        const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100);
+                        if (songsWithPreview.length === 0) return null;
+
+                        const albums = songsWithPreview.reduce((acc, song) => {
+                            if (!acc[song.collectionId]) {
+                                acc[song.collectionId] = {
+                                    artistName: song.artistName,
+                                    collectionName: song.collectionName,
+                                    artworkUrl: song.artworkUrl100,
+                                    previewUrl: song.previewUrl
+                                };
+                            }
+                            return acc;
+                        }, {});
+
+                        const albumArray = Object.values(albums);
+                        if (albumArray.length === 0) return null;
+                        
+                        return albumArray[Math.floor(Math.random() * albumArray.length)];
+                    } catch (error) {
+                        console.error('Error in searchAndProcess:', error);
+                        return null;
+                    }
+                };
+
+                if (isArtistSearch) {
+                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
+                    return await searchAndProcess(searchUrl);
+                } else {
+                    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+                        const genre = genres[Math.floor(Math.random() * genres.length)];
+                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                        const result = await searchAndProcess(searchUrl);
+                        if (result) {
+                            return result;
                         }
-                        return acc;
-                    }, {});
-
-                    const albumArray = Object.values(albums);
-                    if (albumArray.length === 0) return null;
-                    
-                    return albumArray[Math.floor(Math.random() * albumArray.length)];
-
-                } catch (error) {
-                    console.error('Error finding album with music:', error);
+                        console.warn(`Random search attempt ${i + 1} with genre "${genre}" failed. Retrying...`);
+                    }
+                    console.error('All random search attempts failed.');
                     return null;
                 }
             }
