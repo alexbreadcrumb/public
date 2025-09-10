@@ -512,7 +512,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.36</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.37</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -863,7 +863,7 @@
                         btn.textContent = suggestion;
                         btn.onclick = () => {
                             elements.artistSearch.value = suggestion;
-                            prepareNewGame();
+                            prepareNewGame(true);
                         };
                         suggestionsContainer.appendChild(btn);
                     });
@@ -969,7 +969,7 @@
                 }
             }
 
-            async function prepareNewGame() {
+            async function prepareNewGame(isFromSuggestion = false) {
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 hideOverlay();
@@ -981,7 +981,7 @@
 
                 let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
                 
-                if (!album && isArtistSearch) {
+                if (!album && isArtistSearch && !isFromSuggestion) {
                     const suggestions = await findSuggestions(searchTerm);
                     if (suggestions.length > 0) {
                         showOverlay(`Quisiste decir:`, suggestions);
