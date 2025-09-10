@@ -130,7 +130,7 @@
             width: 100%;
             aspect-ratio: 1 / 1;
             position: relative;
-            background-color: var(--surface);
+            background-color: transparent; /* Changed */
             border-radius: 12px;
             box-shadow: 0 8px 24px var(--shadow-color);
             overflow: hidden;
@@ -139,6 +139,16 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
+        }
+        
+        /* New ::after pseudo-element for solid background */
+        .puzzle-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: var(--surface);
+            border-radius: 12px;
+            z-index: -1;
         }
         
         @keyframes gradient-flow {
@@ -151,7 +161,7 @@
             content: '';
             position: absolute;
             inset: -4px;
-            z-index: -1;
+            z-index: -2; /* Changed to be behind ::after */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -162,7 +172,7 @@
             );
             background-size: 400% 400%;
             animation: gradient-flow 10s ease infinite;
-            border-radius: 16px; /* slightly larger than parent */
+            border-radius: 16px; 
             filter: blur(8px);
         }
 
@@ -494,7 +504,7 @@
         </div>
     </div>
     
-    <footer>Game By: Ale Fernández PY-2025 - v1.23</footer>
+    <footer>Game By: Ale Fernández PY-2025 - v1.24</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
