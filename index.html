@@ -558,6 +558,7 @@
             border-radius: 8px;
             font-size: 1.1rem;
             color: var(--on-surface);
+            transition: opacity 0.3s ease;
         }
         .switch {
             position: relative;
@@ -594,6 +595,10 @@
         }
         input:checked + .slider {
             background-color: var(--primary);
+        }
+        input:disabled + .slider {
+            cursor: not-allowed;
+            background-color: #555;
         }
         input:checked + .slider:before {
             transform: translateX(22px);
@@ -846,7 +851,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.68</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.69</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -939,7 +944,9 @@
                     minute_singular: "minuto",
                     andConnector: "con",
                     startButton: "Empezar",
-                    newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!"
+                    newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!",
+                    shareResultTitle: "Compartir Resultado",
+                    shareMessage: "¡Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes!"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -979,7 +986,9 @@
                     minute_singular: "minute",
                     andConnector: "and",
                     startButton: "Start",
-                    newTopRecord: "You've achieved a new personal best at rank {rank}!"
+                    newTopRecord: "You've achieved a new personal best at rank {rank}!",
+                    shareResultTitle: "Share Result",
+                    shareMessage: "I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes!"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1019,7 +1028,9 @@
                     minute_singular: "minuto",
                     andConnector: "e",
                     startButton: "Começar",
-                    newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!"
+                    newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!",
+                    shareResultTitle: "Compartilhar Resultado",
+                    shareMessage: "Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes!"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1059,7 +1070,9 @@
                     minute_singular: "minute",
                     andConnector: "et",
                     startButton: "Commencer",
-                    newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !"
+                    newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !",
+                    shareResultTitle: "Partager le Résultat",
+                    shareMessage: "J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes !"
                 }
             };
 
@@ -1280,7 +1293,7 @@
                     
                     swapPieces(clickedPiece, emptyPiece);
                     state.moves++;
-                    if (state.hapticEnabled) {
+                    if (state.hapticEnabled && typeof navigator.vibrate === 'function') {
                         navigator.vibrate(20);
                     }
 
@@ -1359,38 +1372,42 @@
                 setTimeout(() => {
                     const winMsgDiv = document.createElement('div');
                     winMsgDiv.innerHTML = getTranslatedString('winMessage', {time: formatTime(state.time)});
-                    showOverlay(winMsgDiv.innerHTML);
-                    
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'overlay';
+                    const messageContainer = document.createElement('div');
+                    messageContainer.innerHTML = winMsgDiv.innerHTML;
+                    overlay.appendChild(messageContainer);
+
                     if (navigator.share) {
-                        const overlay = elements.puzzleContainer.querySelector('.overlay');
-                        if (overlay) {
-                            const shareBtn = document.createElement('button');
-                            shareBtn.className = 'share-btn';
-                            shareBtn.title = getTranslatedString('shareResultTitle');
-                            shareBtn.innerHTML = `
-                                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>
-                                <span>${getTranslatedString('shareResultTitle')}</span>
-                            `;
-                            shareBtn.onclick = async () => {
-                                const shareData = {
-                                    title: 'Puzzletunes',
-                                    text: getTranslatedString('shareMessage', {
-                                        artist: state.currentAlbum.artistName,
-                                        album: state.currentAlbum.collectionName,
-                                        time: formatTime(state.time),
-                                        moves: state.moves
-                                    }),
-                                    url: window.location.href
-                                };
-                                try {
-                                    await navigator.share(shareData);
-                                } catch(err) {
-                                    console.error("Share failed:", err);
-                                }
+                        const shareBtn = document.createElement('button');
+                        shareBtn.className = 'share-btn';
+                        shareBtn.title = getTranslatedString('shareResultTitle');
+                        shareBtn.innerHTML = `
+                            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>
+                            <span>${getTranslatedString('shareResultTitle')}</span>
+                        `;
+                        shareBtn.onclick = async () => {
+                            const shareData = {
+                                title: 'Puzzletunes',
+                                text: getTranslatedString('shareMessage', {
+                                    artist: state.currentAlbum.artistName,
+                                    album: state.currentAlbum.collectionName,
+                                    time: formatTime(state.time),
+                                    moves: state.moves
+                                }),
+                                url: window.location.href
                             };
-                            overlay.firstChild.appendChild(shareBtn);
-                        }
+                            try {
+                                await navigator.share(shareData);
+                            } catch(err) {
+                                console.error("Share failed:", err);
+                            }
+                        };
+                        messageContainer.appendChild(shareBtn);
                     }
+                    elements.puzzleContainer.appendChild(overlay);
+
                 }, 500);
 
                 if (newRank !== -1) {
@@ -1893,18 +1910,30 @@
 
             function initMobileFeatures() {
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile && 'vibrate' in navigator) {
+                if (isMobile) {
                     elements.optionsTabBtn.style.display = 'block';
-                    const savedHaptic = localStorage.getItem('puzzletunesHapticEnabled') === 'true';
-                    state.hapticEnabled = savedHaptic;
-                    elements.hapticToggle.checked = savedHaptic;
 
-                    elements.hapticToggle.addEventListener('change', (e) => {
-                        state.hapticEnabled = e.target.checked;
-                        localStorage.setItem('puzzletunesHapticEnabled', String(state.hapticEnabled));
-                    });
+                    if ('vibrate' in navigator && navigator.vibrate) {
+                        // Feature is supported, enable the toggle and its logic
+                        const savedHaptic = localStorage.getItem('puzzletunesHapticEnabled') === 'true';
+                        state.hapticEnabled = savedHaptic;
+                        elements.hapticToggle.checked = savedHaptic;
+
+                        elements.hapticToggle.addEventListener('change', (e) => {
+                            state.hapticEnabled = e.target.checked;
+                            localStorage.setItem('puzzletunesHapticEnabled', String(state.hapticEnabled));
+                        });
+                    } else {
+                        // Feature is not supported, show the option but disable it
+                        const optionItem = elements.hapticToggle.closest('.option-item');
+                        if (optionItem) {
+                            optionItem.style.opacity = '0.5';
+                            elements.hapticToggle.disabled = true;
+                        }
+                    }
                 }
             }
+
 
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
