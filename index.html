@@ -189,7 +189,7 @@
         .puzzle-container.animated-gradient-border::before {
             content: '';
             position: absolute;
-            inset: -1px; /* Increased spread */
+            inset: -5px; /* Increased spread for better visibility */
             z-index: 0; /* Position between puzzle and background */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
@@ -202,7 +202,7 @@
             background-size: 400% 400%;
             animation: gradient-flow 8s ease infinite;
             border-radius: 16px; 
-            filter: blur(15px); /* Increased blur for a softer glow */
+            filter: blur(20px); /* Increased blur for a more prominent glow */
         }
 
 
@@ -685,7 +685,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.59</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.60</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1641,6 +1641,15 @@
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) {
                     return;
                 }
+                
+                // Reset stats and UI immediately
+                stopTimer();
+                state.time = 0;
+                state.moves = 0;
+                state.isPaused = true;
+                state.gameInProgress = false; // This disables the pause button
+                updateUI(); // This updates timer, moves, and button states
+
                 clearGameState();
                 elements.audioPlayer.pause();
                 elements.audioPlayer.src = '';
