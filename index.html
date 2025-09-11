@@ -226,7 +226,7 @@
             opacity: 0.9;
         }
         
-        /* --- Intro Animation Styles --- */
+        /* --- Intro & Swirl Animation Styles --- */
         .puzzle-piece-intro {
             transform-style: preserve-3d;
             transform: translateY(120%) translateZ(-300px) rotateX(-90deg);
@@ -260,7 +260,21 @@
             from { transform: scale(0); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
-        /* --- End Intro Animation Styles --- */
+
+        @keyframes swirl-out {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(720deg) scale(0);
+                opacity: 0;
+            }
+        }
+        .puzzle-container.swirl-animation {
+            animation: swirl-out 0.8s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+        }
+        /* --- End Animation Styles --- */
 
 
         .overlay {
@@ -671,7 +685,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.58</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.59</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1176,16 +1190,14 @@
                 }
                 return [];
             }
-
+            
             function saveScore() {
                 if (!state.currentAlbum) return;
 
-                // 1. Update total cumulative playtime (this is independent of the top 10)
                 let totalPlaytime = parseInt(localStorage.getItem('puzzletunesTotalPlaytime'), 10) || 0;
                 totalPlaytime += state.time;
                 localStorage.setItem('puzzletunesTotalPlaytime', totalPlaytime);
 
-                // 2. Prepare the new score object
                 const newScore = {
                     time: state.time,
                     moves: state.moves,
@@ -1193,26 +1205,22 @@
                     id: Date.now()
                 };
 
-                // 3. Get the current list of high scores
                 let highScores = getHighScores();
-
-                // 4. Add the new score to the list.
                 highScores.push(newScore);
 
-                // 5. Sort the entire list. Best scores (lowest time) come first.
                 highScores.sort((a, b) => {
-                    if (a.time !== b.time) {
-                        return a.time - b.time;
-                    }
-                    return a.moves - b.moves; // Secondary sort by moves
+                    if (a.time !== b.time) return a.time - b.time;
+                    return a.moves - b.moves;
                 });
+                
+                // Only trim the list if it exceeds 10 entries
+                if (highScores.length > 10) {
+                    highScores = highScores.slice(0, 10);
+                }
 
-                // 6. Trim the list to only keep the top 10 best scores.
-                const finalScores = highScores.slice(0, 10);
-
-                // 7. Save the final, sorted, and trimmed list.
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(finalScores));
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
             }
+
 
             function renderHighScores() {
                 const highScores = getHighScores();
@@ -1468,11 +1476,31 @@
 
                     startButton.onclick = () => {
                         startOverlay.remove();
-                        elements.puzzleContainer.classList.remove('intro-animation-active');
-                        resetGame();
-                        startNewGame();
+                        elements.puzzleContainer.classList.add('swirl-animation');
+
+                        resetGame(); 
+
+                        setTimeout(() => {
+                            elements.puzzleContainer.classList.remove('swirl-animation');
+                            elements.puzzleContainer.classList.remove('intro-animation-active');
+                            
+                            elements.puzzleContainer.style.transform = '';
+                            elements.puzzleContainer.style.opacity = '0';
+                            
+                            startNewGame();
+                            
+                            requestAnimationFrame(() => {
+                                elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
+                                elements.puzzleContainer.style.opacity = '1';
+                                setTimeout(() => {
+                                    elements.puzzleContainer.style.transition = '';
+                                    elements.puzzleContainer.style.opacity = '';
+                                }, 400);
+                            });
+
+                        }, 800);
                     };
-                }, (shuffledIndices.length * 100) + 800); // Increased delay to match animation
+                }, (shuffledIndices.length * 100) + 800);
             }
 
             function resetGame() {
