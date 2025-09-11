@@ -171,15 +171,6 @@
             perspective: 1000px;
         }
 
-        .puzzle-container::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-color: var(--surface);
-            border-radius: 12px;
-            z-index: 0;
-        }
-        
         @keyframes gradient-flow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -832,7 +823,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.75</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.76</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1168,15 +1159,12 @@
                 const genresToRender = ['all', ...ALL_GENRES];
 
                 selector.innerHTML = genresToRender.map(genre => {
-                    const key = `genre${genre.charAt(0).toUpperCase() + genre.slice(1)}`;
-                    // Special case for Nu Metal
-                    if (genre === 'numetal') {
-                        key = 'genreNumetal';
-                    }
+                    const key = (genre === 'all') ? 'genreAll' : genre;
+                    const label = getTranslatedString(key);
                     return `
                         <label class="genre-tag">
                             <input type="checkbox" name="genre" value="${genre}" ${savedGenres.includes(genre) ? 'checked' : ''}>
-                            <span>${getTranslatedString(key)}</span>
+                            <span>${label}</span>
                         </label>
                     `;
                 }).join('');
