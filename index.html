@@ -164,6 +164,7 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
+            z-index: 1; /* FIX: Establish stacking context */
         }
         
         .puzzle-container::after {
@@ -619,7 +620,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.54</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.55</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -692,7 +693,7 @@
                     movesSuffix: "mov.",
                     langEnglish: "Inglés",
                     langSpanish: "Español",
-                    langPortuguese: "Portugués",
+                    langPortuguese: "Português",
                     langFrench: "Francés",
                     aboutGameText: "En un mundo de gratificación instantánea, Puzzletunes ofrece un respiro. Resolver este puzzle no solo pone a prueba tu ingenio, sino que también entrena tu paciencia y concentración. Cada pieza que mueves es un paso para calmar tu mente y fortalecer tu enfoque. Disfruta de la música, del desafío y del momento de calma que este juego te regala. Tómate tu tiempo, el viaje es tan importante como la victoria final."
                 },
@@ -1450,6 +1451,7 @@
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
                     stopTimer();
+                    elements.audioPlayer.pause(); // FIX: Pause the audio
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
