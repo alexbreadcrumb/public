@@ -287,12 +287,21 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 600;
             z-index: 10;
             padding: 1rem;
         }
         
+        .overlay h2 {
+            font-size: 1.8rem;
+            margin: 0 0 1rem 0;
+        }
+
+        .overlay p {
+            margin: 0.5rem 0;
+        }
+
         .suggestions-container {
             margin-top: 1rem;
             display: flex;
@@ -778,7 +787,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.70</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.71</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -841,7 +850,9 @@
                     artistSearchPlaceholder: "Buscar por artista (opcional)",
                     newGame: "Nuevo Juego",
                     gameBy: "Juego por:",
-                    winMessage: "¡Ganaste!<br>{time}",
+                    winMessage: "¡Ganaste!",
+                    winTime: "Tiempo: {time}",
+                    winMoves: "Movimientos: {moves}",
                     paused: "Pausado",
                     startMessage: "Haz clic en 'Nuevo Juego' para empezar",
                     searchingMusic: "Buscando música...",
@@ -881,7 +892,9 @@
                     artistSearchPlaceholder: "Search by artist (optional)",
                     newGame: "New Game",
                     gameBy: "Game by:",
-                    winMessage: "You Win!<br>{time}",
+                    winMessage: "You Win!",
+                    winTime: "Time: {time}",
+                    winMoves: "Moves: {moves}",
                     paused: "Paused",
                     startMessage: "Click 'New Game' to start",
                     searchingMusic: "Searching for music...",
@@ -921,7 +934,9 @@
                     artistSearchPlaceholder: "Pesquisar por artista (opcional)",
                     newGame: "Novo Jogo",
                     gameBy: "Jogo por:",
-                    winMessage: "Você Venceu!<br>{time}",
+                    winMessage: "Você Venceu!",
+                    winTime: "Tempo: {time}",
+                    winMoves: "Movimentos: {moves}",
                     paused: "Pausado",
                     startMessage: "Clique em 'Novo Jogo' para começar",
                     searchingMusic: "Procurando música...",
@@ -961,7 +976,9 @@
                     artistSearchPlaceholder: "Rechercher par artiste (optionnel)",
                     newGame: "Nouveau Jeu",
                     gameBy: "Jeu par :",
-                    winMessage: "Vous avez gagné !<br>{time}",
+                    winMessage: "Vous avez gagné !",
+                    winTime: "Temps : {time}",
+                    winMoves: "Mouvements : {moves}",
                     paused: "En pause",
                     startMessage: "Cliquez sur 'Nouveau Jeu' pour commencer",
                     searchingMusic: "Recherche de musique...",
@@ -1283,13 +1300,24 @@
                 const newRank = saveScore();
 
                 setTimeout(() => {
-                    const winMsgDiv = document.createElement('div');
-                    winMsgDiv.innerHTML = getTranslatedString('winMessage', {time: formatTime(state.time)});
-
                     const overlay = document.createElement('div');
                     overlay.className = 'overlay';
+                    
                     const messageContainer = document.createElement('div');
-                    messageContainer.innerHTML = winMsgDiv.innerHTML;
+                    
+                    const winTitle = document.createElement('h2');
+                    winTitle.textContent = getTranslatedString('winMessage');
+                    
+                    const timeStat = document.createElement('p');
+                    timeStat.textContent = getTranslatedString('winTime', { time: formatTime(state.time) });
+                    
+                    const movesStat = document.createElement('p');
+                    movesStat.textContent = getTranslatedString('winMoves', { moves: state.moves });
+                    
+                    messageContainer.appendChild(winTitle);
+                    messageContainer.appendChild(timeStat);
+                    messageContainer.appendChild(movesStat);
+
                     overlay.appendChild(messageContainer);
 
                     if (navigator.share) {
