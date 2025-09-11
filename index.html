@@ -177,7 +177,7 @@
             inset: 0;
             background-color: var(--surface);
             border-radius: 12px;
-            z-index: -1;
+            z-index: 0;
         }
         
         @keyframes gradient-flow {
@@ -190,7 +190,7 @@
             content: '';
             position: absolute;
             inset: -5px; /* Increased spread for better visibility */
-            z-index: 0; /* Position between puzzle and background */
+            z-index: -1; /* Position behind puzzle */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -518,6 +518,62 @@
             border-color: var(--primary);
             background-color: rgba(29, 185, 84, 0.1);
         }
+        
+        /* Options Panel Styles */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: var(--on-surface);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
 
         #info-panel p {
             line-height: 1.6;
@@ -732,6 +788,7 @@
                 <button class="tab-btn active" data-tab="records">🏆</button>
                 <button class="tab-btn" data-tab="language">🏳️</button>
                 <button class="tab-btn" data-tab="info">ℹ️</button>
+                <button class="tab-btn" data-tab="options" style="display: none;">⚙️</button>
             </div>
             <div class="modal-panels">
                 <div id="records-panel" class="modal-panel active">
@@ -749,12 +806,23 @@
                 <div id="info-panel" class="modal-panel">
                     <p data-translate-key="aboutGameText"></p>
                 </div>
+                <div id="options-panel" class="modal-panel">
+                    <div class="options-container">
+                        <div class="option-item">
+                            <label for="haptic-toggle" data-translate-key="hapticFeedbackLabel">Respuesta háptica</label>
+                            <label class="switch">
+                                <input type="checkbox" id="haptic-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.66</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.67</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -783,6 +851,8 @@
                 closeMenuBtn: document.getElementById('close-menu-btn'),
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
+                optionsTabBtn: document.querySelector('.tab-btn[data-tab="options"]'),
+                hapticToggle: document.getElementById('haptic-toggle'),
             };
 
             let state = {
@@ -794,6 +864,7 @@
                 isMuted: true,
                 currentAlbum: null,
                 gameInProgress: false,
+                hapticEnabled: false,
             };
 
             const PROXIES = [
@@ -814,6 +885,8 @@
                     highScoresTitle: "Mejores Tiempos",
                     languageTitle: "Idioma",
                     aboutTitle: "Acerca de",
+                    optionsTitle: "Opciones",
+                    hapticFeedbackLabel: "Respuesta háptica",
                     artistSearchPlaceholder: "Buscar por artista (opcional)",
                     newGame: "Nuevo Juego",
                     gameBy: "Juego por:",
@@ -852,6 +925,8 @@
                     highScoresTitle: "High Scores",
                     languageTitle: "Language",
                     aboutTitle: "About",
+                    optionsTitle: "Options",
+                    hapticFeedbackLabel: "Haptic Feedback",
                     artistSearchPlaceholder: "Search by artist (optional)",
                     newGame: "New Game",
                     gameBy: "Game by:",
@@ -890,6 +965,8 @@
                     highScoresTitle: "Melhores Tempos",
                     languageTitle: "Idioma",
                     aboutTitle: "Sobre",
+                    optionsTitle: "Opções",
+                    hapticFeedbackLabel: "Resposta tátil",
                     artistSearchPlaceholder: "Pesquisar por artista (opcional)",
                     newGame: "Novo Jogo",
                     gameBy: "Jogo por:",
@@ -928,6 +1005,8 @@
                     highScoresTitle: "Meilleurs Scores",
                     languageTitle: "Langue",
                     aboutTitle: "À propos",
+                    optionsTitle: "Options",
+                    hapticFeedbackLabel: "Retour haptique",
                     artistSearchPlaceholder: "Rechercher par artiste (optionnel)",
                     newGame: "Nouveau Jeu",
                     gameBy: "Jeu par :",
@@ -963,7 +1042,6 @@
             let currentStrings = { ...translations.es };
 
             function getTranslatedString(key, replacements = {}) {
-                // Fallback chain: current language -> Spanish (base) -> key name
                 let str = currentStrings[key] || translations.es[key] || key;
                 for (const placeholder in replacements) {
                     str = str.replace(`{${placeholder}}`, replacements[placeholder]);
@@ -992,17 +1070,15 @@
                     const key = el.dataset.translateTitle;
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
-                // Special case for footer to preserve structure
                 const gameBySpan = document.querySelector('footer > span');
                 if (gameBySpan) gameBySpan.textContent = currentStrings.gameBy;
             }
             
             function setLanguage(lang) {
-                if (!translations[lang]) lang = 'en'; // Default to English if lang is invalid
+                if (!translations[lang]) lang = 'en';
                 localStorage.setItem('puzzletunesLanguage', lang);
                 applyTranslations();
                 updateActiveLanguageButton(lang);
-                // Also update high scores list if it's open
                 if (elements.menuModal.classList.contains('visible')) {
                     renderHighScores();
                 }
@@ -1010,11 +1086,7 @@
             
             function updateActiveLanguageButton(lang) {
                 document.querySelectorAll('.lang-btn').forEach(btn => {
-                    if (btn.dataset.lang === lang) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
+                    btn.classList.toggle('active', btn.dataset.lang === lang);
                 });
             }
 
@@ -1060,10 +1132,9 @@
 
             function clearBackground() {
                 document.body.style.setProperty('--bg-opacity', '0');
-                // After the fade out transition, remove the image to free up memory
                 setTimeout(() => {
                     document.body.style.setProperty('--bg-image', 'none');
-                }, 700); // Must match transition duration in CSS
+                }, 700);
             }
 
             function updateUI() {
@@ -1095,7 +1166,6 @@
                     const saved = localStorage.getItem('puzzletunesGameState');
                     if (saved) {
                         const savedState = JSON.parse(saved);
-                         // Basic validation
                         if (!savedState.album || !Array.isArray(savedState.pieces)) {
                             throw new Error("Invalid saved state structure.");
                         }
@@ -1173,13 +1243,11 @@
 
                 if (isAdjacent) {
                     if (state.moves === 0) {
-                        // First move, try to unmute and play
                         state.isMuted = false;
                         elements.audioPlayer.muted = false;
                         if (elements.audioPlayer.paused) {
                             elements.audioPlayer.play().catch(e => {
                                 console.error("Audio play failed on first move:", e);
-                                // If it fails, revert to muted state
                                 state.isMuted = true;
                                 elements.audioPlayer.muted = true;
                             });
@@ -1188,6 +1256,9 @@
                     
                     swapPieces(clickedPiece, emptyPiece);
                     state.moves++;
+                    if (state.hapticEnabled) {
+                        navigator.vibrate(20);
+                    }
 
                     updateUI();
                     if (checkWin()) {
@@ -1211,10 +1282,10 @@
             function getValidMoves(emptyIndex) {
                 const moves = [];
                 const { row, col } = getRowCol(emptyIndex);
-                if (row > 0) moves.push(emptyIndex - SIZE); // Up
-                if (row < SIZE - 1) moves.push(emptyIndex + SIZE); // Down
-                if (col > 0) moves.push(emptyIndex - 1); // Left
-                if (col < SIZE - 1) moves.push(emptyIndex + 1); // Right
+                if (row > 0) moves.push(emptyIndex - SIZE);
+                if (row < SIZE - 1) moves.push(emptyIndex + SIZE);
+                if (col > 0) moves.push(emptyIndex - 1);
+                if (col < SIZE - 1) moves.push(emptyIndex + 1);
                 return moves;
             }
 
@@ -1287,7 +1358,6 @@
                 overlay.appendChild(text);
                 document.body.appendChild(overlay);
                 
-                // Trigger transition
                 requestAnimationFrame(() => overlay.classList.add('visible'));
 
                 let confettiInterval = triggerTopRecordCelebration();
@@ -1309,22 +1379,8 @@
                         return;
                     }
 
-                    confetti({
-                        particleCount: 2,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: colors,
-                        shapes: ['star']
-                    });
-                    confetti({
-                        particleCount: 2,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: colors,
-                        shapes: ['star']
-                    });
+                    confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, colors: colors, shapes: ['star'] });
+                    confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, colors: colors, shapes: ['star'] });
                 };
                 
                 const intervalId = setInterval(frame, 200);
@@ -1389,17 +1445,15 @@
                 if (totalSeconds > 0) {
                     const hours = Math.floor(totalSeconds / 3600);
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
-
                     const timeParts = [];
                     if (hours > 0) {
                         const hourKey = hours === 1 ? 'hour_singular' : 'hours_plural';
                         timeParts.push(`${hours} ${getTranslatedString(hourKey)}`);
                     }
-                    if (minutes > 0 || hours === 0) { // Show minutes if > 0 or if hours is 0
+                    if (minutes > 0 || hours === 0) {
                         const minuteKey = minutes === 1 ? 'minute_singular' : 'minutes_plural';
                         timeParts.push(`${minutes} ${getTranslatedString(minuteKey)}`);
                     }
-                    
                     const formattedTime = timeParts.join(` ${getTranslatedString('andConnector')} `);
                     totalPlaytimeEl.innerHTML = `⏰ ${getTranslatedString('totalPlaytimeText', { time: formattedTime })}`;
                 } else {
@@ -1550,7 +1604,6 @@
             }
             
             async function prepareNewGame(isFromSuggestion = false) {
-                // This is the main entry point for a new game, cleanup is handled by the event listener.
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
@@ -1575,8 +1628,10 @@
                     img.crossOrigin = "Anonymous";
                     img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const palette = colorThief.getPalette(img, 5);
-                        palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        try {
+                            const palette = colorThief.getPalette(img, 5);
+                            palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        } catch(e) { console.error("ColorThief failed:", e); }
                         updateBackground(img.src);
                         hideOverlay();
                         playIntroAnimation();
@@ -1591,24 +1646,16 @@
             function cleanupPreviousGameResources() {
                 stopTimer();
                 clearGameState();
-
-                // Stop and unload the audio player
                 elements.audioPlayer.pause();
                 elements.audioPlayer.removeAttribute('src');
                 elements.audioPlayer.load();
-
-                // Clear visual elements
                 clearBackground();
                 elements.puzzleContainer.innerHTML = '';
                 elements.trackText.innerHTML = '';
                 hideTrackLinks();
-                
-                // Reset core state properties
                 state.currentAlbum = null;
                 state.gameInProgress = false;
                 state.isPaused = true;
-                
-                // Reset UI stats immediately
                 state.time = 0;
                 state.moves = 0;
                 updateUI();
@@ -1649,18 +1696,15 @@
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece', 'puzzle-piece-intro');
-                    
                     const row = Math.floor(i / SIZE);
                     const col = i % SIZE;
                     pieceEl.style.backgroundImage = `url(${imageUrl})`;
                     pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
-                    
                     elements.puzzleContainer.appendChild(pieceEl);
                     pieces.push(pieceEl);
                 }
 
                 const shuffledIndices = [...Array(pieces.length).keys()].sort(() => Math.random() - 0.5);
-                
                 shuffledIndices.forEach((index, i) => {
                     setTimeout(() => {
                         pieces[index].classList.add('visible');
@@ -1671,44 +1715,30 @@
                     const startOverlay = document.createElement('div');
                     startOverlay.className = 'overlay';
                     startOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                    
                     const startButton = document.createElement('button');
                     startButton.id = 'start-game-btn';
                     startButton.textContent = getTranslatedString('startButton');
-                    
                     startOverlay.appendChild(startButton);
                     elements.puzzleContainer.appendChild(startOverlay);
 
                     startButton.onclick = () => {
                         startOverlay.remove();
                         elements.puzzleContainer.classList.add('swirl-animation');
-
-                        resetGameForPlay(); 
-
                         setTimeout(() => {
-                            elements.puzzleContainer.classList.remove('swirl-animation');
-                            elements.puzzleContainer.classList.remove('intro-animation-active');
-                            
-                            elements.puzzleContainer.style.transform = '';
+                            elements.puzzleContainer.classList.remove('swirl-animation', 'intro-animation-active');
                             elements.puzzleContainer.style.opacity = '0';
-                            
                             startNewGame();
-                            
                             requestAnimationFrame(() => {
                                 elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
                                 elements.puzzleContainer.style.opacity = '1';
-                                setTimeout(() => {
-                                    elements.puzzleContainer.style.transition = '';
-                                    elements.puzzleContainer.style.opacity = '';
-                                }, 400);
+                                setTimeout(() => { elements.puzzleContainer.style.transition = ''; elements.puzzleContainer.style.opacity = ''; }, 400);
                             });
-
                         }, 800);
                     };
                 }, (shuffledIndices.length * 100) + 800);
             }
 
-            function resetGameForPlay() {
+            function startNewGame() {
                 state.time = 0;
                 state.moves = 0;
                 state.isPaused = false;
@@ -1735,9 +1765,7 @@
                     currentIndex: board.indexOf(i),
                     isEmpty: i === SIZE * SIZE - 1
                 }));
-            }
 
-            function startNewGame() {
                 renderBoard();
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
@@ -1745,7 +1773,6 @@
                 updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
-                state.isMuted = true;
                 elements.audioPlayer.muted = true;
                 updateUI();
                 saveGameState();
@@ -1757,10 +1784,11 @@
                     img.crossOrigin = "Anonymous";
                     img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const palette = colorThief.getPalette(img, 5);
-                        palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        try {
+                            const palette = colorThief.getPalette(img, 5);
+                            palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
+                        } catch(e) { console.error("ColorThief failed on load:", e); }
                         updateBackground(img.src);
-                        
                         renderBoard();
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
@@ -1794,7 +1822,6 @@
                 state.timerInterval = null;
             }
 
-            // --- Modal & Tabs Logic ---
             function switchTab(tabName) {
                 const modal = elements.menuModal;
                 modal.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
@@ -1804,26 +1831,36 @@
                 if(tabName === 'records') titleKey = 'highScoresTitle';
                 else if (tabName === 'language') titleKey = 'languageTitle';
                 else if (tabName === 'info') titleKey = 'aboutTitle';
+                else if (tabName === 'options') titleKey = 'optionsTitle';
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
             }
 
+            function initMobileFeatures() {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile && 'vibrate' in navigator) {
+                    elements.optionsTabBtn.style.display = 'block';
+                    const savedHaptic = localStorage.getItem('puzzletunesHapticEnabled') === 'true';
+                    state.hapticEnabled = savedHaptic;
+                    elements.hapticToggle.checked = savedHaptic;
+
+                    elements.hapticToggle.addEventListener('change', (e) => {
+                        state.hapticEnabled = e.target.checked;
+                        localStorage.setItem('puzzletunesHapticEnabled', String(state.hapticEnabled));
+                    });
+                }
+            }
+
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
-                if (tabBtn) {
-                    switchTab(tabBtn.dataset.tab);
-                }
+                if (tabBtn) switchTab(tabBtn.dataset.tab);
+
                 const langBtn = e.target.closest('.lang-btn');
-                if(langBtn) {
-                    setLanguage(langBtn.dataset.lang);
-                }
+                if(langBtn) setLanguage(langBtn.dataset.lang);
             });
 
-
             elements.newGameBtn.addEventListener('click', () => {
-                if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) {
-                    return;
-                }
+                if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
                 cleanupPreviousGameResources();
                 prepareNewGame();
             });
@@ -1866,20 +1903,19 @@
             
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
-                switchTab('records'); // Default to records tab
+                switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
             elements.closeMenuBtn.addEventListener('click', () => elements.menuModal.classList.remove('visible'));
 
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
-                if (deleteBtn) {
-                    deleteScore(parseInt(deleteBtn.dataset.id, 10));
-                }
+                if (deleteBtn) deleteScore(parseInt(deleteBtn.dataset.id, 10));
             });
             window.addEventListener('beforeunload', () => state.gameInProgress && saveGameState());
             
             initializeLocalization();
+            initMobileFeatures();
             initGame();
         });
     </script>
