@@ -167,6 +167,10 @@
             z-index: 1; /* Establish stacking context */
         }
         
+        .puzzle-container.intro-animation-active {
+            perspective: 1000px;
+        }
+
         .puzzle-container::after {
             content: '';
             position: absolute;
@@ -224,13 +228,14 @@
         
         /* --- Intro Animation Styles --- */
         .puzzle-piece-intro {
-            transform: translateY(150%) rotateY(180deg);
+            transform-style: preserve-3d;
+            transform: translateY(120%) translateZ(-300px) rotateX(-90deg);
             opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out;
             will-change: transform, opacity;
         }
         .puzzle-piece-intro.visible {
-            transform: translateY(0) rotateY(0);
+            transform: translateY(0) translateZ(0) rotateX(0);
             opacity: 1;
         }
         #start-game-btn {
@@ -666,7 +671,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.57</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.58</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1175,29 +1180,38 @@
             function saveScore() {
                 if (!state.currentAlbum) return;
 
-                // Update total cumulative playtime
+                // 1. Update total cumulative playtime (this is independent of the top 10)
                 let totalPlaytime = parseInt(localStorage.getItem('puzzletunesTotalPlaytime'), 10) || 0;
                 totalPlaytime += state.time;
                 localStorage.setItem('puzzletunesTotalPlaytime', totalPlaytime);
 
-                // Update top 10 high scores list
-                let highScores = getHighScores();
-                const newScore = { 
-                    time: state.time, 
-                    moves: state.moves, 
-                    album: { ...state.currentAlbum }, 
-                    id: Date.now() 
+                // 2. Prepare the new score object
+                const newScore = {
+                    time: state.time,
+                    moves: state.moves,
+                    album: { ...state.currentAlbum },
+                    id: Date.now()
                 };
+
+                // 3. Get the current list of high scores
+                let highScores = getHighScores();
+
+                // 4. Add the new score to the list.
                 highScores.push(newScore);
 
+                // 5. Sort the entire list. Best scores (lowest time) come first.
                 highScores.sort((a, b) => {
-                    if (a.time !== b.time) return a.time - b.time;
-                    return a.moves - b.moves;
+                    if (a.time !== b.time) {
+                        return a.time - b.time;
+                    }
+                    return a.moves - b.moves; // Secondary sort by moves
                 });
 
-                const top10Scores = highScores.slice(0, 10);
-                
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(top10Scores));
+                // 6. Trim the list to only keep the top 10 best scores.
+                const finalScores = highScores.slice(0, 10);
+
+                // 7. Save the final, sorted, and trimmed list.
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(finalScores));
             }
 
             function renderHighScores() {
@@ -1413,6 +1427,7 @@
                 stopTimer();
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
+                elements.puzzleContainer.classList.add('intro-animation-active');
                 elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
                 
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
@@ -1453,10 +1468,11 @@
 
                     startButton.onclick = () => {
                         startOverlay.remove();
+                        elements.puzzleContainer.classList.remove('intro-animation-active');
                         resetGame();
                         startNewGame();
                     };
-                }, (shuffledIndices.length * 100) + 600);
+                }, (shuffledIndices.length * 100) + 800); // Increased delay to match animation
             }
 
             function resetGame() {
