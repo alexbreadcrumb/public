@@ -787,7 +787,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.71</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.72</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1548,7 +1548,7 @@
                     try {
                         const response = await fetchWithProxyFallback(url);
                         const data = await response.json();
-                        const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100 && song.trackViewUrl && song.trackName);
+                        const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100 && song.trackViewUrl && song.trackName && song.releaseDate);
                         if (songsWithPreview.length === 0) return null;
 
                         const albums = songsWithPreview.reduce((acc, song) => {
@@ -1559,14 +1559,23 @@
                                     artworkUrl: song.artworkUrl100,
                                     previewUrl: song.previewUrl,
                                     trackViewUrl: song.trackViewUrl,
-                                    trackName: song.trackName
+                                    trackName: song.trackName,
+                                    releaseDate: song.releaseDate
                                 };
                             }
                             return acc;
                         }, {});
 
-                        const albumArray = Object.values(albums);
-                        return albumArray.length > 0 ? albumArray[Math.floor(Math.random() * albumArray.length)] : null;
+                        let albumArray = Object.values(albums);
+
+                        albumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                        
+                        if (albumArray.length === 0) return null;
+
+                        const selectionSize = Math.min(50, Math.ceil(albumArray.length * 0.5));
+                        const newestAlbums = albumArray.slice(0, selectionSize);
+
+                        return newestAlbums[Math.floor(Math.random() * newestAlbums.length)];
                     } catch (error) {
                         console.error('Error in searchAndProcess:', error);
                         return null;
