@@ -552,10 +552,50 @@
             background-color: rgba(29, 185, 84, 0.1);
         }
         
-        #info-panel p {
+        #info-panel p, #options-panel p {
             line-height: 1.6;
             color: var(--on-surface);
         }
+
+        #options-panel h3 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            color: var(--on-surface);
+        }
+        
+        .genre-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .genre-tag {
+            display: block;
+        }
+        .genre-tag input {
+            display: none;
+        }
+        .genre-tag span {
+            display: block;
+            padding: 0.5rem 1rem;
+            background-color: #333;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .genre-tag input:checked + span {
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 600;
+        }
+        .genre-tag:hover span {
+             background-color: #444;
+        }
+        .genre-tag input:checked:hover + span {
+             background-color: var(--primary-hover);
+        }
+        
 
         #total-playtime {
             text-align: center;
@@ -764,6 +804,7 @@
             <div class="modal-tabs">
                 <button class="tab-btn active" data-tab="records">🏆</button>
                 <button class="tab-btn" data-tab="language">🏳️</button>
+                <button class="tab-btn" data-tab="options">⚙️</button>
                 <button class="tab-btn" data-tab="info">ℹ️</button>
             </div>
             <div class="modal-panels">
@@ -779,6 +820,10 @@
                         <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench">Français</span></button>
                     </div>
                 </div>
+                <div id="options-panel" class="modal-panel">
+                    <h3 data-translate-key="favoriteGenresTitle">Géneros favoritos</h3>
+                    <div id="genre-selector" class="genre-selector"></div>
+                </div>
                 <div id="info-panel" class="modal-panel">
                     <p data-translate-key="aboutGameText"></p>
                 </div>
@@ -787,7 +832,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.72</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.73</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -838,6 +883,7 @@
             const colorThief = new ColorThief();
 
             // --- I18n & Translation ---
+            const ALL_GENRES = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk', 'latin', 'country', 'blues', 'alternative'];
             const translations = {
                 es: {
                     pageTitle: "Puzzletunes",
@@ -846,6 +892,7 @@
                     menuTitle: "Menú",
                     highScoresTitle: "Mejores Tiempos",
                     languageTitle: "Idioma",
+                    optionsTitle: "Opciones",
                     aboutTitle: "Acerca de",
                     artistSearchPlaceholder: "Buscar por artista (opcional)",
                     newGame: "Nuevo Juego",
@@ -879,7 +926,10 @@
                     startButton: "Empezar",
                     newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!",
                     shareResultTitle: "Compartir Resultado",
-                    shareMessage: "¡Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes!"
+                    shareMessage: "¡Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes!",
+                    favoriteGenresTitle: "Géneros favoritos",
+                    genreAll: "Todos",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -888,6 +938,7 @@
                     menuTitle: "Menu",
                     highScoresTitle: "High Scores",
                     languageTitle: "Language",
+                    optionsTitle: "Options",
                     aboutTitle: "About",
                     artistSearchPlaceholder: "Search by artist (optional)",
                     newGame: "New Game",
@@ -921,7 +972,10 @@
                     startButton: "Start",
                     newTopRecord: "You've achieved a new personal best at rank {rank}!",
                     shareResultTitle: "Share Result",
-                    shareMessage: "I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes!"
+                    shareMessage: "I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes!",
+                    favoriteGenresTitle: "Favorite Genres",
+                    genreAll: "All",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -930,6 +984,7 @@
                     menuTitle: "Menu",
                     highScoresTitle: "Melhores Tempos",
                     languageTitle: "Idioma",
+                    optionsTitle: "Opções",
                     aboutTitle: "Sobre",
                     artistSearchPlaceholder: "Pesquisar por artista (opcional)",
                     newGame: "Novo Jogo",
@@ -963,7 +1018,10 @@
                     startButton: "Começar",
                     newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!",
                     shareResultTitle: "Compartilhar Resultado",
-                    shareMessage: "Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes!"
+                    shareMessage: "Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes!",
+                    favoriteGenresTitle: "Gêneros favoritos",
+                    genreAll: "Todos",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -972,6 +1030,7 @@
                     menuTitle: "Menu",
                     highScoresTitle: "Meilleurs Scores",
                     languageTitle: "Langue",
+                    optionsTitle: "Options",
                     aboutTitle: "À propos",
                     artistSearchPlaceholder: "Rechercher par artiste (optionnel)",
                     newGame: "Nouveau Jeu",
@@ -1005,7 +1064,10 @@
                     startButton: "Commencer",
                     newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !",
                     shareResultTitle: "Partager le Résultat",
-                    shareMessage: "J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes !"
+                    shareMessage: "J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes !",
+                    favoriteGenresTitle: "Genres favoris",
+                    genreAll: "Tous",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative",
                 }
             };
 
@@ -1051,6 +1113,7 @@
                 updateActiveLanguageButton(lang);
                 if (elements.menuModal.classList.contains('visible')) {
                     renderHighScores();
+                    renderGenreSelector();
                 }
             }
             
@@ -1073,6 +1136,65 @@
                 setLanguage(initialLang);
             }
             // --- End I18n ---
+            
+            // --- Genre Selector ---
+            function getSavedGenres() {
+                try {
+                    const saved = localStorage.getItem('puzzletunesGenres');
+                    if (!saved) return ['all'];
+                    const parsed = JSON.parse(saved);
+                    return Array.isArray(parsed) && parsed.length > 0 ? parsed : ['all'];
+                } catch(e) {
+                    return ['all'];
+                }
+            }
+
+            function saveGenres(genres) {
+                localStorage.setItem('puzzletunesGenres', JSON.stringify(genres));
+            }
+
+            function renderGenreSelector() {
+                const selector = document.getElementById('genre-selector');
+                if (!selector) return;
+                
+                const savedGenres = getSavedGenres();
+                
+                const genresToRender = ['all', ...ALL_GENRES];
+
+                selector.innerHTML = genresToRender.map(genre => `
+                    <label class="genre-tag">
+                        <input type="checkbox" name="genre" value="${genre}" ${savedGenres.includes(genre) ? 'checked' : ''}>
+                        <span>${getTranslatedString(`genre${genre.charAt(0).toUpperCase() + genre.slice(1)}`)}</span>
+                    </label>
+                `).join('');
+
+                const checkboxes = selector.querySelectorAll('input[name="genre"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        handleGenreSelection(checkboxes);
+                    });
+                });
+            }
+
+            function handleGenreSelection(checkboxes) {
+                const allCheckbox = document.querySelector('input[value="all"]');
+                const selectedGenres = Array.from(checkboxes)
+                    .filter(cb => cb.checked && cb.value !== 'all')
+                    .map(cb => cb.value);
+
+                if (event.target.value === 'all' && event.target.checked) {
+                    checkboxes.forEach(cb => { if (cb.value !== 'all') cb.checked = false; });
+                    saveGenres(['all']);
+                } else {
+                    allCheckbox.checked = selectedGenres.length === 0;
+                    if (selectedGenres.length > 0) {
+                        saveGenres(selectedGenres);
+                    } else {
+                        saveGenres(['all']);
+                    }
+                }
+            }
+            // --- End Genre Selector ---
 
             async function fetchWithProxyFallback(url) {
                 let lastError = null;
@@ -1541,7 +1663,8 @@
             }
             
             async function findAlbumWithMusic(searchTerm, isArtistSearch = false) {
-                const genres = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk'];
+                const userGenres = getSavedGenres();
+                const genresToSearch = (userGenres.includes('all') || userGenres.length === 0) ? ALL_GENRES : userGenres;
                 const MAX_ATTEMPTS = 5;
 
                 const searchAndProcess = async (url) => {
@@ -1572,7 +1695,8 @@
                         
                         if (albumArray.length === 0) return null;
 
-                        const selectionSize = Math.min(50, Math.ceil(albumArray.length * 0.5));
+                        // More aggressive selection of recent music
+                        const selectionSize = Math.min(25, Math.ceil(albumArray.length * 0.2));
                         const newestAlbums = albumArray.slice(0, selectionSize);
 
                         return newestAlbums[Math.floor(Math.random() * newestAlbums.length)];
@@ -1587,7 +1711,7 @@
                     return await searchAndProcess(searchUrl);
                 }
                 for (let i = 0; i < MAX_ATTEMPTS; i++) {
-                    const genre = genres[Math.floor(Math.random() * genres.length)];
+                    const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
                     const result = await searchAndProcess(searchUrl);
                     if (result) return result;
@@ -1852,6 +1976,7 @@
                 let titleKey;
                 if(tabName === 'records') titleKey = 'highScoresTitle';
                 else if (tabName === 'language') titleKey = 'languageTitle';
+                else if (tabName === 'options') titleKey = 'optionsTitle';
                 else if (tabName === 'info') titleKey = 'aboutTitle';
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
@@ -1909,6 +2034,7 @@
             
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
+                renderGenreSelector();
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
