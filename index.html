@@ -385,23 +385,18 @@
             border-bottom: 3px solid transparent;
             margin-bottom: -1px;
             transition: border-color 0.2s ease, color 0.2s ease;
+            font-size: 1.5rem; /* Control emoji size */
+            line-height: 1; /* Adjust vertical alignment */
+            color: var(--on-surface-secondary);
         }
-        .tab-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--on-surface-secondary);
-            transition: fill 0.2s ease;
-        }
-        .tab-btn:hover svg {
-            fill: var(--on-surface);
+        .tab-btn:hover {
+            color: var(--on-surface);
         }
         .tab-btn.active {
             border-bottom-color: var(--primary);
+            color: var(--primary);
         }
-        .tab-btn.active svg {
-            fill: var(--primary);
-        }
-
+        
         .modal-panels {
             flex-grow: 1;
             overflow-y: auto;
@@ -600,15 +595,9 @@
                 </button>
             </div>
             <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="records">
-                    <svg viewBox="0 0 24 24"><path d="M20.2 6H19V4c0-1.1-.9-2-2-2h-3c-1.1 0-2 .9-2 2v2H8V4c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v2H.8C.3 6 0 6.3 0 6.8v14.4c0 .4.3.8.8.8h22.4c.5 0 .8-.4.8-.8V6.8c0-.5-.4-.8-.8-.8zM14 4h3v6h-3V4zM3 4h3v6H3V4zm18 16H3V8h18v12zM9 11h6v2H9zm0 4h6v2H9z"></path></svg>
-                </button>
-                <button class="tab-btn" data-tab="language">
-                    <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17c-.47 1.72-1.25 3.25-2.27 4.56-1.15-1.3-1.87-2.7-2.21-4.12H1V12h6.12c.18 1.4.67 2.72 1.34 3.87l-3.42 3.42 1.41 1.41L12.87 15.07zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
-                </button>
-                <button class="tab-btn" data-tab="info">
-                    <svg viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg>
-                </button>
+                <button class="tab-btn active" data-tab="records">🏆</button>
+                <button class="tab-btn" data-tab="language">🏳️</button>
+                <button class="tab-btn" data-tab="info">ℹ️</button>
             </div>
             <div class="modal-panels">
                 <div id="records-panel" class="modal-panel active">
@@ -630,7 +619,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.52</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.53</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
