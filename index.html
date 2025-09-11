@@ -315,6 +315,30 @@
             background-color: var(--primary-hover);
         }
 
+        .share-btn {
+            background-color: var(--primary);
+            color: var(--background);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            margin-top: 1.5rem; /* Add space above it */
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .share-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .share-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--background);
+        }
+
         .current-track-info {
             text-align: center;
             padding: 0 1rem;
@@ -822,7 +846,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.67</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.68</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1336,6 +1360,37 @@
                     const winMsgDiv = document.createElement('div');
                     winMsgDiv.innerHTML = getTranslatedString('winMessage', {time: formatTime(state.time)});
                     showOverlay(winMsgDiv.innerHTML);
+                    
+                    if (navigator.share) {
+                        const overlay = elements.puzzleContainer.querySelector('.overlay');
+                        if (overlay) {
+                            const shareBtn = document.createElement('button');
+                            shareBtn.className = 'share-btn';
+                            shareBtn.title = getTranslatedString('shareResultTitle');
+                            shareBtn.innerHTML = `
+                                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>
+                                <span>${getTranslatedString('shareResultTitle')}</span>
+                            `;
+                            shareBtn.onclick = async () => {
+                                const shareData = {
+                                    title: 'Puzzletunes',
+                                    text: getTranslatedString('shareMessage', {
+                                        artist: state.currentAlbum.artistName,
+                                        album: state.currentAlbum.collectionName,
+                                        time: formatTime(state.time),
+                                        moves: state.moves
+                                    }),
+                                    url: window.location.href
+                                };
+                                try {
+                                    await navigator.share(shareData);
+                                } catch(err) {
+                                    console.error("Share failed:", err);
+                                }
+                            };
+                            overlay.firstChild.appendChild(shareBtn);
+                        }
+                    }
                 }, 500);
 
                 if (newRank !== -1) {
