@@ -221,6 +221,42 @@
             transform: scale(0.95);
             opacity: 0.9;
         }
+        
+        /* --- Intro Animation Styles --- */
+        .puzzle-piece-intro {
+            transform: translateY(150%) rotateY(180deg);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            will-change: transform, opacity;
+        }
+        .puzzle-piece-intro.visible {
+            transform: translateY(0) rotateY(0);
+            opacity: 1;
+        }
+        #start-game-btn {
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transform: scale(0);
+            animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        #start-game-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
+        @keyframes pop-in {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        /* --- End Intro Animation Styles --- */
+
 
         .overlay {
             position: absolute;
@@ -630,7 +666,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.56</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.57</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -711,7 +747,8 @@
                     hour_singular: "hora",
                     minutes_plural: "minutos",
                     minute_singular: "minuto",
-                    andConnector: "con"
+                    andConnector: "con",
+                    startButton: "Empezar"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -747,7 +784,8 @@
                     hour_singular: "hour",
                     minutes_plural: "minutes",
                     minute_singular: "minute",
-                    andConnector: "and"
+                    andConnector: "and",
+                    startButton: "Start"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -783,7 +821,8 @@
                     hour_singular: "hora",
                     minutes_plural: "minutos",
                     minute_singular: "minuto",
-                    andConnector: "e"
+                    andConnector: "e",
+                    startButton: "Começar"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -819,7 +858,8 @@
                     hour_singular: "heure",
                     minutes_plural: "minutes",
                     minute_singular: "minute",
-                    andConnector: "et"
+                    andConnector: "et",
+                    startButton: "Commencer"
                 }
             };
 
@@ -1360,14 +1400,63 @@
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         updateBackground(img.src);
                         hideOverlay();
-                        resetGame();
-                        startNewGame();
+                        playIntroAnimation();
                     };
                     img.onerror = () => showOverlay(getTranslatedString('imageError'));
                 } else {
                     const message = isArtistSearch ? getTranslatedString('noMusicFoundFor', {searchTerm}) : getTranslatedString('noRandomMusic');
                     showOverlay(message);
                 }
+            }
+            
+            function playIntroAnimation() {
+                stopTimer();
+                elements.puzzleContainer.innerHTML = '';
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
+                elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                
+                const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                const pieces = [];
+
+                for (let i = 0; i < SIZE * SIZE; i++) {
+                    const pieceEl = document.createElement('div');
+                    pieceEl.classList.add('puzzle-piece', 'puzzle-piece-intro');
+                    
+                    const row = Math.floor(i / SIZE);
+                    const col = i % SIZE;
+                    pieceEl.style.backgroundImage = `url(${imageUrl})`;
+                    pieceEl.style.backgroundPosition = `${(col * 100) / (SIZE - 1)}% ${(row * 100) / (SIZE - 1)}%`;
+                    
+                    elements.puzzleContainer.appendChild(pieceEl);
+                    pieces.push(pieceEl);
+                }
+
+                const shuffledIndices = [...Array(pieces.length).keys()].sort(() => Math.random() - 0.5);
+                
+                shuffledIndices.forEach((index, i) => {
+                    setTimeout(() => {
+                        pieces[index].classList.add('visible');
+                    }, i * 100);
+                });
+                
+                setTimeout(() => {
+                    const startOverlay = document.createElement('div');
+                    startOverlay.className = 'overlay';
+                    startOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                    
+                    const startButton = document.createElement('button');
+                    startButton.id = 'start-game-btn';
+                    startButton.textContent = getTranslatedString('startButton');
+                    
+                    startOverlay.appendChild(startButton);
+                    elements.puzzleContainer.appendChild(startOverlay);
+
+                    startButton.onclick = () => {
+                        startOverlay.remove();
+                        resetGame();
+                        startNewGame();
+                    };
+                }, (shuffledIndices.length * 100) + 600);
             }
 
             function resetGame() {
