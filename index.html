@@ -543,67 +543,6 @@
             background-color: rgba(29, 185, 84, 0.1);
         }
         
-        /* Options Panel Styles */
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .option-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            color: var(--on-surface);
-            transition: opacity 0.3s ease;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 28px;
-        }
-        .switch input { 
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 28px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: var(--primary);
-        }
-        input:disabled + .slider {
-            cursor: not-allowed;
-            background-color: #555;
-        }
-        input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
         #info-panel p {
             line-height: 1.6;
             color: var(--on-surface);
@@ -817,7 +756,6 @@
                 <button class="tab-btn active" data-tab="records">🏆</button>
                 <button class="tab-btn" data-tab="language">🏳️</button>
                 <button class="tab-btn" data-tab="info">ℹ️</button>
-                <button class="tab-btn" data-tab="options" style="display: none;">⚙️</button>
             </div>
             <div class="modal-panels">
                 <div id="records-panel" class="modal-panel active">
@@ -835,23 +773,12 @@
                 <div id="info-panel" class="modal-panel">
                     <p data-translate-key="aboutGameText"></p>
                 </div>
-                <div id="options-panel" class="modal-panel">
-                    <div class="options-container">
-                        <div class="option-item">
-                            <label for="haptic-toggle" data-translate-key="hapticFeedbackLabel">Respuesta háptica</label>
-                            <label class="switch">
-                                <input type="checkbox" id="haptic-toggle">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.69</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.70</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -880,8 +807,6 @@
                 closeMenuBtn: document.getElementById('close-menu-btn'),
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
-                optionsTabBtn: document.querySelector('.tab-btn[data-tab="options"]'),
-                hapticToggle: document.getElementById('haptic-toggle'),
             };
 
             let state = {
@@ -893,7 +818,6 @@
                 isMuted: true,
                 currentAlbum: null,
                 gameInProgress: false,
-                hapticEnabled: false,
             };
 
             const PROXIES = [
@@ -914,8 +838,6 @@
                     highScoresTitle: "Mejores Tiempos",
                     languageTitle: "Idioma",
                     aboutTitle: "Acerca de",
-                    optionsTitle: "Opciones",
-                    hapticFeedbackLabel: "Respuesta háptica",
                     artistSearchPlaceholder: "Buscar por artista (opcional)",
                     newGame: "Nuevo Juego",
                     gameBy: "Juego por:",
@@ -956,8 +878,6 @@
                     highScoresTitle: "High Scores",
                     languageTitle: "Language",
                     aboutTitle: "About",
-                    optionsTitle: "Options",
-                    hapticFeedbackLabel: "Haptic Feedback",
                     artistSearchPlaceholder: "Search by artist (optional)",
                     newGame: "New Game",
                     gameBy: "Game by:",
@@ -998,8 +918,6 @@
                     highScoresTitle: "Melhores Tempos",
                     languageTitle: "Idioma",
                     aboutTitle: "Sobre",
-                    optionsTitle: "Opções",
-                    hapticFeedbackLabel: "Resposta tátil",
                     artistSearchPlaceholder: "Pesquisar por artista (opcional)",
                     newGame: "Novo Jogo",
                     gameBy: "Jogo por:",
@@ -1040,8 +958,6 @@
                     highScoresTitle: "Meilleurs Scores",
                     languageTitle: "Langue",
                     aboutTitle: "À propos",
-                    optionsTitle: "Options",
-                    hapticFeedbackLabel: "Retour haptique",
                     artistSearchPlaceholder: "Rechercher par artiste (optionnel)",
                     newGame: "Nouveau Jeu",
                     gameBy: "Jeu par :",
@@ -1293,10 +1209,7 @@
                     
                     swapPieces(clickedPiece, emptyPiece);
                     state.moves++;
-                    if (state.hapticEnabled && typeof navigator.vibrate === 'function') {
-                        navigator.vibrate(20);
-                    }
-
+                    
                     updateUI();
                     if (checkWin()) {
                         handleWin();
@@ -1903,37 +1816,9 @@
                 if(tabName === 'records') titleKey = 'highScoresTitle';
                 else if (tabName === 'language') titleKey = 'languageTitle';
                 else if (tabName === 'info') titleKey = 'aboutTitle';
-                else if (tabName === 'options') titleKey = 'optionsTitle';
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
             }
-
-            function initMobileFeatures() {
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                    elements.optionsTabBtn.style.display = 'block';
-
-                    if ('vibrate' in navigator && navigator.vibrate) {
-                        // Feature is supported, enable the toggle and its logic
-                        const savedHaptic = localStorage.getItem('puzzletunesHapticEnabled') === 'true';
-                        state.hapticEnabled = savedHaptic;
-                        elements.hapticToggle.checked = savedHaptic;
-
-                        elements.hapticToggle.addEventListener('change', (e) => {
-                            state.hapticEnabled = e.target.checked;
-                            localStorage.setItem('puzzletunesHapticEnabled', String(state.hapticEnabled));
-                        });
-                    } else {
-                        // Feature is not supported, show the option but disable it
-                        const optionItem = elements.hapticToggle.closest('.option-item');
-                        if (optionItem) {
-                            optionItem.style.opacity = '0.5';
-                            elements.hapticToggle.disabled = true;
-                        }
-                    }
-                }
-            }
-
 
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
@@ -1999,7 +1884,6 @@
             window.addEventListener('beforeunload', () => state.gameInProgress && saveGameState());
             
             initializeLocalization();
-            initMobileFeatures();
             initGame();
         });
     </script>
