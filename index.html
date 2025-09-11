@@ -832,7 +832,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.74</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.75</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -883,7 +883,7 @@
             const colorThief = new ColorThief();
 
             // --- I18n & Translation ---
-            const ALL_GENRES = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk', 'latin', 'country', 'blues', 'alternative'];
+            const ALL_GENRES = ['rock', 'pop', 'jazz', 'classical', 'electronic', 'hiphop', 'reggae', 'metal', 'soul', 'funk', 'latin', 'country', 'blues', 'alternative', 'reggaeton', 'cumbia', 'numetal', 'kpop', 'jpop', 'folk', 'indie'];
             const translations = {
                 es: {
                     pageTitle: "Puzzletunes",
@@ -929,7 +929,7 @@
                     shareMessage: "¡Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes!",
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
-                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -975,7 +975,7 @@
                     shareMessage: "I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes!",
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
-                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1021,7 +1021,7 @@
                     shareMessage: "Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes!",
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
-                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1067,7 +1067,7 @@
                     shareMessage: "J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes !",
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
-                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative",
+                    rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
                 }
             };
 
@@ -1102,8 +1102,14 @@
                     const key = el.dataset.translateTitle;
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
+                
                 const gameBySpan = document.querySelector('footer > span');
-                if (gameBySpan) gameBySpan.textContent = currentStrings.gameBy;
+                const footer = document.querySelector('footer');
+                if (gameBySpan && footer) {
+                    const version = footer.textContent.split('- v')[1];
+                    gameBySpan.textContent = getTranslatedString('gameBy');
+                    footer.innerHTML = `${gameBySpan.outerHTML} Ale Fernández PY-2025 - v${version}`;
+                }
             }
             
             function setLanguage(lang) {
@@ -1161,28 +1167,35 @@
                 
                 const genresToRender = ['all', ...ALL_GENRES];
 
-                selector.innerHTML = genresToRender.map(genre => `
-                    <label class="genre-tag">
-                        <input type="checkbox" name="genre" value="${genre}" ${savedGenres.includes(genre) ? 'checked' : ''}>
-                        <span>${getTranslatedString(`genre${genre.charAt(0).toUpperCase() + genre.slice(1)}`)}</span>
-                    </label>
-                `).join('');
+                selector.innerHTML = genresToRender.map(genre => {
+                    const key = `genre${genre.charAt(0).toUpperCase() + genre.slice(1)}`;
+                    // Special case for Nu Metal
+                    if (genre === 'numetal') {
+                        key = 'genreNumetal';
+                    }
+                    return `
+                        <label class="genre-tag">
+                            <input type="checkbox" name="genre" value="${genre}" ${savedGenres.includes(genre) ? 'checked' : ''}>
+                            <span>${getTranslatedString(key)}</span>
+                        </label>
+                    `;
+                }).join('');
 
                 const checkboxes = selector.querySelectorAll('input[name="genre"]');
                 checkboxes.forEach(checkbox => {
-                    checkbox.addEventListener('change', () => {
-                        handleGenreSelection(checkboxes);
+                    checkbox.addEventListener('change', (event) => {
+                        handleGenreSelection(checkboxes, event.target);
                     });
                 });
             }
 
-            function handleGenreSelection(checkboxes) {
+            function handleGenreSelection(checkboxes, target) {
                 const allCheckbox = document.querySelector('input[value="all"]');
                 const selectedGenres = Array.from(checkboxes)
                     .filter(cb => cb.checked && cb.value !== 'all')
                     .map(cb => cb.value);
 
-                if (event.target.value === 'all' && event.target.checked) {
+                if (target.value === 'all' && target.checked) {
                     checkboxes.forEach(cb => { if (cb.value !== 'all') cb.checked = false; });
                     saveGenres(['all']);
                 } else {
@@ -1994,6 +2007,10 @@
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
             }
+
+            elements.artistSearch.addEventListener('dblclick', () => {
+                elements.artistSearch.value = '';
+            });
 
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
