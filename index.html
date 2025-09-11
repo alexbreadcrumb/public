@@ -685,7 +685,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.60</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.61</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1126,6 +1126,16 @@
                 return { row: Math.floor(index / SIZE), col: index % SIZE };
             }
 
+            function getValidMoves(emptyIndex) {
+                const moves = [];
+                const { row, col } = getRowCol(emptyIndex);
+                if (row > 0) moves.push(emptyIndex - SIZE); // Up
+                if (row < SIZE - 1) moves.push(emptyIndex + SIZE); // Down
+                if (col > 0) moves.push(emptyIndex - 1); // Left
+                if (col < SIZE - 1) moves.push(emptyIndex + 1); // Right
+                return moves;
+            }
+
             function checkWin() {
                 return state.pieces.every(p => p.currentIndex === p.originalIndex);
             }
@@ -1510,45 +1520,35 @@
                 state.isMuted = true;
                 state.gameInProgress = true;
                 
-                const indices = Array.from({ length: SIZE * SIZE }, (_, i) => i);
-                let shuffled;
-                let attempts = 0;
-                const MAX_ATTEMPTS = 100;
+                // New shuffle logic: Start with a solved board and make random moves
+                let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                let emptyPosition = SIZE * SIZE - 1;
+                let lastMove = -1;
 
-                do {
-                    shuffled = [...indices].sort(() => Math.random() - 0.5);
-                    const hasPiecesInPlace = shuffled.some((value, index) => value === index && index < SIZE * SIZE - 1);
-                    if (isSolvable(shuffled) && !hasPiecesInPlace) {
-                        break; 
-                    }
-                    attempts++;
-                } while (attempts < MAX_ATTEMPTS);
-                
-                if (attempts >= MAX_ATTEMPTS) {
-                    console.warn("Could not generate a perfectly shuffled puzzle in time. Using a standard solvable shuffle.");
-                    do {
-                        shuffled = [...indices].sort(() => Math.random() - 0.5);
-                    } while (!isSolvable(shuffled));
+                // Perform a large number of random moves to shuffle the board
+                const shuffleMoves = 150; 
+                for (let i = 0; i < shuffleMoves; i++) {
+                    const validMoves = getValidMoves(emptyPosition);
+                    // Filter out the move that would undo the last move, to improve shuffling
+                    const possibleMoves = validMoves.filter(pos => pos !== lastMove);
+                    const move = possibleMoves.length > 0 ? possibleMoves[Math.floor(Math.random() * possibleMoves.length)] : validMoves[0];
+                    
+                    // Swap values at emptyPosition and the chosen move position
+                    [board[emptyPosition], board[move]] = [board[move], board[emptyPosition]];
+                    
+                    // Update the empty position and track the last position
+                    lastMove = emptyPosition;
+                    emptyPosition = move;
                 }
 
+                // Create the final state.pieces structure from the shuffled board
                 state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                     el: null,
-                    originalIndex: i,
-                    currentIndex: shuffled.indexOf(i),
+                    originalIndex: i, // The ID of the piece (0-8)
+                    currentIndex: board.indexOf(i), // The position of this piece on the board
                     isEmpty: i === SIZE * SIZE - 1
                 }));
             }
-            
-            const isSolvable = (shuffled) => {
-                let inversions = 0;
-                const puzzle = shuffled.filter(i => i !== SIZE * SIZE - 1);
-                for (let i = 0; i < puzzle.length - 1; i++) {
-                    for (let j = i + 1; j < puzzle.length; j++) {
-                        if (puzzle[i] > puzzle[j]) inversions++;
-                    }
-                }
-                return inversions % 2 === 0;
-            };
 
             function startNewGame() {
                 renderBoard();
