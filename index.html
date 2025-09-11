@@ -599,6 +599,39 @@
             height: 20px;
             fill: #ff4d4d;
         }
+        
+        /* --- Personal Best Notification Styles --- */
+        .personal-best-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .personal-best-overlay.visible {
+            opacity: 1;
+        }
+        .personal-best-text {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 700;
+            text-align: center;
+            padding: 2rem;
+            color: #fff;
+            animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px var(--gradient-color-1),
+                0 0 30px var(--gradient-color-1),
+                0 0 40px var(--gradient-color-2),
+                0 0 50px var(--gradient-color-2);
+        }
+
 
         footer {
             width: 100%;
@@ -685,7 +718,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.62</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.63</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -769,7 +802,8 @@
                     minutes_plural: "minutos",
                     minute_singular: "minuto",
                     andConnector: "con",
-                    startButton: "Empezar"
+                    startButton: "Empezar",
+                    newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -806,7 +840,8 @@
                     minutes_plural: "minutes",
                     minute_singular: "minute",
                     andConnector: "and",
-                    startButton: "Start"
+                    startButton: "Start",
+                    newTopRecord: "You've achieved a new personal best at rank {rank}!"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -843,7 +878,8 @@
                     minutes_plural: "minutos",
                     minute_singular: "minuto",
                     andConnector: "e",
-                    startButton: "Começar"
+                    startButton: "Começar",
+                    newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -880,7 +916,8 @@
                     minutes_plural: "minutes",
                     minute_singular: "minute",
                     andConnector: "et",
-                    startButton: "Commencer"
+                    startButton: "Commencer",
+                    newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !"
                 }
             };
 
@@ -1182,16 +1219,80 @@
 
                 state.isPaused = true;
                 state.gameInProgress = false;
+
+                const newRank = saveScore();
+
                 setTimeout(() => {
                     const winMsgDiv = document.createElement('div');
                     winMsgDiv.innerHTML = getTranslatedString('winMessage', {time: formatTime(state.time)});
                     showOverlay(winMsgDiv.innerHTML);
                 }, 500);
-                saveScore();
+
+                if (newRank !== -1) {
+                    setTimeout(() => showTopRecordNotification(newRank), 1200);
+                }
+
                 clearGameState();
                 elements.audioPlayer.pause();
                 updateUI();
             }
+            
+            function showTopRecordNotification(rank) {
+                const overlay = document.createElement('div');
+                overlay.className = 'personal-best-overlay';
+                
+                const text = document.createElement('div');
+                text.className = 'personal-best-text';
+                text.innerHTML = getTranslatedString('newTopRecord', { rank });
+                
+                overlay.appendChild(text);
+                document.body.appendChild(overlay);
+                
+                // Trigger transition
+                requestAnimationFrame(() => overlay.classList.add('visible'));
+
+                let confettiInterval = triggerTopRecordCelebration();
+
+                overlay.addEventListener('click', () => {
+                    overlay.classList.remove('visible');
+                    clearInterval(confettiInterval);
+                    confetti.reset();
+                    overlay.addEventListener('transitionend', () => overlay.remove());
+                }, { once: true });
+            }
+
+            function triggerTopRecordCelebration() {
+                const end = Date.now() + (3 * 1000);
+                const colors = ['#FFD700', '#FFDF00', '#F0E68C'];
+
+                const frame = () => {
+                    if (Date.now() > end) {
+                        return;
+                    }
+
+                    confetti({
+                        particleCount: 2,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: colors,
+                        shapes: ['star']
+                    });
+                    confetti({
+                        particleCount: 2,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: colors,
+                        shapes: ['star']
+                    });
+                };
+                
+                const intervalId = setInterval(frame, 200);
+                frame();
+                return intervalId;
+            }
+
 
             function getHighScores() {
                 try {
@@ -1208,7 +1309,7 @@
             }
             
             function saveScore() {
-                if (!state.currentAlbum) return;
+                if (!state.currentAlbum) return -1;
 
                 let totalPlaytime = parseInt(localStorage.getItem('puzzletunesTotalPlaytime'), 10) || 0;
                 totalPlaytime += state.time;
@@ -1229,12 +1330,14 @@
                     return a.moves - b.moves;
                 });
                 
-                // Only trim the list if it exceeds 10 entries
                 if (highScores.length > 10) {
                     highScores = highScores.slice(0, 10);
                 }
 
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
+                
+                const newRank = highScores.findIndex(score => score.id === newScore.id) + 1;
+                return (newRank > 0 && newRank <= 3) ? newRank : -1;
             }
 
 
@@ -1548,32 +1651,24 @@
                 state.isMuted = true;
                 state.gameInProgress = true;
                 
-                // New shuffle logic: Start with a solved board and make random moves
                 let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let emptyPosition = SIZE * SIZE - 1;
                 let lastMove = -1;
 
-                // Perform a large number of random moves to shuffle the board
                 const shuffleMoves = 150; 
                 for (let i = 0; i < shuffleMoves; i++) {
                     const validMoves = getValidMoves(emptyPosition);
-                    // Filter out the move that would undo the last move, to improve shuffling
                     const possibleMoves = validMoves.filter(pos => pos !== lastMove);
                     const move = possibleMoves.length > 0 ? possibleMoves[Math.floor(Math.random() * possibleMoves.length)] : validMoves[0];
-                    
-                    // Swap values at emptyPosition and the chosen move position
                     [board[emptyPosition], board[move]] = [board[move], board[emptyPosition]];
-                    
-                    // Update the empty position and track the last position
                     lastMove = emptyPosition;
                     emptyPosition = move;
                 }
-
-                // Create the final state.pieces structure from the shuffled board
+                
                 state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
                     el: null,
-                    originalIndex: i, // The ID of the piece (0-8)
-                    currentIndex: board.indexOf(i), // The position of this piece on the board
+                    originalIndex: i,
+                    currentIndex: board.indexOf(i),
                     isEmpty: i === SIZE * SIZE - 1
                 }));
             }
