@@ -685,7 +685,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.61</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.62</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -730,6 +730,8 @@
                 'https://thingproxy.freeboard.io/fetch/'
             ];
             
+            const colorThief = new ColorThief();
+
             // --- I18n & Translation ---
             const translations = {
                 es: {
@@ -982,6 +984,10 @@
 
             function clearBackground() {
                 document.body.style.setProperty('--bg-opacity', '0');
+                // After the fade out transition, remove the image to free up memory
+                setTimeout(() => {
+                    document.body.style.setProperty('--bg-image', 'none');
+                }, 700); // Must match transition duration in CSS
             }
 
             function updateUI() {
@@ -1398,12 +1404,9 @@
                     return [];
                 }
             }
-
+            
             async function prepareNewGame(isFromSuggestion = false) {
-                stopTimer();
-                elements.puzzleContainer.classList.remove('animated-gradient-border');
-                hideOverlay();
-                
+                // This is the main entry point for a new game, cleanup is handled by the event listener.
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
@@ -1428,7 +1431,7 @@
                     img.crossOrigin = "Anonymous";
                     img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const palette = new ColorThief().getPalette(img, 5);
+                        const palette = colorThief.getPalette(img, 5);
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         updateBackground(img.src);
                         hideOverlay();
@@ -1440,9 +1443,34 @@
                     showOverlay(message);
                 }
             }
+
+            function cleanupPreviousGameResources() {
+                stopTimer();
+                clearGameState();
+
+                // Stop and unload the audio player
+                elements.audioPlayer.pause();
+                elements.audioPlayer.removeAttribute('src');
+                elements.audioPlayer.load();
+
+                // Clear visual elements
+                clearBackground();
+                elements.puzzleContainer.innerHTML = '';
+                elements.trackInfo.innerHTML = '';
+                
+                // Reset core state properties
+                state.currentAlbum = null;
+                state.gameInProgress = false;
+                state.isPaused = true;
+                
+                // Reset UI stats immediately
+                state.time = 0;
+                state.moves = 0;
+                updateUI();
+            }
+
             
             function playIntroAnimation() {
-                stopTimer();
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 elements.puzzleContainer.classList.add('intro-animation-active');
@@ -1488,7 +1516,7 @@
                         startOverlay.remove();
                         elements.puzzleContainer.classList.add('swirl-animation');
 
-                        resetGame(); 
+                        resetGameForPlay(); 
 
                         setTimeout(() => {
                             elements.puzzleContainer.classList.remove('swirl-animation');
@@ -1513,7 +1541,7 @@
                 }, (shuffledIndices.length * 100) + 800);
             }
 
-            function resetGame() {
+            function resetGameForPlay() {
                 state.time = 0;
                 state.moves = 0;
                 state.isPaused = false;
@@ -1569,7 +1597,7 @@
                     img.crossOrigin = "Anonymous";
                     img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                     img.onload = () => {
-                        const palette = new ColorThief().getPalette(img, 5);
+                        const palette = colorThief.getPalette(img, 5);
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         updateBackground(img.src);
                         
@@ -1585,14 +1613,8 @@
                     };
                      img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
-                    clearGameState();
-                    clearBackground();
-                    state.gameInProgress = false;
-                    state.isPaused = true;
-                    elements.puzzleContainer.innerHTML = '';
+                    cleanupPreviousGameResources();
                     showOverlay(getTranslatedString('startMessage'));
-                    elements.trackInfo.innerHTML = '';
-                    updateUI();
                 }
             }
             
@@ -1641,19 +1663,7 @@
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) {
                     return;
                 }
-                
-                // Reset stats and UI immediately
-                stopTimer();
-                state.time = 0;
-                state.moves = 0;
-                state.isPaused = true;
-                state.gameInProgress = false; // This disables the pause button
-                updateUI(); // This updates timer, moves, and button states
-
-                clearGameState();
-                elements.audioPlayer.pause();
-                elements.audioPlayer.src = '';
-                state.currentAlbum = null;
+                cleanupPreviousGameResources();
                 prepareNewGame();
             });
 
