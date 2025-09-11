@@ -61,7 +61,7 @@
             background-position: center;
             filter: blur(30px) brightness(0.4);
             transform: scale(1.1);
-            z-index: -1;
+            z-index: -2; /* Ensure it's behind the neon border */
             opacity: var(--bg-opacity, 0);
             transition: opacity 0.7s ease-in-out;
             will-change: opacity, background-image;
@@ -164,7 +164,7 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
-            z-index: 1; /* FIX: Establish stacking context */
+            z-index: 1; /* Establish stacking context */
         }
         
         .puzzle-container::after {
@@ -186,7 +186,7 @@
             content: '';
             position: absolute;
             inset: -1px; /* Increased spread */
-            z-index: -2;
+            z-index: 0; /* Position between puzzle and background */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -210,6 +210,8 @@
             cursor: pointer;
             visibility: visible;
             border-radius: 4px;
+            position: relative; /* Ensure pieces are on top of the border background */
+            z-index: 2;
         }
         .puzzle-piece.empty {
             visibility: hidden;
@@ -441,6 +443,13 @@
             color: var(--on-surface);
         }
 
+        #total-playtime {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: var(--on-surface);
+        }
+
         #high-scores-list {
             list-style-type: none;
             padding: 0;
@@ -602,6 +611,7 @@
             </div>
             <div class="modal-panels">
                 <div id="records-panel" class="modal-panel active">
+                    <p id="total-playtime"></p>
                     <ol id="high-scores-list"></ol>
                 </div>
                 <div id="language-panel" class="modal-panel">
@@ -620,7 +630,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.55</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.56</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -695,7 +705,13 @@
                     langSpanish: "Español",
                     langPortuguese: "Português",
                     langFrench: "Francés",
-                    aboutGameText: "En un mundo de gratificación instantánea, Puzzletunes ofrece un respiro. Resolver este puzzle no solo pone a prueba tu ingenio, sino que también entrena tu paciencia y concentración. Cada pieza que mueves es un paso para calmar tu mente y fortalecer tu enfoque. Disfruta de la música, del desafío y del momento de calma que este juego te regala. Tómate tu tiempo, el viaje es tan importante como la victoria final."
+                    aboutGameText: "¿Sabías que un estudio publicado en Frontiers in Psychology (Montag & Hegelich, 2021) demostró que el uso excesivo de redes como Instagram y TikTok activa descargas rápidas de dopamina, lo que reduce la capacidad de concentración y nos vuelve más impacientes? La buena noticia es que podés entrenar tu mente de una forma simple y entretenida: con Puzzletunes, un puzzle digital de 3×3 que exige mantener la atención y ofrece la recompensa solo al completarlo. Jugar unos minutos al día se convierte en tu “gimnasio mental” para fortalecer el foco, la paciencia y el autocontrol mientras te diviertes rearmando portadas musicales.",
+                    totalPlaytimeText: "Llevas un total de <strong>{time}</strong> en partidas ganadas.",
+                    hours_plural: "horas",
+                    hour_singular: "hora",
+                    minutes_plural: "minutos",
+                    minute_singular: "minuto",
+                    andConnector: "con"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -725,7 +741,13 @@
                     langSpanish: "Spanish",
                     langPortuguese: "Portuguese",
                     langFrench: "French",
-                    aboutGameText: "In a world of instant gratification, Puzzletunes offers a respite. Solving this puzzle not only tests your wits but also trains your patience and concentration. Every piece you move is a step towards calming your mind and strengthening your focus. Enjoy the music, the challenge, and the moment of calm this game gives you. Take your time; the journey is as important as the final victory."
+                    aboutGameText: "Did you know that a study published in Frontiers in Psychology (Montag & Hegelich, 2021) showed that excessive use of networks like Instagram and TikTok triggers rapid dopamine releases, reducing concentration and making us more impatient? The good news is you can train your mind in a simple and entertaining way: with Puzzletunes, a 3x3 digital puzzle that demands sustained attention and offers the reward only upon completion. Playing a few minutes a day becomes your 'mental gym' to strengthen focus, patience, and self-control while having fun reassembling music covers.",
+                    totalPlaytimeText: "You have a total of <strong>{time}</strong> in won games.",
+                    hours_plural: "hours",
+                    hour_singular: "hour",
+                    minutes_plural: "minutes",
+                    minute_singular: "minute",
+                    andConnector: "and"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -755,7 +777,13 @@
                     langSpanish: "Espanhol",
                     langPortuguese: "Português",
                     langFrench: "Francês",
-                    aboutGameText: "Em um mundo de gratificação instantânea, Puzzletunes oferece um respiro. Resolver este quebra-cabeça não apenas testa sua inteligência, mas também treina sua paciência e concentração. Cada peça que você move é um passo para acalmar sua mente e fortalecer seu foco. Aproveite a música, o desafio e o momento de calma que este jogo lhe proporciona. Leve o seu tempo; a jornada é tão importante quanto a vitória final."
+                    aboutGameText: "Você sabia que um estudo publicado na Frontiers in Psychology (Montag & Hegelich, 2021) demonstrou que o uso excessivo de redes como Instagram e TikTok ativa liberações rápidas de dopamina, o que reduz a capacidade de concentração e nos torna mais impacientes? A boa notícia é que você pode treinar sua mente de uma forma simples e divertida: com o Puzzletunes, um quebra-cabeça digital 3x3 que exige atenção contínua e oferece a recompensa apenas ao ser completado. Jogar alguns minutos por dia se torna sua 'academia mental' para fortalecer o foco, a paciência e o autocontrole enquanto você se diverte remontando capas de álbuns.",
+                    totalPlaytimeText: "Você tem um total de <strong>{time}</strong> em jogos ganhos.",
+                    hours_plural: "horas",
+                    hour_singular: "hora",
+                    minutes_plural: "minutos",
+                    minute_singular: "minuto",
+                    andConnector: "e"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -785,7 +813,13 @@
                     langSpanish: "Espagnol",
                     langPortuguese: "Portugais",
                     langFrench: "Français",
-                    aboutGameText: "Dans un monde de gratification instantanée, Puzzletunes offre un répit. Résoudre ce puzzle ne teste pas seulement votre intelligence, mais entraîne également votre patience et votre concentration. Chaque pièce que vous déplacez est un pas vers l'apaisement de votre esprit et le renforcement de votre concentration. Profitez de la musique, du défi et du moment de calme que ce jeu vous offre. Prenez votre temps ; le voyage est aussi important que la victoire finale."
+                    aboutGameText: "Saviez-vous qu'une étude publiée dans Frontiers in Psychology (Montag & Hegelich, 2021) a démontré que l'utilisation excessive de réseaux comme Instagram et TikTok déclenche des libérations rapides de dopamine, ce qui réduit la capacité de concentration et nous rend plus impatients ? La bonne nouvelle est que vous pouvez entraîner votre esprit de manière simple et divertissante : avec Puzzletunes, un puzzle numérique 3x3 qui exige une attention soutenue et n'offre la récompense qu'une fois terminé. Jouer quelques minutes par jour devient votre 'salle de sport mentale' pour renforcer la concentration, la patience et la maîtrise de soi tout en vous amusant à reconstituer des pochettes d'albums.",
+                    totalPlaytimeText: "Vous avez un total de <strong>{time}</strong> de parties gagnées.",
+                    hours_plural: "heures",
+                    hour_singular: "heure",
+                    minutes_plural: "minutes",
+                    minute_singular: "minute",
+                    andConnector: "et"
                 }
             };
 
@@ -916,27 +950,36 @@
             }
 
             function loadGameState() {
-                const saved = localStorage.getItem('puzzletunesGameState');
-                if (saved) {
-                    const savedState = JSON.parse(saved);
-                    state.moves = savedState.moves;
-                    state.time = savedState.time;
-                    state.isMuted = savedState.isMuted;
-                    state.currentAlbum = savedState.album;
-                    state.gameInProgress = savedState.gameInProgress;
-                    state.isPaused = true;
-                    
-                    const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
-                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
-                        const originalIndex = pieceMap.get(i);
-                        return {
-                           el: null,
-                           originalIndex: originalIndex,
-                           currentIndex: i,
-                           isEmpty: originalIndex === SIZE * SIZE - 1
-                        };
-                    });
-                    return true;
+                try {
+                    const saved = localStorage.getItem('puzzletunesGameState');
+                    if (saved) {
+                        const savedState = JSON.parse(saved);
+                         // Basic validation
+                        if (!savedState.album || !Array.isArray(savedState.pieces)) {
+                            throw new Error("Invalid saved state structure.");
+                        }
+                        state.moves = savedState.moves;
+                        state.time = savedState.time;
+                        state.isMuted = savedState.isMuted;
+                        state.currentAlbum = savedState.album;
+                        state.gameInProgress = savedState.gameInProgress;
+                        state.isPaused = true;
+                        
+                        const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
+                        state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
+                            const originalIndex = pieceMap.get(i);
+                            return {
+                               el: null,
+                               originalIndex: originalIndex,
+                               currentIndex: i,
+                               isEmpty: originalIndex === SIZE * SIZE - 1
+                            };
+                        });
+                        return true;
+                    }
+                } catch(e) {
+                    console.error("Failed to load game state, clearing.", e);
+                    clearGameState();
                 }
                 return false;
             }
@@ -988,21 +1031,22 @@
                                    (Math.abs(emptyCol - clickedCol) === 1 && emptyRow === clickedRow);
 
                 if (isAdjacent) {
-                    swapPieces(clickedPiece, emptyPiece);
-                    state.moves++;
-
-                    if (state.moves === 1 && state.isMuted) {
+                    if (state.moves === 0) {
+                        // First move, try to unmute and play
                         state.isMuted = false;
                         elements.audioPlayer.muted = false;
-
                         if (elements.audioPlayer.paused) {
                             elements.audioPlayer.play().catch(e => {
-                                console.error("Error playing audio on first move:", e);
+                                console.error("Audio play failed on first move:", e);
+                                // If it fails, revert to muted state
                                 state.isMuted = true;
                                 elements.audioPlayer.muted = true;
                             });
                         }
                     }
+                    
+                    swapPieces(clickedPiece, emptyPiece);
+                    state.moves++;
 
                     updateUI();
                     if (checkWin()) {
@@ -1090,8 +1134,13 @@
 
             function saveScore() {
                 if (!state.currentAlbum) return;
-                
-                // 1. Get current scores and add the new one
+
+                // Update total cumulative playtime
+                let totalPlaytime = parseInt(localStorage.getItem('puzzletunesTotalPlaytime'), 10) || 0;
+                totalPlaytime += state.time;
+                localStorage.setItem('puzzletunesTotalPlaytime', totalPlaytime);
+
+                // Update top 10 high scores list
                 let highScores = getHighScores();
                 const newScore = { 
                     time: state.time, 
@@ -1101,15 +1150,11 @@
                 };
                 highScores.push(newScore);
 
-                // 2. Sort by best time, then by fewest moves
                 highScores.sort((a, b) => {
-                    if (a.time !== b.time) {
-                        return a.time - b.time;
-                    }
+                    if (a.time !== b.time) return a.time - b.time;
                     return a.moves - b.moves;
                 });
 
-                // 3. Keep only the top 10 scores
                 const top10Scores = highScores.slice(0, 10);
                 
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(top10Scores));
@@ -1117,6 +1162,30 @@
 
             function renderHighScores() {
                 const highScores = getHighScores();
+                
+                const totalPlaytimeEl = document.getElementById('total-playtime');
+                const totalSeconds = parseInt(localStorage.getItem('puzzletunesTotalPlaytime'), 10) || 0;
+                
+                if (totalSeconds > 0) {
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+                    const timeParts = [];
+                    if (hours > 0) {
+                        const hourKey = hours === 1 ? 'hour_singular' : 'hours_plural';
+                        timeParts.push(`${hours} ${getTranslatedString(hourKey)}`);
+                    }
+                    if (minutes > 0 || hours === 0) { // Show minutes if > 0 or if hours is 0
+                        const minuteKey = minutes === 1 ? 'minute_singular' : 'minutes_plural';
+                        timeParts.push(`${minutes} ${getTranslatedString(minuteKey)}`);
+                    }
+                    
+                    const formattedTime = timeParts.join(` ${getTranslatedString('andConnector')} `);
+                    totalPlaytimeEl.innerHTML = `⏰ ${getTranslatedString('totalPlaytimeText', { time: formattedTime })}`;
+                } else {
+                    totalPlaytimeEl.innerHTML = '';
+                }
+
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
                     const wrapperId = `marquee-wrapper-${item.id}`;
                     const html = `
@@ -1373,6 +1442,7 @@
                         
                         renderBoard();
                         startTimer();
+                        elements.puzzleContainer.classList.add('animated-gradient-border');
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
                         elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
@@ -1391,7 +1461,6 @@
                     elements.trackInfo.innerHTML = '';
                     updateUI();
                 }
-                renderHighScores();
             }
             
             function startTimer() {
@@ -1451,7 +1520,7 @@
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
                     stopTimer();
-                    elements.audioPlayer.pause(); // FIX: Pause the audio
+                    elements.audioPlayer.pause();
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
