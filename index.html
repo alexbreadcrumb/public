@@ -832,7 +832,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.73</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.74</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1597,12 +1597,15 @@
 
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
                     const wrapperId = `marquee-wrapper-${item.id}`;
+                    const year = item.album.releaseDate ? new Date(item.album.releaseDate).getFullYear() : '';
+                    const artistText = year ? `${item.album.artistName} (${year})` : item.album.artistName;
+
                     const html = `
                         <li class="score-item">
                             <span class="score-rank">${index + 1}</span>
                             <img src="${item.album.artworkUrl}" class="score-thumbnail" alt="Artwork for ${item.album.collectionName}">
                             <div class="score-info">
-                                <p class="score-artist">${item.album.artistName}</p>
+                                <p class="score-artist">${artistText}</p>
                                 <div class="marquee-wrapper" id="${wrapperId}">
                                     <p class="score-track marquee-content">${item.album.collectionName}</p>
                                 </div>
@@ -1739,7 +1742,7 @@
                     const data = await response.json();
                     return [...new Set(data.results.map(r => r.artistName))]
                         .map(name => ({ name, distance: calculateLevenshteinDistance(searchTerm.toLowerCase(), name.toLowerCase()) }))
-                        .filter(item => item.distance < 4)
+                        .filter(item => item.distance < 4 && item.name.toLowerCase() !== searchTerm.toLowerCase())
                         .sort((a, b) => a.distance - b.distance)
                         .map(item => item.name)
                         .slice(0, 3);
@@ -1829,11 +1832,21 @@
                 elements.spotifyLink.href = '#';
             }
             
+            function updateTrackText() {
+                if (!state.currentAlbum) {
+                    elements.trackText.innerHTML = '';
+                    return;
+                }
+                const year = state.currentAlbum.releaseDate ? new Date(state.currentAlbum.releaseDate).getFullYear() : '';
+                const artistText = year ? `${state.currentAlbum.artistName} (${year})` : state.currentAlbum.artistName;
+                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${artistText}</p>`;
+            }
+
             function playIntroAnimation() {
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 elements.puzzleContainer.classList.add('intro-animation-active');
-                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
@@ -1915,7 +1928,7 @@
                 renderBoard();
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
-                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
@@ -1940,7 +1953,7 @@
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
-                        elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                        updateTrackText();
                         updateTrackLinks(state.currentAlbum);
                         if (state.currentAlbum.previewUrl) {
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
