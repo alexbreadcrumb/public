@@ -318,6 +318,10 @@
         .current-track-info {
             text-align: center;
             padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
         }
         .current-track-info h2 {
             font-size: 1.1rem;
@@ -329,6 +333,28 @@
             margin: 0.25rem 0 0;
             color: var(--on-surface-secondary);
         }
+        
+        #track-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.25rem;
+        }
+
+        .track-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+        .track-link-btn:hover {
+            transform: scale(1.1);
+        }
+        .track-link-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--on-surface-secondary);
+        }
+
 
         .new-game-controls {
             display: flex;
@@ -676,7 +702,17 @@
 
     <div class="main-container">
         <div class="puzzle-container" id="puzzle-container"></div>
-        <div class="current-track-info" id="current-track-info"></div>
+        <div class="current-track-info" id="current-track-info">
+            <div id="track-text"></div>
+            <div id="track-links">
+                <a id="apple-music-link" href="#" target="_blank" class="track-link-btn" style="display: none;" title="Listen on Apple Music">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.187 11.368c-.01.01-1.63 1.222-1.63 3.422 0 1.953 1.13 2.828 2.625 2.828 1.484 0 2.53-1.015 2.53-2.453 0-1.734-1.39-2.593-2.85-2.593-.25 0-.485.03-.675.094zm-1.81-1.57c.234-.282 1.077-1.313 1.077-2.313 0-1.328-.96-2.078-2.235-2.078-.12 0-1.64.062-2.733 1.171-.995 1.004-1.71 2.375-1.71 3.656 0 2.21 1.83 3.515 3.472 3.515.22 0 .42-.015.615-.046-.03-.124-.047-.25-.047-.375 0-.75.422-1.36 1.036-1.53z"></path></svg>
+                </a>
+                <a id="spotify-link" href="#" target="_blank" class="track-link-btn" style="display: none;" title="Listen on Spotify">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm4.183 14.123c-.246.332-.703.43-1.035.183-2.76-1.683-6.22-1.95-10.387-1.02a.662.662 0 0 1-.728-.642c-.01-.36.26-.67.62-.73 4.58-1.02 8.35-.71 11.4 1.18.33.2.43.66.18 1.03zm.88-2.32c-.3.402-.84.522-1.24.222-3.09-1.89-7.73-2.43-11.45-1.32a.803.803 0 0 1-.92-.782c-.01-.44.32-.82.75-.88 4.18-1.21 9.24-.62 12.72 1.54.4.24.52.78.22 1.22zm.08-2.58c-3.53-2.08-9.43-2.28-13.3-1.25a.965.965 0 0 1-1.1-.943c-.02-.52.4-.98.92-1.04 4.3-.92 10.79-.72 14.8 1.58.48.28.64.88.35 1.36-.28.48-.88.64-1.36.35z"></path></svg>
+                </a>
+            </div>
+        </div>
 
         <div class="new-game-controls">
             <input type="text" id="artist-search" data-translate-placeholder="artistSearchPlaceholder">
@@ -718,7 +754,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.63</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.64</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -735,6 +771,9 @@
                 menuBtn: document.getElementById('menu-btn'),
                 artistSearch: document.getElementById('artist-search'),
                 trackInfo: document.getElementById('current-track-info'),
+                trackText: document.getElementById('track-text'),
+                appleMusicLink: document.getElementById('apple-music-link'),
+                spotifyLink: document.getElementById('spotify-link'),
                 audioPlayer: document.getElementById('audio-player'),
                 pauseIcon: document.getElementById('pause-icon'),
                 playIcon: document.getElementById('play-icon'),
@@ -1442,7 +1481,7 @@
                     try {
                         const response = await fetchWithProxyFallback(url);
                         const data = await response.json();
-                        const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100);
+                        const songsWithPreview = data.results.filter(song => song.previewUrl && song.artworkUrl100 && song.trackViewUrl && song.trackName);
                         if (songsWithPreview.length === 0) return null;
 
                         const albums = songsWithPreview.reduce((acc, song) => {
@@ -1451,7 +1490,9 @@
                                     artistName: song.artistName,
                                     collectionName: song.collectionName,
                                     artworkUrl: song.artworkUrl100,
-                                    previewUrl: song.previewUrl
+                                    previewUrl: song.previewUrl,
+                                    trackViewUrl: song.trackViewUrl,
+                                    trackName: song.trackName
                                 };
                             }
                             return acc;
@@ -1559,7 +1600,8 @@
                 // Clear visual elements
                 clearBackground();
                 elements.puzzleContainer.innerHTML = '';
-                elements.trackInfo.innerHTML = '';
+                elements.trackText.innerHTML = '';
+                hideTrackLinks();
                 
                 // Reset core state properties
                 state.currentAlbum = null;
@@ -1572,12 +1614,34 @@
                 updateUI();
             }
 
+            function updateTrackLinks(album) {
+                if (!album || !album.trackViewUrl || !album.trackName) {
+                    hideTrackLinks();
+                    return;
+                }
+
+                elements.appleMusicLink.href = album.trackViewUrl;
+                elements.appleMusicLink.style.display = 'flex';
+
+                const spotifyQuery = `${album.artistName} ${album.trackName}`;
+                const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(spotifyQuery)}`;
+                elements.spotifyLink.href = spotifyUrl;
+                elements.spotifyLink.style.display = 'flex';
+            }
+
+            function hideTrackLinks() {
+                elements.appleMusicLink.style.display = 'none';
+                elements.appleMusicLink.href = '#';
+                elements.spotifyLink.style.display = 'none';
+                elements.spotifyLink.href = '#';
+            }
             
             function playIntroAnimation() {
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 elements.puzzleContainer.classList.add('intro-animation-active');
-                elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                updateTrackLinks(state.currentAlbum);
                 
                 const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                 const pieces = [];
@@ -1677,7 +1741,8 @@
                 renderBoard();
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
-                elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
                 state.isMuted = true;
@@ -1701,7 +1766,8 @@
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
-                        elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                        elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
+                        updateTrackLinks(state.currentAlbum);
                         if (state.currentAlbum.previewUrl) {
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
                         }
