@@ -619,7 +619,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.53</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.54</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1089,10 +1089,29 @@
 
             function saveScore() {
                 if (!state.currentAlbum) return;
+                
+                // 1. Get current scores and add the new one
                 let highScores = getHighScores();
-                highScores.push({ time: state.time, moves: state.moves, album: { ...state.currentAlbum }, id: Date.now() });
-                highScores.sort((a, b) => a.time !== b.time ? a.time - b.time : a.moves - b.moves);
-                localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores.slice(0, 10)));
+                const newScore = { 
+                    time: state.time, 
+                    moves: state.moves, 
+                    album: { ...state.currentAlbum }, 
+                    id: Date.now() 
+                };
+                highScores.push(newScore);
+
+                // 2. Sort by best time, then by fewest moves
+                highScores.sort((a, b) => {
+                    if (a.time !== b.time) {
+                        return a.time - b.time;
+                    }
+                    return a.moves - b.moves;
+                });
+
+                // 3. Keep only the top 10 scores
+                const top10Scores = highScores.slice(0, 10);
+                
+                localStorage.setItem('puzzletunesHighScores', JSON.stringify(top10Scores));
             }
 
             function renderHighScores() {
@@ -1331,6 +1350,7 @@
             function startNewGame() {
                 renderBoard();
                 startTimer();
+                elements.puzzleContainer.classList.add('animated-gradient-border');
                 elements.trackInfo.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${state.currentAlbum.artistName}</p>`;
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
@@ -1431,10 +1451,11 @@
                 if (state.isPaused) {
                     stopTimer();
                     showOverlay(getTranslatedString('paused'));
-                    elements.audioPlayer.pause();
+                    elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
                     hideOverlay();
                     startTimer();
+                    elements.puzzleContainer.classList.add('animated-gradient-border');
                     if (!state.isMuted && elements.audioPlayer.src) {
                         elements.audioPlayer.play().catch(e => console.error("Error on resume:", e));
                     }
@@ -1458,13 +1479,6 @@
             });
 
             elements.audioPlayer.addEventListener('canplaythrough', () => elements.audioBtn.disabled = false);
-            elements.audioPlayer.addEventListener('play', () => {
-                if (!state.isMuted && !state.isPaused) {
-                    elements.puzzleContainer.classList.add('animated-gradient-border');
-                }
-                updateUI();
-            });
-            elements.audioPlayer.addEventListener('pause', () => elements.puzzleContainer.classList.remove('animated-gradient-border'));
             
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
