@@ -919,7 +919,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v2.0</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1364,7 +1364,7 @@
             }
             
             function saveGameState() {
-                if (!state.currentAlbum) return;
+                if (!state.currentAlbum || !state.gameInProgress) return;
                 const gameState = {
                     pieces: state.pieces.map(p => ({ originalIndex: p.originalIndex, currentIndex: p.currentIndex })),
                     moves: state.moves,
@@ -1416,11 +1416,13 @@
             }
 
             function renderBoard(imageUrl, boardState) {
-                elements.puzzleContainer.innerHTML = '';
+                // More robustly clear only puzzle pieces, preserving other elements like overlays
+                const existingPieces = elements.puzzleContainer.querySelectorAll('.puzzle-piece');
+                existingPieces.forEach(p => p.remove());
+
                 if (!imageUrl || !boardState) return;
 
                 const url = imageUrl.replace('100x100', '600x600');
-                const emptyIndex = boardState.indexOf(SIZE*SIZE - 1);
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceEl = document.createElement('div');
@@ -2094,7 +2096,7 @@
             }
 
             function startNewGame() {
-                clearGameState();
+                // clearGameState() is now called on button click, not here.
                 state.time = 0;
                 state.moves = 0;
                 state.isPaused = false;
@@ -2389,6 +2391,7 @@
 
             elements.newGameBtn.addEventListener('click', () => {
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
+                clearGameState();
                 cleanupPreviousGameResources();
                 prepareNewGame();
             });
@@ -2441,7 +2444,7 @@
                 const deleteBtn = e.target.closest('.score-delete-btn');
                 if (deleteBtn) deleteScore(parseInt(deleteBtn.dataset.id, 10));
             });
-            window.addEventListener('beforeunload', () => state.gameInProgress && saveGameState());
+            window.addEventListener('beforeunload', () => saveGameState());
             
              // Levenshtein distance function for suggestions
             function calculateLevenshteinDistance(a, b) {
