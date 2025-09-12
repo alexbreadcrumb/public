@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-A">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
     <!-- PWA & Icon Metadata -->
@@ -203,22 +203,13 @@
             background-color: transparent;
             border-radius: 12px;
             box-shadow: 0 8px 24px var(--shadow-color);
-            z-index: 1;
-            transform-style: preserve-3d;
-            transition: opacity 0.3s ease, filter 0.3s ease;
-        }
-        
-        .puzzle-container.idle-animation {
-            filter: brightness(0.7);
-            opacity: 0.8;
-        }
-
-        .puzzle-container.game-active {
-             display: grid;
+            display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
+            z-index: 1;
+            transform-style: preserve-3d;
         }
         
         .puzzle-container.intro-animation-active {
@@ -252,6 +243,8 @@
 
 
         .puzzle-piece {
+            width: 100%;
+            height: 100%;
             background-size: 300% 300%;
             transition: transform 0.2s ease-in-out, top 0.15s ease-in-out, left 0.15s ease-in-out;
             cursor: pointer;
@@ -260,18 +253,6 @@
             position: relative;
             z-index: 2;
         }
-        
-        .puzzle-container.game-active .puzzle-piece {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .puzzle-container:not(.game-active) .puzzle-piece {
-             position: absolute;
-             width: calc(100% / 3);
-             height: calc(100% / 3);
-        }
-
         .puzzle-piece.empty {
             visibility: hidden;
             cursor: default;
@@ -346,22 +327,6 @@
             font-weight: 600;
             z-index: 10;
             padding: 1rem;
-        }
-        
-        .idle-text-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            z-index: 10;
-            padding: 1rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            pointer-events: none; /* Make it non-interactive */
         }
         
         .overlay h2 {
@@ -478,18 +443,6 @@
             min-width: 0;
         }
         
-        @keyframes pulse-glow {
-            0% {
-                box-shadow: 0 0 4px var(--primary), 0 0 8px var(--primary);
-            }
-            50% {
-                box-shadow: 0 0 16px var(--primary), 0 0 24px var(--primary);
-            }
-            100% {
-                box-shadow: 0 0 4px var(--primary), 0 0 8px var(--primary);
-            }
-        }
-
         #new-game-btn {
             background-color: var(--primary);
             color: var(--background);
@@ -499,13 +452,11 @@
             font-size: 1rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s ease, box-shadow 0.3s ease;
+            transition: background-color 0.2s ease;
             white-space: nowrap;
-            animation: pulse-glow 2.5s infinite ease-in-out;
         }
         #new-game-btn:hover {
             background-color: var(--primary-hover);
-            animation-play-state: paused;
         }
         
         @media (max-width: 480px) {
@@ -929,7 +880,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.94</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1031,7 +982,6 @@
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleMessage: "Toca 'Nuevo Juego' para iniciar una partida...",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1079,7 +1029,6 @@
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleMessage: "Tap 'New Game' to start a match...",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1127,7 +1076,6 @@
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleMessage: "Toque em 'Novo Jogo' para iniciar uma partida...",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1175,7 +1123,6 @@
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleMessage: "Appuyez sur 'Nouveau Jeu' pour commencer une partie...",
                 }
             };
 
@@ -1427,12 +1374,11 @@
 
             function renderBoard(imageUrl, boardState) {
                 elements.puzzleContainer.innerHTML = '';
-                elements.puzzleContainer.classList.add('game-active');
-
                 if (!imageUrl || !boardState) return;
 
                 const url = imageUrl.replace('100x100', '600x600');
-                
+                const emptyIndex = boardState.indexOf(SIZE*SIZE - 1);
+
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceEl = document.createElement('div');
                     pieceEl.classList.add('puzzle-piece');
@@ -1452,7 +1398,7 @@
                     elements.puzzleContainer.appendChild(pieceEl);
                 }
             }
-
+            
             function onPieceClick(clickedIndex) {
                 if (state.isPaused) return;
 
@@ -1496,6 +1442,16 @@
                 piece1.currentIndex = piece2.currentIndex;
                 piece2.currentIndex = tempIndex;
 
+                const piece1El = elements.puzzleContainer.querySelector(`[data-index="${piece2.currentIndex}"]`);
+                const piece2El = elements.puzzleContainer.querySelector(`[data-index="${tempIndex}"]`);
+
+                if (piece1El && piece2El) {
+                    const tempGridArea = piece1El.style.gridArea;
+                    piece1El.style.gridArea = piece2El.style.gridArea;
+                    piece2El.style.gridArea = tempGridArea;
+                }
+                
+                // For live games, re-render is simpler and safer
                 const imageUrl = state.currentAlbum.artworkUrl;
                 const boardState = Array(SIZE*SIZE).fill(0);
                 state.pieces.forEach(p => {
@@ -1503,6 +1459,7 @@
                 });
                 renderBoard(imageUrl, boardState);
                 
+                // Add click listeners back after re-render
                 elements.puzzleContainer.querySelectorAll('.puzzle-piece').forEach(el => {
                     el.addEventListener('click', () => onPieceClick(parseInt(el.dataset.index, 10)));
                 });
@@ -1591,6 +1548,7 @@
                         shareBtn.className = 'share-btn';
                         shareBtn.title = getTranslatedString('shareResultTitle');
                         shareBtn.innerHTML = `
+                            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>
                             <span>${getTranslatedString('shareResultTitle')}</span>
                         `;
                         shareBtn.onclick = async () => {
@@ -1970,20 +1928,19 @@
                     } catch(e) { console.error("ColorThief failed:", e); }
                     updateBackground(img.src);
                     hideOverlay();
-                    runIntroAnimation();
+                    playIntroAnimation();
                 };
                 img.onerror = () => showOverlay(getTranslatedString('imageError'));
             }
 
             function cleanupPreviousGameResources() {
                 stopTimer();
-                state.isIdle = false; 
+                state.isIdle = false; // Stop idle animation
                 elements.audioPlayer.pause();
                 elements.audioPlayer.removeAttribute('src');
                 elements.audioPlayer.load();
                 clearBackground();
                 elements.puzzleContainer.innerHTML = '';
-                elements.puzzleContainer.classList.remove('game-active', 'animated-gradient-border', 'idle-animation');
                 elements.trackText.innerHTML = '';
                 hideTrackLinks();
                 state.currentAlbum = null;
@@ -1993,9 +1950,7 @@
                 state.moves = 0;
                 
                 elements.idleCollage.classList.remove('visible');
-                
-                const idleOverlay = document.getElementById('idle-text-overlay');
-                if (idleOverlay) idleOverlay.remove();
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
                 
                 if (elements.gameTitle) {
                     elements.gameTitle.innerHTML = '';
@@ -2037,11 +1992,9 @@
                 elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${artistText}</p>`;
             }
 
-            // --- ANIMATION FUNCTIONS ---
-
-            function runIntroAnimation() {
+            function playIntroAnimation() {
                 elements.puzzleContainer.innerHTML = '';
-                elements.puzzleContainer.classList.remove('animated-gradient-border', 'game-active', 'idle-animation');
+                elements.puzzleContainer.classList.remove('animated-gradient-border');
                 elements.puzzleContainer.classList.add('intro-animation-active');
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
@@ -2079,28 +2032,19 @@
 
                     startButton.onclick = () => {
                         startOverlay.remove();
-                        runSwirlAnimation(() => {
-                           startNewGame(); 
-                        });
+                        elements.puzzleContainer.classList.add('swirl-animation');
+                        setTimeout(() => {
+                            elements.puzzleContainer.classList.remove('swirl-animation', 'intro-animation-active');
+                            elements.puzzleContainer.style.opacity = '0';
+                            startNewGame();
+                            requestAnimationFrame(() => {
+                                elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
+                                elements.puzzleContainer.style.opacity = '1';
+                                setTimeout(() => { elements.puzzleContainer.style.transition = ''; elements.puzzleContainer.style.opacity = ''; }, 400);
+                            });
+                        }, 800);
                     };
                 }, (shuffledIndices.length * 100) + 800);
-            }
-
-            function runSwirlAnimation(onComplete) {
-                elements.puzzleContainer.classList.add('swirl-animation');
-                setTimeout(() => {
-                    elements.puzzleContainer.classList.remove('swirl-animation', 'intro-animation-active');
-                    elements.puzzleContainer.style.opacity = '0';
-                    requestAnimationFrame(() => {
-                        elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
-                        elements.puzzleContainer.style.opacity = '1';
-                        setTimeout(() => { 
-                            elements.puzzleContainer.style.transition = ''; 
-                            elements.puzzleContainer.style.opacity = ''; 
-                        }, 400);
-                        if(onComplete) onComplete();
-                    });
-                }, 800);
             }
 
             function startNewGame() {
@@ -2216,39 +2160,7 @@
                 });
             }
             
-            // --- IDLE/GHOST SOLVER ANIMATION ---
-
-            function renderGhostBoard(imageUrl, boardState) {
-                const container = elements.puzzleContainer;
-                container.innerHTML = '';
-                container.classList.remove('game-active');
-
-                const pieceSize = 100 / SIZE;
-                const url = imageUrl.replace('100x100', '600x600');
-
-                for (let i = 0; i < SIZE * SIZE; i++) {
-                    const originalIndex = boardState.indexOf(i);
-                    const { row, col } = getRowCol(originalIndex);
-
-                    const pieceEl = document.createElement('div');
-                    pieceEl.classList.add('puzzle-piece');
-                    pieceEl.dataset.originalIndex = i;
-
-                    if (i === SIZE * SIZE - 1) {
-                        pieceEl.classList.add('empty');
-                    } else {
-                        const bgRow = Math.floor(i / SIZE);
-                        const bgCol = i % SIZE;
-                        pieceEl.style.backgroundImage = `url(${url})`;
-                        pieceEl.style.backgroundPosition = `${(bgCol * 100) / (SIZE - 1)}% ${(bgRow * 100) / (SIZE - 1)}%`;
-                    }
-                    
-                    pieceEl.style.top = `${row * pieceSize}%`;
-                    pieceEl.style.left = `${col * pieceSize}%`;
-                    
-                    container.appendChild(pieceEl);
-                }
-            }
+            // --- GHOST SOLVER ANIMATION ---
 
             async function ghostSolverLoop(urls) {
                 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -2260,6 +2172,7 @@
                     let shuffledBoard = [...board];
                     let emptyIndex = SIZE * SIZE - 1;
                     
+                    // Simple shuffle, good enough for animation
                     for (let j = 0; j < 50; j++) {
                         const validMoves = getValidMoves(emptyIndex);
                         const move = validMoves[Math.floor(Math.random() * validMoves.length)];
@@ -2267,29 +2180,16 @@
                         emptyIndex = move;
                     }
                     
-                    renderGhostBoard(urls[i], shuffledBoard);
+                    renderBoard(urls[i], shuffledBoard);
 
                     const solution = solvePuzzle(shuffledBoard);
                     if (!solution || !state.isIdle) continue;
 
-                    let currentBoard = shuffledBoard;
-                    for (const nextBoard of solution) {
+                    for (const move of solution) {
                         if (!state.isIdle) break;
-                        
-                        const emptyIndexOld = currentBoard.indexOf(SIZE * SIZE - 1);
-                        const emptyIndexNew = nextBoard.indexOf(SIZE * SIZE - 1);
-                        const movedPieceOriginalIndex = currentBoard[emptyIndexNew];
-
-                        const pieceEl = elements.puzzleContainer.querySelector(`.puzzle-piece[data-original-index="${movedPieceOriginalIndex}"]`);
-                        
-                        if(pieceEl) {
-                            const { row, col } = getRowCol(emptyIndexOld);
-                            pieceEl.style.top = `${row * (100 / SIZE)}%`;
-                            pieceEl.style.left = `${col * (100 / SIZE)}%`;
-                        }
-                        
+                        shuffledBoard = move;
+                        renderBoard(urls[i], shuffledBoard);
                         await delay(150);
-                        currentBoard = nextBoard;
                     }
                     
                     if (state.isIdle) await delay(2000);
@@ -2303,12 +2203,17 @@
             function solvePuzzle(startBoard) {
                 const goal = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 const goalStr = goal.join(',');
-                const queue = [[startBoard, []]]; 
+
+                // Basic Breadth-First Search (BFS) is simpler and sufficient for 3x3
+                const queue = [[startBoard, []]]; // [board, path]
                 const visited = new Set([startBoard.join(',')]);
 
                 while (queue.length > 0) {
                     const [currentBoard, path] = queue.shift();
-                    if (currentBoard.join(',') === goalStr) return path;
+                    
+                    if (currentBoard.join(',') === goalStr) {
+                        return path;
+                    }
 
                     const emptyIndex = currentBoard.indexOf(SIZE * SIZE - 1);
                     const validMoves = getValidMoves(emptyIndex);
@@ -2325,13 +2230,14 @@
                         }
                     }
                 }
-                return null;
+                return null; // Should not happen for solvable puzzles
             }
             
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
                 if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
+                    // Fallback if fetch fails or user starts game during fetch
                     showOverlay(getTranslatedString('startMessage'));
                     return;
                 }
@@ -2343,13 +2249,6 @@
                     }
                 });
                 elements.idleCollage.classList.add('visible');
-
-                elements.puzzleContainer.classList.add('idle-animation');
-                const idleOverlay = document.createElement('div');
-                idleOverlay.className = 'idle-text-overlay';
-                idleOverlay.id = 'idle-text-overlay';
-                idleOverlay.textContent = getTranslatedString('idleMessage');
-                elements.puzzleContainer.appendChild(idleOverlay);
 
                 animateTitle();
                 ghostSolverLoop(allArtworks);
@@ -2388,6 +2287,7 @@
                      img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
                     cleanupPreviousGameResources();
+                    showOverlay(getTranslatedString('startMessage'));
                     setupIdleAnimation();
                 }
             }
