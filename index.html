@@ -240,6 +240,32 @@
             border-radius: 16px; 
             filter: blur(20px);
         }
+        
+        .puzzle-container.idle-mode::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.65);
+            z-index: 3;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .idle-call-to-action {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 1rem;
+            z-index: 4;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            width: 80%;
+        }
 
 
         .puzzle-piece {
@@ -452,11 +478,24 @@
             font-size: 1rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, box-shadow 0.4s ease;
             white-space: nowrap;
         }
         #new-game-btn:hover {
             background-color: var(--primary-hover);
+        }
+
+        @keyframes neon-pulse {
+            0%, 100% {
+                box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary), 0 0 15px var(--primary-hover);
+            }
+            50% {
+                box-shadow: 0 0 10px var(--primary-hover), 0 0 20px var(--primary-hover), 0 0 30px var(--primary);
+            }
+        }
+
+        #new-game-btn.pulsating-neon {
+            animation: neon-pulse 2s ease-in-out infinite;
         }
         
         @media (max-width: 480px) {
@@ -880,7 +919,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v2.0</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -982,6 +1021,7 @@
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
+                    idleCallToAction: "Toca 'Nuevo Juego' para iniciar una partida..."
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1029,6 +1069,7 @@
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
+                    idleCallToAction: "Tap 'New Game' to start a match..."
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1076,6 +1117,7 @@
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
+                    idleCallToAction: "Toque em 'Novo Jogo' para iniciar uma partida..."
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1123,6 +1165,7 @@
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
+                    idleCallToAction: "Appuyez sur 'Nouveau Jeu' pour commencer une partie..."
                 }
             };
 
@@ -1950,7 +1993,10 @@
                 state.moves = 0;
                 
                 elements.idleCollage.classList.remove('visible');
-                elements.puzzleContainer.classList.remove('animated-gradient-border');
+                elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
+                elements.newGameBtn.classList.remove('pulsating-neon');
+                const cta = document.getElementById('idle-cta');
+                if (cta) cta.remove();
                 
                 if (elements.gameTitle) {
                     elements.gameTitle.innerHTML = '';
@@ -2241,6 +2287,14 @@
                     showOverlay(getTranslatedString('startMessage'));
                     return;
                 }
+                
+                elements.puzzleContainer.classList.add('idle-mode');
+                const callToAction = document.createElement('div');
+                callToAction.className = 'idle-call-to-action';
+                callToAction.id = 'idle-cta';
+                callToAction.textContent = getTranslatedString('idleCallToAction');
+                elements.puzzleContainer.appendChild(callToAction);
+                elements.newGameBtn.classList.add('pulsating-neon');
 
                 const backgroundLayers = elements.idleCollage.children;
                 allArtworks.forEach((url, i) => {
@@ -2287,7 +2341,7 @@
                      img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
                     cleanupPreviousGameResources();
-                    showOverlay(getTranslatedString('startMessage'));
+                    // showOverlay(getTranslatedString('startMessage')); // Replaced by idle animation
                     setupIdleAnimation();
                 }
             }
