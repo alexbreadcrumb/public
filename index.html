@@ -47,6 +47,7 @@
             box-sizing: border-box;
             min-height: 100%;
             position: relative;
+            overflow: hidden; /* Prevent scrollbars from idle collage */
         }
 
         body::before {
@@ -61,11 +62,38 @@
             background-position: center;
             filter: blur(30px) brightness(0.4);
             transform: scale(1.1);
-            z-index: -2; /* Ensure it's behind the neon border */
+            z-index: -2;
             opacity: var(--bg-opacity, 0);
             transition: opacity 0.7s ease-in-out;
             will-change: opacity, background-image;
         }
+
+        #idle-background-collage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            opacity: 0;
+            transition: opacity 0.7s ease-in-out;
+        }
+        #idle-background-collage.visible {
+            opacity: 1;
+        }
+        .collage-layer {
+            position: absolute;
+            background-size: cover;
+            background-position: center;
+            filter: blur(5px) brightness(0.5);
+            transform: scale(1.1);
+        }
+        #collage-1 { top: -10%; left: -10%; width: 60%; height: 60%; }
+        #collage-2 { top: -5%; right: -15%; width: 70%; height: 50%; }
+        #collage-3 { bottom: -15%; left: 20%; width: 40%; height: 60%; }
+        #collage-4 { bottom: -10%; right: -10%; width: 65%; height: 65%; }
+        #collage-5 { top: 30%; left: -20%; width: 55%; height: 55%; }
+
 
         h1 {
             margin: auto 0 0.5rem;
@@ -77,7 +105,7 @@
 
         .top-bar {
             position: fixed;
-            top: 0; /* Position at the very top */
+            top: 0;
             left: 0;
             width: 100%;
             background-color: var(--surface);
@@ -164,7 +192,29 @@
             gap: 2px;
             padding: 2px;
             box-sizing: border-box;
-            z-index: 1; /* Establish stacking context */
+            z-index: 1;
+            transform-style: preserve-3d;
+        }
+        
+        @keyframes spin-record {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+        
+        .puzzle-container.idle-spinner {
+            animation: spin-record 10s linear infinite;
+            display: flex; /* Override grid for single placeholder */
+            align-items: center;
+            justify-content: center;
+        }
+
+        #idle-placeholder {
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%23111"/><circle cx="50" cy="50" r="15" fill="%231DB954"/><circle cx="50" cy="50" r="14" fill="%23111"/><circle cx="50" cy="50" r="2" fill="%23fff"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
         
         .puzzle-container.intro-animation-active {
@@ -180,8 +230,8 @@
         .puzzle-container.animated-gradient-border::before {
             content: '';
             position: absolute;
-            inset: -5px; /* Increased spread for better visibility */
-            z-index: -1; /* Position directly behind puzzle pieces */
+            inset: -5px;
+            z-index: -1;
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -193,7 +243,7 @@
             background-size: 400% 400%;
             animation: gradient-flow 8s ease infinite;
             border-radius: 16px; 
-            filter: blur(20px); /* Increased blur for a more prominent glow */
+            filter: blur(20px);
         }
 
 
@@ -205,7 +255,7 @@
             cursor: pointer;
             visibility: visible;
             border-radius: 4px;
-            position: relative; /* Ensure pieces are on top of the border background */
+            position: relative;
             z-index: 2;
         }
         .puzzle-piece.empty {
@@ -325,7 +375,7 @@
             font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.2s ease;
-            margin-top: 1.5rem; /* Add space above it */
+            margin-top: 1.5rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -395,7 +445,7 @@
             padding: 0.75rem 1rem;
             font-size: 1rem;
             color: var(--on-background);
-            min-width: 0; /* Fix for flexbox shrinking */
+            min-width: 0;
         }
         
         #new-game-btn {
@@ -493,8 +543,8 @@
             border-bottom: 3px solid transparent;
             margin-bottom: -1px;
             transition: border-color 0.2s ease, color 0.2s ease;
-            font-size: 1.5rem; /* Control emoji size */
-            line-height: 1; /* Adjust vertical alignment */
+            font-size: 1.5rem;
+            line-height: 1;
             color: var(--on-surface-secondary);
         }
         .tab-btn:hover {
@@ -631,14 +681,14 @@
         }
         .score-info {
             flex-grow: 1;
-            overflow: hidden; /* For marquee */
+            overflow: hidden;
         }
         .score-track {
             font-weight: 600;
             color: var(--on-surface);
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: clip; /* Changed from ellipsis */
+            text-overflow: clip;
         }
         .score-artist {
             color: var(--on-surface-secondary);
@@ -659,7 +709,7 @@
             display: inline-block;
             animation: marquee 10s linear infinite;
             animation-play-state: paused;
-            padding-right: 2rem; /* space at the end of scroll */
+            padding-right: 2rem;
         }
         .marquee-wrapper:hover .marquee-content,
         .marquee-wrapper.animate .marquee-content {
@@ -737,6 +787,13 @@
 </head>
 <body>
     <audio id="audio-player" crossorigin="anonymous" loop playsinline></audio>
+    <div id="idle-background-collage">
+        <div id="collage-1" class="collage-layer"></div>
+        <div id="collage-2" class="collage-layer"></div>
+        <div id="collage-3" class="collage-layer"></div>
+        <div id="collage-4" class="collage-layer"></div>
+        <div id="collage-5" class="collage-layer"></div>
+    </div>
 
     <div class="top-bar">
         <div class="stats-group">
@@ -823,7 +880,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.81</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.77</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -852,6 +909,7 @@
                 closeMenuBtn: document.getElementById('close-menu-btn'),
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
+                idleCollage: document.getElementById('idle-background-collage'),
             };
 
             let state = {
@@ -1137,9 +1195,7 @@
                 const initialLang = supportedLangs.includes(browserLang) ? browserLang : 'en';
                 setLanguage(initialLang);
             }
-            // --- End I18n ---
             
-            // --- Genre Selector ---
             function getSavedGenres() {
                 try {
                     const saved = localStorage.getItem('puzzletunesGenres');
@@ -1200,9 +1256,7 @@
                     }
                 }
             }
-            // --- End Genre Selector ---
-
-            // --- Album History ---
+            
             function getAlbumHistory() {
                 try {
                     const history = localStorage.getItem('puzzletunesAlbumHistory');
@@ -1220,8 +1274,7 @@
                 }
                 localStorage.setItem('puzzletunesAlbumHistory', JSON.stringify(history));
             }
-            // --- End Album History ---
-
+            
             async function fetchWithProxyFallback(url) {
                 let lastError = null;
                 for (const proxy of PROXIES) {
@@ -1691,6 +1744,28 @@
                 if (overlay) overlay.remove();
             }
             
+            async function fetchRandomArtworks(count) {
+                 try {
+                    const genre = ALL_GENRES[Math.floor(Math.random() * ALL_GENRES.length)];
+                    const url = `https://itunes.apple.com/search?term=${genre}&entity=album&limit=50`;
+                    const response = await fetchWithProxyFallback(url);
+                    const data = await response.json();
+                    
+                    const artworks = data.results.map(item => item.artworkUrl100.replace('100x100', '300x300'));
+                    const uniqueArtworks = [...new Set(artworks)];
+                    
+                    // Shuffle and pick
+                    for (let i = uniqueArtworks.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [uniqueArtworks[i], uniqueArtworks[j]] = [uniqueArtworks[j], uniqueArtworks[i]];
+                    }
+                    return uniqueArtworks.slice(0, count);
+                } catch (error) {
+                    console.error('Failed to fetch random artworks:', error);
+                    return [];
+                }
+            }
+
             async function findAlbumWithMusic(searchTerm, isArtistSearch = false) {
                 const userGenres = getSavedGenres();
                 const genresToSearch = (userGenres.includes('all') || userGenres.length === 0) ? ALL_GENRES : userGenres;
@@ -1725,7 +1800,8 @@
                         const uniqueAlbumArray = albumArray.filter(album => !history.includes(album.collectionId));
 
                         if (uniqueAlbumArray.length === 0) {
-                            return null;
+                            // If all results are in recent history, fall back to the original list but still try to avoid history
+                             return albumArray.length > 0 ? albumArray[0] : null;
                         }
 
                         uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
@@ -1739,19 +1815,21 @@
                         return null;
                     }
                 };
-
+                
+                let result = null;
                 if (isArtistSearch) {
                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
-                    return await searchAndProcess(searchUrl);
+                    result = await searchAndProcess(searchUrl);
+                } else {
+                    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+                        const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
+                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                        result = await searchAndProcess(searchUrl);
+                        if (result) break;
+                        console.warn(`Random search attempt ${i + 1} for genre ${genre} failed. Retrying...`);
+                    }
                 }
-                for (let i = 0; i < MAX_ATTEMPTS; i++) {
-                    const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
-                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
-                    const result = await searchAndProcess(searchUrl);
-                    if (result) return result;
-                    console.warn(`Random search attempt ${i + 1} failed. Retrying...`);
-                }
-                return null;
+                return result;
             }
             
             const calculateLevenshteinDistance = (a, b) => {
@@ -1840,6 +1918,11 @@
                 state.isPaused = true;
                 state.time = 0;
                 state.moves = 0;
+                
+                // Cleanup idle animation
+                elements.idleCollage.classList.remove('visible');
+                elements.puzzleContainer.classList.remove('idle-spinner');
+                
                 updateUI();
             }
 
@@ -1941,15 +2024,12 @@
 
                 let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let emptyPosition = SIZE * SIZE - 1;
-                let lastMove = -1;
-
+                
                 const shuffleMoves = 150; 
                 for (let i = 0; i < shuffleMoves; i++) {
                     const validMoves = getValidMoves(emptyPosition);
-                    const possibleMoves = validMoves.filter(pos => pos !== lastMove);
-                    const move = possibleMoves.length > 0 ? possibleMoves[Math.floor(Math.random() * possibleMoves.length)] : validMoves[0];
+                    const move = validMoves[Math.floor(Math.random() * validMoves.length)];
                     [board[emptyPosition], board[move]] = [board[move], board[emptyPosition]];
-                    lastMove = emptyPosition;
                     emptyPosition = move;
                 }
                 
@@ -1971,7 +2051,26 @@
                 updateUI();
                 saveGameState();
             }
-
+            
+            async function setupIdleAnimation() {
+                const placeholder = document.createElement('div');
+                placeholder.id = 'idle-placeholder';
+                elements.puzzleContainer.innerHTML = '';
+                elements.puzzleContainer.appendChild(placeholder);
+                elements.puzzleContainer.classList.add('idle-spinner');
+                
+                const artworkUrls = await fetchRandomArtworks(5);
+                if (artworkUrls && artworkUrls.length > 0) {
+                    const collageLayers = elements.idleCollage.children;
+                    artworkUrls.forEach((url, i) => {
+                        if (collageLayers[i]) {
+                            collageLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                        }
+                    });
+                    elements.idleCollage.classList.add('visible');
+                }
+            }
+            
             function initGame() {
                 if (loadGameState() && state.gameInProgress) {
                     const img = new Image();
@@ -1998,6 +2097,7 @@
                 } else {
                     cleanupPreviousGameResources();
                     showOverlay(getTranslatedString('startMessage'));
+                    setupIdleAnimation();
                 }
             }
             
