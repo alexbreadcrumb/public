@@ -115,7 +115,6 @@
         #game-title span {
             position: relative;
             display: inline-block;
-            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .top-bar {
@@ -921,7 +920,7 @@
     </div>
     
     <h1 id="game-title">Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.89</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -2112,60 +2111,71 @@
                 const text = "Puzzletunes";
                 const letters = text.split('');
                 titleEl.innerHTML = '';
+
+                // 1. Create spans and append in correct order to calculate final positions
+                const spans = letters.map(letter => {
+                    const span = document.createElement('span');
+                    span.textContent = letter;
+                    if (letter === ' ') span.innerHTML = '&nbsp;';
+                    titleEl.appendChild(span);
+                    return span;
+                });
+
+                // 2. Calculate final positions
+                const finalPositions = spans.map(span => {
+                    const rect = span.getBoundingClientRect();
+                    return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+                });
                 
                 const puzzleRect = elements.puzzleContainer.getBoundingClientRect();
                 const startX = puzzleRect.left + puzzleRect.width / 2;
                 const startY = puzzleRect.top + puzzleRect.height / 2;
 
-                const spans = letters.map(letter => {
-                    const span = document.createElement('span');
-                    span.textContent = letter;
-                    return span;
-                });
-                
-                // Temporarily append to calculate final positions
-                spans.forEach(span => titleEl.appendChild(span));
-                const finalPositions = spans.map(span => {
-                    const rect = span.getBoundingClientRect();
-                    return { x: rect.left, y: rect.top };
-                });
-                titleEl.innerHTML = ''; // Clear again
-                
-                const shuffledSpans = [...spans].sort(() => Math.random() - 0.5);
-
-                shuffledSpans.forEach((span, i) => {
-                    titleEl.appendChild(span);
-                    span.style.position = 'absolute';
-                    span.style.left = `${startX}px`;
-                    span.style.top = `${startY}px`;
-                    span.style.transform = `translate(-50%, -50%)`;
-                    span.style.opacity = '0';
-                    span.style.transition = `all 1s cubic-bezier(0.19, 1, 0.22, 1) ${i * 0.05}s`;
-                });
-                
-                await new Promise(resolve => setTimeout(resolve, 50));
-                
+                // 3. Set initial state for animation
                 spans.forEach((span, i) => {
-                    const finalPos = finalPositions[shuffledSpans.indexOf(span)];
+                    span.style.position = 'absolute';
+                    span.style.left = `${startX - finalPositions[i].width / 2}px`;
+                    span.style.top = `${startY - finalPositions[i].height / 2}px`;
+                    span.style.opacity = '0';
+                    span.style.transform = 'scale(0)';
+                    span.style.transition = `all 1s cubic-bezier(0.19, 1, 0.22, 1)`;
+                });
+
+                // 4. First animation phase (fly out to shuffled positions)
+                const shuffledIndices = [...Array(spans.length).keys()].sort(() => Math.random() - 0.5);
+                
+                await new Promise(resolve => setTimeout(resolve, 50)); 
+
+                spans.forEach((span, i) => {
+                    const shuffledIndex = shuffledIndices[i];
+                    const targetPos = finalPositions[shuffledIndex];
+                    span.style.left = `${targetPos.x}px`;
+                    span.style.top = `${targetPos.y}px`;
+                    span.style.opacity = '1';
+                    span.style.transform = 'scale(1)';
+                    span.style.transitionDelay = `${i * 0.05}s`;
+                });
+
+                await new Promise(resolve => setTimeout(resolve, 1000 + (letters.length * 50)));
+
+                // 5. Second animation phase (re-order)
+                spans.forEach((span, i) => {
+                    const finalPos = finalPositions[i];
                     span.style.left = `${finalPos.x}px`;
                     span.style.top = `${finalPos.y}px`;
-                    span.style.opacity = '1';
+                    span.style.transitionDelay = `0s`;
                 });
-                
-                await new Promise(resolve => setTimeout(resolve, 1000 + (letters.length * 50)));
-                
-                titleEl.style.position = 'relative';
-                spans.forEach((span, i) => {
+
+                await new Promise(resolve => setTimeout(resolve, 1100));
+
+                // 6. Cleanup styles and restore normal flow
+                titleEl.style.position = 'relative'; 
+                spans.forEach(span => {
                     span.style.position = 'relative';
                     span.style.left = 'auto';
                     span.style.top = 'auto';
-                    span.style.transform = `translateX(${finalPositions[shuffledSpans.indexOf(span)].x - finalPositions[i].x}px)`;
-                });
-                
-                await new Promise(resolve => setTimeout(resolve, 50));
-
-                spans.forEach(span => {
-                    span.style.transform = 'translateX(0px)';
+                    span.style.transform = 'none';
+                    span.style.transition = '';
                 });
             }
             
