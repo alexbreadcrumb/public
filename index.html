@@ -106,6 +106,16 @@
             font-weight: 700;
             color: var(--primary);
             width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+        
+        #game-title span {
+            position: relative;
+            display: inline-block;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .top-bar {
@@ -910,8 +920,8 @@
         </div>
     </div>
     
-    <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.88</footer>
+    <h1 id="game-title">Puzzletunes</h1>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.89</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -941,6 +951,7 @@
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
                 idleCollage: document.getElementById('idle-background-collage'),
+                gameTitle: document.getElementById('game-title'),
             };
 
             let state = {
@@ -1174,7 +1185,7 @@
                 
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
-                    if (currentStrings[key]) {
+                    if (currentStrings[key] && el.id !== 'game-title') { // Don't touch title during animation
                         el.innerHTML = currentStrings[key];
                     }
                 });
@@ -1961,6 +1972,8 @@
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('idle-spinner', 'animated-gradient-border');
                 
+                if (elements.gameTitle) elements.gameTitle.innerHTML = 'Puzzletunes';
+
                 updateUI();
             }
 
@@ -2091,6 +2104,71 @@
                 saveGameState();
             }
             
+            async function animateTitle() {
+                const titleEl = elements.gameTitle;
+                if (!titleEl || titleEl.dataset.animated) return;
+                titleEl.dataset.animated = "true";
+
+                const text = "Puzzletunes";
+                const letters = text.split('');
+                titleEl.innerHTML = '';
+                
+                const puzzleRect = elements.puzzleContainer.getBoundingClientRect();
+                const startX = puzzleRect.left + puzzleRect.width / 2;
+                const startY = puzzleRect.top + puzzleRect.height / 2;
+
+                const spans = letters.map(letter => {
+                    const span = document.createElement('span');
+                    span.textContent = letter;
+                    return span;
+                });
+                
+                // Temporarily append to calculate final positions
+                spans.forEach(span => titleEl.appendChild(span));
+                const finalPositions = spans.map(span => {
+                    const rect = span.getBoundingClientRect();
+                    return { x: rect.left, y: rect.top };
+                });
+                titleEl.innerHTML = ''; // Clear again
+                
+                const shuffledSpans = [...spans].sort(() => Math.random() - 0.5);
+
+                shuffledSpans.forEach((span, i) => {
+                    titleEl.appendChild(span);
+                    span.style.position = 'absolute';
+                    span.style.left = `${startX}px`;
+                    span.style.top = `${startY}px`;
+                    span.style.transform = `translate(-50%, -50%)`;
+                    span.style.opacity = '0';
+                    span.style.transition = `all 1s cubic-bezier(0.19, 1, 0.22, 1) ${i * 0.05}s`;
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                spans.forEach((span, i) => {
+                    const finalPos = finalPositions[shuffledSpans.indexOf(span)];
+                    span.style.left = `${finalPos.x}px`;
+                    span.style.top = `${finalPos.y}px`;
+                    span.style.opacity = '1';
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 1000 + (letters.length * 50)));
+                
+                titleEl.style.position = 'relative';
+                spans.forEach((span, i) => {
+                    span.style.position = 'relative';
+                    span.style.left = 'auto';
+                    span.style.top = 'auto';
+                    span.style.transform = `translateX(${finalPositions[shuffledSpans.indexOf(span)].x - finalPositions[i].x}px)`;
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                spans.forEach(span => {
+                    span.style.transform = 'translateX(0px)';
+                });
+            }
+            
             async function setupIdleAnimation() {
                 const placeholder = document.createElement('div');
                 placeholder.id = 'idle-placeholder';
@@ -2111,6 +2189,7 @@
                 elements.idleCollage.classList.add('visible');
 
                 placeholder.innerHTML = '<div class="disc-center-label"></div>';
+                animateTitle();
             }
             
             function initGame() {
