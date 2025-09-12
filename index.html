@@ -823,7 +823,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.80</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.81</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1101,9 +1101,10 @@
                 const gameBySpan = document.querySelector('footer > span');
                 const footer = document.querySelector('footer');
                 if (gameBySpan && footer) {
-                    const version = footer.textContent.split('- v')[1];
+                    const versionText = footer.textContent.match(/- v[\d\.]+/);
+                    const version = versionText ? versionText[0] : '';
                     gameBySpan.textContent = getTranslatedString('gameBy');
-                    footer.innerHTML = `${gameBySpan.outerHTML} Ale Fernández PY-2025 - v${version}`;
+                    footer.innerHTML = `${gameBySpan.outerHTML} Ale Fernández PY-2025 ${version}`;
                 }
             }
             
@@ -1711,7 +1712,8 @@
                                     previewUrl: song.previewUrl,
                                     trackViewUrl: song.trackViewUrl,
                                     trackName: song.trackName,
-                                    releaseDate: song.releaseDate
+                                    releaseDate: song.releaseDate,
+                                    collectionId: song.collectionId,
                                 };
                             }
                             return acc;
@@ -1721,14 +1723,15 @@
                         
                         const history = getAlbumHistory();
                         const uniqueAlbumArray = albumArray.filter(album => !history.includes(album.collectionId));
-                        const effectiveAlbumArray = uniqueAlbumArray.length > 0 ? uniqueAlbumArray : albumArray;
 
-                        effectiveAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                        if (uniqueAlbumArray.length === 0) {
+                            return null;
+                        }
+
+                        uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
                         
-                        if (effectiveAlbumArray.length === 0) return null;
-
-                        const selectionSize = Math.min(25, Math.ceil(effectiveAlbumArray.length * 0.2));
-                        const newestAlbums = effectiveAlbumArray.slice(0, selectionSize);
+                        const selectionSize = Math.min(25, Math.ceil(uniqueAlbumArray.length * 0.2));
+                        const newestAlbums = uniqueAlbumArray.slice(0, selectionSize);
 
                         return newestAlbums[Math.floor(Math.random() * newestAlbums.length)];
                     } catch (error) {
