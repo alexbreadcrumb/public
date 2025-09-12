@@ -234,7 +234,10 @@
             transform: translate(-50%, -50%);
             width: 30%;
             height: 30%;
-            background-color: var(--primary);
+            background-color: #111;
+            background-image: url('apple-touch-icon.png');
+            background-size: cover;
+            background-position: center;
             border-radius: 50%;
             border: clamp(3px, 1.5vw, 8px) solid #111;
             box-sizing: border-box;
@@ -908,7 +911,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.82</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.83</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -2093,8 +2096,8 @@
                 elements.puzzleContainer.appendChild(placeholder);
                 elements.puzzleContainer.classList.add('idle-spinner');
                 
-                const allArtworks = await fetchRandomArtworks(15);
-                if (!allArtworks || allArtworks.length === 0) return;
+                const allArtworks = await fetchRandomArtworks(20);
+                if (!allArtworks || allArtworks.length < 10) return;
 
                 const backgroundArtworks = allArtworks.slice(0, 10);
                 const backgroundLayers = elements.idleCollage.children;
@@ -2105,14 +2108,30 @@
                 });
                 elements.idleCollage.classList.add('visible');
                 
-                const discArtworks = allArtworks.slice(10, 14).filter(Boolean);
+                const discArtworks = allArtworks.slice(10, 20).filter(Boolean);
                 if (discArtworks.length > 0) {
-                    let discCollageHTML = `
-                        <div class="disc-collage-piece" style="top:0; left:0; width:50%; height:50%; background-image: url('${discArtworks[0]}');"></div>
-                        <div class="disc-collage-piece" style="top:0; left:50%; width:50%; height:50%; background-image: url('${discArtworks[1] || discArtworks[0]}');"></div>
-                        <div class="disc-collage-piece" style="top:50%; left:0; width:50%; height:50%; background-image: url('${discArtworks[2] || discArtworks[0]}');"></div>
-                        <div class="disc-collage-piece" style="top:50%; left:50%; width:50%; height:50%; background-image: url('${discArtworks[3] || discArtworks[1] || discArtworks[0]}');"></div>
-                        <div class="disc-center-label"></div>`;
+                    const positions = [
+                        { top: '-10%', left: '-10%', width: '60%', height: '60%' },
+                        { top: '-5%', right: '-15%', width: '70%', height: '50%' },
+                        { bottom: '-15%', left: '20%', width: '40%', height: '60%' },
+                        { bottom: '-10%', right: '-10%', width: '65%', height: '65%' },
+                        { top: '30%', left: '-20%', width: '55%', height: '55%' },
+                        { top: '50%', right: '-20%', width: '50%', height: '50%', opacity: '0.8' },
+                        { bottom: '-20%', left: '-15%', width: '60%', height: '45%', opacity: '0.9' },
+                        { top: '65%', left: '45%', width: '40%', height: '40%', transform: 'translateX(-50%)', opacity: '0.85' },
+                        { top: '10%', left: '50%', width: '35%', height: '35%'},
+                        { bottom: '5%', right: '50%', width: '30%', height: '30%' }
+                    ];
+
+                    let discCollageHTML = discArtworks.map((url, i) => {
+                        const pos = positions[i % positions.length];
+                        const styleString = Object.entries(pos)
+                            .map(([key, value]) => `${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}: ${value};`)
+                            .join(' ');
+                        return `<div class="disc-collage-piece" style="background-image: url('${url}'); ${styleString}"></div>`;
+                    }).join('');
+                    
+                    discCollageHTML += '<div class="disc-center-label"></div>';
                     placeholder.innerHTML = discCollageHTML;
                 }
             }
