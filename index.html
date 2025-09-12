@@ -919,7 +919,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.92</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1209,6 +1209,11 @@
                     gameBySpan.textContent = getTranslatedString('gameBy');
                     footer.innerHTML = `${gameBySpan.outerHTML} Ale Fernández PY-2025 ${version}`;
                 }
+
+                const idleCtaEl = document.getElementById('idle-cta');
+                if (idleCtaEl) {
+                    idleCtaEl.textContent = getTranslatedString('idleCallToAction');
+                }
             }
             
             function setLanguage(lang) {
@@ -1415,14 +1420,17 @@
                 localStorage.removeItem('puzzletunesGameState');
             }
 
-            function renderBoard(imageUrl, boardState) {
-                // More robustly clear only puzzle pieces, preserving other elements like overlays
-                const existingPieces = elements.puzzleContainer.querySelectorAll('.puzzle-piece');
-                existingPieces.forEach(p => p.remove());
+            function renderBoard(imageUrl, boardState, isIdle = false) {
+                const container = elements.puzzleContainer;
+                
+                // Optimized clear
+                const piecesToRemove = container.querySelectorAll('.puzzle-piece');
+                piecesToRemove.forEach(p => p.remove());
 
                 if (!imageUrl || !boardState) return;
 
                 const url = imageUrl.replace('100x100', '600x600');
+                const fragment = document.createDocumentFragment();
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
                     const pieceEl = document.createElement('div');
@@ -1440,10 +1448,17 @@
                     
                     pieceEl.dataset.index = i;
                     pieceEl.dataset.originalIndex = originalIndex;
-                    elements.puzzleContainer.appendChild(pieceEl);
+                    fragment.appendChild(pieceEl);
+                }
+                container.appendChild(fragment);
+                
+                if (!isIdle) {
+                    container.querySelectorAll('.puzzle-piece').forEach(el => {
+                        el.addEventListener('click', () => onPieceClick(parseInt(el.dataset.index, 10)));
+                    });
                 }
             }
-            
+
             function onPieceClick(clickedIndex) {
                 if (state.isPaused) return;
 
@@ -1503,11 +1518,6 @@
                     boardState[p.currentIndex] = p.originalIndex;
                 });
                 renderBoard(imageUrl, boardState);
-                
-                // Add click listeners back after re-render
-                elements.puzzleContainer.querySelectorAll('.puzzle-piece').forEach(el => {
-                    el.addEventListener('click', () => onPieceClick(parseInt(el.dataset.index, 10)));
-                });
             }
 
             function getRowCol(index) {
@@ -2130,11 +2140,6 @@
                 });
                 renderBoard(imageUrl, boardState);
                 
-                 elements.puzzleContainer.querySelectorAll('.puzzle-piece').forEach(el => {
-                    el.addEventListener('click', () => onPieceClick(parseInt(el.dataset.index, 10)));
-                });
-
-
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
                 updateTrackText();
@@ -2228,7 +2233,7 @@
                         emptyIndex = move;
                     }
                     
-                    renderBoard(urls[i], shuffledBoard);
+                    renderBoard(urls[i], shuffledBoard, true);
 
                     const solution = solvePuzzle(shuffledBoard);
                     if (!solution || !state.isIdle) continue;
@@ -2236,7 +2241,7 @@
                     for (const move of solution) {
                         if (!state.isIdle) break;
                         shuffledBoard = move;
-                        renderBoard(urls[i], shuffledBoard);
+                        renderBoard(urls[i], shuffledBoard, true);
                         await delay(150);
                     }
                     
@@ -2326,9 +2331,6 @@
                            boardState[p.currentIndex] = p.originalIndex;
                         });
                         renderBoard(img.src, boardState);
-                         elements.puzzleContainer.querySelectorAll('.puzzle-piece').forEach(el => {
-                            el.addEventListener('click', () => onPieceClick(parseInt(el.dataset.index, 10)));
-                        });
 
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
