@@ -167,15 +167,6 @@
             z-index: 1; /* Establish stacking context */
         }
         
-        .puzzle-container::after { /* Background layer for piece gaps */
-            content: '';
-            position: absolute;
-            inset: 2px;
-            background-color: var(--background);
-            z-index: -1;
-            border-radius: 10px;
-        }
-        
         .puzzle-container.intro-animation-active {
             perspective: 1000px;
         }
@@ -190,7 +181,7 @@
             content: '';
             position: absolute;
             inset: -5px; /* Increased spread for better visibility */
-            z-index: -2; /* Position behind background gap layer */
+            z-index: -1; /* Position directly behind puzzle pieces */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -832,7 +823,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.78</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.79</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
