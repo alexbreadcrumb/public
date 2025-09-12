@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-T">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
     <!-- PWA & Icon Metadata -->
@@ -235,12 +235,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 8%; /* Size of the transparent hole */
-            height: 8%;
-            background: transparent;
+            width: 35%;
+            height: 35%;
+            background-image: url('apple-touch-icon.png');
+            background-size: cover;
+            background-position: center;
             border-radius: 50%;
-            box-shadow: 0 0 0 clamp(15px, 6vw, 35px) #111; /* Creates a black ring around the transparent center */
-            box-sizing: border-box;
         }
         
         .puzzle-container.intro-animation-active {
@@ -911,7 +911,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.86</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.88</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1745,6 +1745,13 @@
                 localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
                 renderHighScores();
             }
+            
+            function hideOverlay() {
+                const existingOverlay = elements.puzzleContainer.querySelector('.overlay');
+                if (existingOverlay) {
+                    existingOverlay.remove();
+                }
+            }
 
             function showOverlay(htmlContent, suggestions = []) {
                 hideOverlay();
@@ -1768,11 +1775,6 @@
                     overlay.appendChild(suggestionsContainer);
                 }
                 elements.puzzleContainer.appendChild(overlay);
-            }
-
-            function hideOverlay() {
-                const overlay = elements.puzzleContainer.querySelector('.overlay');
-                if (overlay) overlay.remove();
             }
             
             async function fetchRandomArtworks(count) {
