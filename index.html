@@ -167,6 +167,15 @@
             z-index: 1; /* Establish stacking context */
         }
         
+        .puzzle-container::after { /* Background layer for piece gaps */
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background-color: var(--background);
+            z-index: -1;
+            border-radius: 10px;
+        }
+        
         .puzzle-container.intro-animation-active {
             perspective: 1000px;
         }
@@ -181,7 +190,7 @@
             content: '';
             position: absolute;
             inset: -5px; /* Increased spread for better visibility */
-            z-index: -1; /* Position behind puzzle */
+            z-index: -2; /* Position behind background gap layer */
             background: linear-gradient(45deg,
                 var(--gradient-color-1),
                 var(--gradient-color-2),
@@ -286,7 +295,7 @@
         
         .overlay h2 {
             font-size: 1.8rem;
-            margin: 0 0 1rem 0;
+            margin: 0 0 0.5rem 0;
         }
 
         .overlay p {
@@ -823,7 +832,7 @@
     </div>
     
     <h1>Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.77</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.78</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -893,8 +902,9 @@
                     winMoves: "Movimientos: {moves}",
                     paused: "Pausado",
                     startMessage: "Haz clic en 'Nuevo Juego' para empezar",
-                    searchingMusic: "Buscando música...",
-                    searchingMusicFor: "Buscando música de {searchTerm}...",
+                    loadingNewGame: "Cargando partida nueva...",
+                    randomArtist: "-artista aleatorio-",
+                    searchingForArtist: "-buscando a: {searchTerm}-",
                     didYouMean: "Quisiste decir:",
                     imageError: "Error al cargar la imagen. Por favor, intenta de nuevo.",
                     noMusicFoundFor: "No se encontró música para \"{searchTerm}\"",
@@ -939,8 +949,9 @@
                     winMoves: "Moves: {moves}",
                     paused: "Paused",
                     startMessage: "Click 'New Game' to start",
-                    searchingMusic: "Searching for music...",
-                    searchingMusicFor: "Searching for music by {searchTerm}...",
+                    loadingNewGame: "Loading new game...",
+                    randomArtist: "-random artist-",
+                    searchingForArtist: "-searching for: {searchTerm}-",
                     didYouMean: "Did you mean:",
                     imageError: "Error loading image. Please try again.",
                     noMusicFoundFor: "No music found for \"{searchTerm}\"",
@@ -985,8 +996,9 @@
                     winMoves: "Movimentos: {moves}",
                     paused: "Pausado",
                     startMessage: "Clique em 'Novo Jogo' para começar",
-                    searchingMusic: "Procurando música...",
-                    searchingMusicFor: "Procurando música de {searchTerm}...",
+                    loadingNewGame: "Carregando novo jogo...",
+                    randomArtist: "-artista aleatório-",
+                    searchingForArtist: "-procurando por: {searchTerm}-",
                     didYouMean: "Você quis dizer:",
                     imageError: "Erro ao carregar a imagem. Por favor, tente novamente.",
                     noMusicFoundFor: "Nenhuma música encontrada para \"{searchTerm}\"",
@@ -1031,8 +1043,9 @@
                     winMoves: "Mouvements : {moves}",
                     paused: "En pause",
                     startMessage: "Cliquez sur 'Nouveau Jeu' pour commencer",
-                    searchingMusic: "Recherche de musique...",
-                    searchingMusicFor: "Recherche de musique de {searchTerm}...",
+                    loadingNewGame: "Chargement d'une nouvelle partie...",
+                    randomArtist: "-artiste aléatoire-",
+                    searchingForArtist: "-recherche de : {searchTerm}-",
                     didYouMean: "Vouliez-vous dire :",
                     imageError: "Erreur de chargement de l'image. Veuillez réessayer.",
                     noMusicFoundFor: "Aucune musique trouvée pour \"{searchTerm}\"",
@@ -1196,6 +1209,26 @@
                 }
             }
             // --- End Genre Selector ---
+
+            // --- Album History ---
+            function getAlbumHistory() {
+                try {
+                    const history = localStorage.getItem('puzzletunesAlbumHistory');
+                    return history ? JSON.parse(history) : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function addAlbumToHistory(albumId) {
+                let history = getAlbumHistory();
+                history = [albumId, ...history.filter(id => id !== albumId)];
+                if (history.length > 5) {
+                    history = history.slice(0, 5);
+                }
+                localStorage.setItem('puzzletunesAlbumHistory', JSON.stringify(history));
+            }
+            // --- End Album History ---
 
             async function fetchWithProxyFallback(url) {
                 let lastError = null;
@@ -1694,14 +1727,17 @@
                         }, {});
 
                         let albumArray = Object.values(albums);
-
-                        albumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
                         
-                        if (albumArray.length === 0) return null;
+                        const history = getAlbumHistory();
+                        const uniqueAlbumArray = albumArray.filter(album => !history.includes(album.collectionId));
+                        const effectiveAlbumArray = uniqueAlbumArray.length > 0 ? uniqueAlbumArray : albumArray;
 
-                        // More aggressive selection of recent music
-                        const selectionSize = Math.min(25, Math.ceil(albumArray.length * 0.2));
-                        const newestAlbums = albumArray.slice(0, selectionSize);
+                        effectiveAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                        
+                        if (effectiveAlbumArray.length === 0) return null;
+
+                        const selectionSize = Math.min(25, Math.ceil(effectiveAlbumArray.length * 0.2));
+                        const newestAlbums = effectiveAlbumArray.slice(0, selectionSize);
 
                         return newestAlbums[Math.floor(Math.random() * newestAlbums.length)];
                     } catch (error) {
@@ -1757,10 +1793,12 @@
                 const searchTerm = elements.artistSearch.value.trim();
                 const isArtistSearch = searchTerm.length > 0;
                 
-                const overlayMessage = isArtistSearch 
-                    ? getTranslatedString('searchingMusicFor', { searchTerm }) 
-                    : getTranslatedString('searchingMusic');
-                showOverlay(overlayMessage);
+                const title = getTranslatedString('loadingNewGame');
+                const subtitle = isArtistSearch
+                    ? getTranslatedString('searchingForArtist', { searchTerm })
+                    : getTranslatedString('randomArtist');
+                const overlayHTML = `<h2>${title}</h2><p style="font-size: 1rem; color: var(--on-surface-secondary);">${subtitle}</p>`;
+                showOverlay(overlayHTML);
 
                 let album = await findAlbumWithMusic(searchTerm, isArtistSearch);
                 
@@ -1905,6 +1943,8 @@
                 state.isMuted = true;
                 state.gameInProgress = true;
                 
+                addAlbumToHistory(state.currentAlbum.collectionId);
+
                 let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let emptyPosition = SIZE * SIZE - 1;
                 let lastMove = -1;
