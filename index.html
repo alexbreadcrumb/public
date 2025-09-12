@@ -110,11 +110,13 @@
             display: flex;
             justify-content: center;
             flex-wrap: nowrap;
+            height: 1.5em; /* Reserve space for the title */
         }
         
         #game-title span {
             position: relative;
             display: inline-block;
+            will-change: transform, opacity, left, top;
         }
 
         .top-bar {
@@ -920,7 +922,7 @@
     </div>
     
     <h1 id="game-title">Puzzletunes</h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.90</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.91</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1971,7 +1973,10 @@
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('idle-spinner', 'animated-gradient-border');
                 
-                if (elements.gameTitle) elements.gameTitle.innerHTML = 'Puzzletunes';
+                if (elements.gameTitle) {
+                    elements.gameTitle.innerHTML = 'Puzzletunes';
+                    elements.gameTitle.removeAttribute('data-animated');
+                }
 
                 updateUI();
             }
@@ -2112,7 +2117,6 @@
                 const letters = text.split('');
                 titleEl.innerHTML = '';
 
-                // 1. Create spans and append in correct order to calculate final positions
                 const spans = letters.map(letter => {
                     const span = document.createElement('span');
                     span.textContent = letter;
@@ -2121,30 +2125,26 @@
                     return span;
                 });
 
-                // 2. Calculate final positions
                 const finalPositions = spans.map(span => {
                     const rect = span.getBoundingClientRect();
                     return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
                 });
                 
-                const puzzleRect = elements.puzzleContainer.getBoundingClientRect();
-                const startX = puzzleRect.left + puzzleRect.width / 2;
-                const startY = puzzleRect.top + puzzleRect.height / 2;
-
-                // 3. Set initial state for animation
+                const screenCenterX = window.innerWidth / 2;
+                const screenCenterY = window.innerHeight / 2;
+                
                 spans.forEach((span, i) => {
-                    span.style.position = 'absolute';
-                    span.style.left = `${startX - finalPositions[i].width / 2}px`;
-                    span.style.top = `${startY - finalPositions[i].height / 2}px`;
+                    span.style.position = 'fixed';
+                    span.style.left = `${screenCenterX - finalPositions[i].width / 2}px`;
+                    span.style.top = `${screenCenterY - finalPositions[i].height / 2}px`;
                     span.style.opacity = '0';
-                    span.style.transform = 'scale(0)';
-                    span.style.transition = `all 1s cubic-bezier(0.19, 1, 0.22, 1)`;
+                    span.style.transform = 'scale(0.5)';
+                    span.style.transition = `all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)`;
                 });
 
-                // 4. First animation phase (fly out to shuffled positions)
                 const shuffledIndices = [...Array(spans.length).keys()].sort(() => Math.random() - 0.5);
                 
-                await new Promise(resolve => setTimeout(resolve, 50)); 
+                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 20)));
 
                 spans.forEach((span, i) => {
                     const shuffledIndex = shuffledIndices[i];
@@ -2156,25 +2156,22 @@
                     span.style.transitionDelay = `${i * 0.05}s`;
                 });
 
-                await new Promise(resolve => setTimeout(resolve, 1000 + (letters.length * 50)));
+                await new Promise(resolve => setTimeout(resolve, 800 + (letters.length * 50)));
 
-                // 5. Second animation phase (re-order)
                 spans.forEach((span, i) => {
                     const finalPos = finalPositions[i];
                     span.style.left = `${finalPos.x}px`;
-                    span.style.top = `${finalPos.y}px`;
-                    span.style.transitionDelay = `0s`;
+                    span.style.transitionDelay = '0s';
+                    span.style.transitionDuration = '0.6s';
                 });
 
-                await new Promise(resolve => setTimeout(resolve, 1100));
+                await new Promise(resolve => setTimeout(resolve, 700));
 
-                // 6. Cleanup styles and restore normal flow
-                titleEl.style.position = 'relative'; 
                 spans.forEach(span => {
                     span.style.position = 'relative';
-                    span.style.left = 'auto';
-                    span.style.top = 'auto';
-                    span.style.transform = 'none';
+                    span.style.left = '';
+                    span.style.top = '';
+                    span.style.transform = '';
                     span.style.transition = '';
                 });
             }
