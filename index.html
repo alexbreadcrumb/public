@@ -931,11 +931,10 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.93</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.94</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const SIZE = 3;
@@ -1030,7 +1029,7 @@
                     startButton: "Empezar",
                     newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!",
                     shareResultTitle: "Compartir Resultado",
-                    shareMessage: "¡Desafíame! Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes.",
+                    shareMessage: "¡Te desafío! Resolví el puzzle de {album} en {time} con {moves} movimientos en Puzzletunes.",
                     shareImageGenerating: "Generando imagen...",
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
@@ -1079,7 +1078,7 @@
                     startButton: "Start",
                     newTopRecord: "You've achieved a new personal best at rank {rank}!",
                     shareResultTitle: "Share Result",
-                    shareMessage: "Challenge me! I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes.",
+                    shareMessage: "I challenge you! I solved the {album} puzzle in {time} with {moves} moves on Puzzletunes.",
                     shareImageGenerating: "Generating image...",
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
@@ -1128,7 +1127,7 @@
                     startButton: "Começar",
                     newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!",
                     shareResultTitle: "Compartilhar Resultado",
-                    shareMessage: "Desafie-me! Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes.",
+                    shareMessage: "Eu te desafio! Resolvi o quebra-cabeça de {album} em {time} com {moves} movimentos no Puzzletunes.",
                     shareImageGenerating: "Gerando imagem...",
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
@@ -1177,7 +1176,7 @@
                     startButton: "Commencer",
                     newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !",
                     shareResultTitle: "Partager le Résultat",
-                    shareMessage: "Défiez-moi ! J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes.",
+                    shareMessage: "Je vous défie ! J'ai résolu le puzzle de {album} en {time} avec {moves} mouvements sur Puzzletunes.",
                     shareImageGenerating: "Génération de l'image...",
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
@@ -1584,26 +1583,44 @@
             }
             
             async function generateShareImage() {
-                const container = elements.puzzleContainer;
-                try {
-                    const canvas = await html2canvas(container, {
-                        useCORS: true, // Important for external images
-                        backgroundColor: null, // Transparent background
-                        allowTaint: true
-                    });
-                    return new Promise(resolve => {
+                if (!state.currentAlbum) return null;
+
+                return new Promise(resolve => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+
+                    const imageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+
+                        const text = "Puzzletunes";
+                        const fontSize = Math.max(24, Math.floor(img.width * 0.05));
+                        ctx.font = `bold ${fontSize}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+                        ctx.lineWidth = 4;
+                        const padding = Math.floor(img.width * 0.03);
+                        
+                        ctx.strokeText(text, padding, padding + fontSize);
+                        ctx.fillText(text, padding, padding + fontSize);
+
                         canvas.toBlob(blob => {
                             if (blob) {
-                                resolve(new File([blob], 'puzzletunes-result.png', { type: 'image/png' }));
+                                resolve(new File([blob], 'puzzletunes-challenge.png', { type: 'image/png' }));
                             } else {
                                 resolve(null);
                             }
                         }, 'image/png');
-                    });
-                } catch (error) {
-                    console.error('Error generating share image:', error);
-                    return null;
-                }
+                    };
+
+                    img.onerror = () => resolve(null);
+                    img.src = imageUrl;
+                });
             }
 
 
@@ -1668,14 +1685,16 @@
                             const shareData = {
                                 title: 'Puzzletunes Challenge',
                                 text: getTranslatedString('shareMessage', {
-                                    artist: state.currentAlbum.artistName,
                                     album: state.currentAlbum.collectionName,
                                     time: formatTime(state.time),
                                     moves: state.moves
                                 }),
                                 url: challengeUrl,
-                                files: imageFile ? [imageFile] : []
                             };
+                            
+                            if (imageFile) {
+                                shareData.files = [imageFile];
+                            }
                             
                             try {
                                 await navigator.share(shareData);
@@ -2073,7 +2092,7 @@
                 
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
-                // Load image through proxy for html2canvas
+                // Load image through proxy for color thief
                 const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                 img.src = proxiedImageUrl;
                 
@@ -2159,7 +2178,7 @@
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 
-                const imageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+                const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                 const pieces = [];
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
@@ -2235,7 +2254,7 @@
                     isEmpty: i === SIZE * SIZE - 1
                 }));
                 
-                const imageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+                const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
                 const boardState = Array(SIZE*SIZE).fill(0);
                 state.pieces.forEach(p => {
                     boardState[p.currentIndex] = p.originalIndex;
@@ -2507,7 +2526,11 @@
 
             elements.newGameBtn.addEventListener('click', () => {
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
-                clearGameState();
+                
+                // This now correctly clears the previous game state before starting a new one.
+                if (state.gameInProgress) {
+                    clearGameState();
+                }
                 cleanupPreviousGameResources();
                 prepareNewGame();
             });
