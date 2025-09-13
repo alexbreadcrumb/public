@@ -22,6 +22,7 @@
             --on-surface: #E0E0E0;
             --on-surface-secondary: #B3B3B3;
             --danger-color: #ff4d4d;
+            --danger-hover-color: #ff6666;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --gradient-color-1: #1DB954;
@@ -150,7 +151,10 @@
 
         #player-name-display {
             font-size: 0.8rem;
-            color: var(--on-surface-secondary);
+            color: var(--on-surface);
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
             font-weight: 500;
         }
 
@@ -696,12 +700,23 @@
             background-color: var(--primary-hover);
         }
         
+        .danger-zone {
+            margin-top: 2rem;
+            padding: 1rem;
+            border: 2px dashed var(--danger-color);
+            border-radius: 8px;
+            background-color: rgba(255, 77, 77, 0.05);
+        }
+        .danger-zone h3 {
+            margin-top: 0;
+            color: var(--danger-color);
+        }
         #reset-game-btn {
             background-color: var(--danger-color);
             width: 100%;
         }
         #reset-game-btn:hover {
-            background-color: #ff6666;
+            background-color: var(--danger-hover-color);
         }
         #reset-game-warning {
             font-size: 0.8rem;
@@ -1047,10 +1062,12 @@
 
                     <h3 data-translate-key="favoriteGenresTitle"></h3>
                     <div id="genre-selector" class="genre-selector"></div>
-
-                    <h3 data-translate-key="resetGameTitle"></h3>
-                    <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
-                    <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
+                    
+                    <div class="danger-zone">
+                        <h3 data-translate-key="resetGameTitle"></h3>
+                        <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
+                        <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
+                    </div>
                 </div>
                 <div id="info-panel" class="modal-panel">
                     <p data-translate-key="aboutGameText"></p>
@@ -1060,7 +1077,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.96</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.97</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1165,7 +1182,7 @@
                     startButton: "Empezar",
                     newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!",
                     shareResultTitle: "Compartir Resultado",
-                    shareMessage: "¡Te desafío! Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes.",
+                    shareMessage: "¡{playerName} te desafía! a resolver el puzzle de {artist} - {album} en menos de {time} y {moves} movimientos en Puzzletunes.",
                     shareImageGenerating: "Generando imagen...",
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
@@ -1224,7 +1241,7 @@
                     startButton: "Start",
                     newTopRecord: "You've achieved a new personal best at rank {rank}!",
                     shareResultTitle: "Share Result",
-                    shareMessage: "I challenge you! I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes.",
+                    shareMessage: "{playerName} challenges you! to solve the {artist} - {album} puzzle in less than {time} and {moves} moves on Puzzletunes.",
                     shareImageGenerating: "Generating image...",
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
@@ -1283,7 +1300,7 @@
                     startButton: "Começar",
                     newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!",
                     shareResultTitle: "Compartilhar Resultado",
-                    shareMessage: "Eu te desafio! Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes.",
+                    shareMessage: "{playerName} te desafia! a resolver o quebra-cabeça de {artist} - {album} em menos de {time} e {moves} movimentos no Puzzletunes.",
                     shareImageGenerating: "Gerando imagem...",
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
@@ -1342,7 +1359,7 @@
                     startButton: "Commencer",
                     newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !",
                     shareResultTitle: "Partager le Résultat",
-                    shareMessage: "Je vous défie ! J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes.",
+                    shareMessage: "{playerName} vous défie ! de résoudre le puzzle de {artist} - {album} en moins de {time} et {moves} mouvements sur Puzzletunes.",
                     shareImageGenerating: "Génération de l'image...",
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
@@ -1538,8 +1555,8 @@
             function addAlbumToHistory(albumId) {
                 let history = getAlbumHistory();
                 history = [albumId, ...history.filter(id => id !== albumId)];
-                if (history.length > 5) {
-                    history = history.slice(0, 5);
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
                 }
                 localStorage.setItem('puzzletunesAlbumHistory', JSON.stringify(history));
             }
@@ -1801,16 +1818,35 @@
                         canvas.height = img.height;
                         ctx.drawImage(img, 0, 0);
 
-                        const text = "Puzzletunes";
-                        const fontSize = Math.max(24, Math.floor(img.width * 0.05));
-                        ctx.font = `bold ${fontSize}px ${getComputedStyle(document.body).fontFamily}`;
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-                        ctx.lineWidth = 4;
-                        const padding = Math.floor(img.width * 0.03);
+                        // Overlay for text readability
+                        const overlayHeight = canvas.height * 0.4;
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                        ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight);
+
+                        const baseFontSize = Math.max(24, Math.floor(img.width * 0.05));
+                        ctx.font = `bold ${baseFontSize}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.textBaseline = 'bottom';
                         
-                        ctx.strokeText(text, padding, padding + fontSize);
-                        ctx.fillText(text, padding, padding + fontSize);
+                        const padding = Math.floor(img.width * 0.05);
+                        let currentY = canvas.height - padding;
+                        
+                        const movesText = `${getTranslatedString('winMoves', {moves: ''})} ${state.moves}`;
+                        ctx.font = `500 ${baseFontSize * 0.8}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText(movesText, padding, currentY);
+                        
+                        const timeText = `${getTranslatedString('winTime', {time: ''})} ${formatTime(state.time)}`;
+                        ctx.fillText(timeText, canvas.width - ctx.measureText(timeText).width - padding, currentY);
+                        currentY -= baseFontSize;
+
+                        const playerName = getPlayerName() || 'Anonymous';
+                        const playerText = `${getTranslatedString('playerNameLabel')} ${playerName}`;
+                        ctx.font = `500 ${baseFontSize * 0.9}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText(playerText, padding, currentY);
+                        currentY -= baseFontSize * 1.2;
+
+                        ctx.font = `bold ${baseFontSize * 1.1}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText("Puzzletunes", padding, currentY);
 
                         canvas.toBlob(blob => {
                             if (blob) {
@@ -1891,6 +1927,7 @@
                             const shareData = {
                                 title: 'Puzzletunes Challenge',
                                 text: getTranslatedString('shareMessage', {
+                                    playerName: getPlayerName() || 'A friend',
                                     artist: state.currentAlbum.artistName,
                                     album: state.currentAlbum.collectionName,
                                     time: formatTime(state.time),
@@ -2204,7 +2241,7 @@
 
                 uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
                 
-                const selectionSize = Math.min(25, Math.ceil(uniqueAlbumArray.length * 0.2));
+                const selectionSize = Math.min(50, Math.ceil(uniqueAlbumArray.length * 0.6));
                 const newestAlbums = uniqueAlbumArray.slice(0, selectionSize);
                 
                 return {
