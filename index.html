@@ -21,6 +21,7 @@
             --on-background: #FFFFFF;
             --on-surface: #E0E0E0;
             --on-surface-secondary: #B3B3B3;
+            --danger-color: #ff4d4d;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --gradient-color-1: #1DB954;
@@ -43,7 +44,7 @@
             align-items: center;
             margin: 0;
             padding: 1rem;
-            padding-top: 5rem; /* Space for fixed top-bar */
+            padding-top: 6rem; /* Adjusted for taller top-bar */
             box-sizing: border-box;
             min-height: 100%;
             position: relative;
@@ -134,10 +135,23 @@
             box-shadow: 0 4px 12px var(--shadow-color);
         }
         
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        
         .stats-group, .controls-group {
             display: flex;
             align-items: center;
             gap: 1rem;
+        }
+
+        #player-name-display {
+            font-size: 0.8rem;
+            color: var(--on-surface-secondary);
+            font-weight: 500;
         }
 
         .main-container {
@@ -645,11 +659,57 @@
         }
 
         #options-panel h3 {
-            margin-top: 0;
+            margin-top: 1rem;
             margin-bottom: 0.75rem;
             color: var(--on-surface);
         }
+        #options-panel h3:first-child {
+            margin-top: 0;
+        }
         
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group input {
+            background-color: #333;
+            border: 1px solid var(--on-surface-secondary);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            color: var(--on-background);
+        }
+        .form-group button {
+             background-color: var(--primary);
+            color: var(--background);
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .form-group button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        #reset-game-btn {
+            background-color: var(--danger-color);
+            width: 100%;
+        }
+        #reset-game-btn:hover {
+            background-color: #ff6666;
+        }
+        #reset-game-warning {
+            font-size: 0.8rem;
+            color: var(--on-surface-secondary);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
         .genre-selector {
             display: flex;
             flex-wrap: wrap;
@@ -818,6 +878,54 @@
                 0 0 50px var(--gradient-color-2);
         }
 
+        #player-name-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        #player-name-prompt h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        #player-name-form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 300px;
+            gap: 1rem;
+        }
+        #player-name-input {
+            background-color: var(--surface);
+            border: 1px solid var(--on-surface-secondary);
+            border-radius: 50px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            color: var(--on-background);
+            text-align: center;
+        }
+        #save-player-name-btn {
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
 
         footer {
             width: 100%;
@@ -846,16 +954,27 @@
         <div id="collage-10" class="collage-layer"></div>
     </div>
 
+    <div id="player-name-prompt" style="display: none;">
+        <h2 data-translate-key="playerNamePromptTitle"></h2>
+        <form id="player-name-form">
+            <input type="text" id="player-name-input" required minlength="1">
+            <button type="submit" id="save-player-name-btn" data-translate-key="saveNameButton"></button>
+        </form>
+    </div>
+
     <div class="top-bar">
-        <div class="stats-group">
-            <div class="stat-item">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg>
-                <span id="timer">00:00</span>
+        <div class="stats-container">
+            <div class="stats-group">
+                <div class="stat-item">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"></path></svg>
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="stat-item">
+                    <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
+                    <span id="moves">0</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <svg viewBox="0 0 24 24"><path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6.9-4.9.9-1-2.8-2.8-.9 1c-.4-.3-1-.5-1.5-.5H14v2h.6c.2 0 .5.1.7.3l.9.9v.6h2v-1.5c0-.5-.2-1.1-.5-1.5zm-13 0c-.3.4-.5.9-.5 1.5v1.5h2V6.4l.9-.9c.2-.2.4-.3.7-.3H8V4H7.5c-.5 0-1.1.2-1.6.5l-.9-1-2.8 2.8.9 1zm12.6 9.4-.9 1c.4.3 1 .5 1.5.5H18v2h-.5c-.2 0-.5-.1-.7-.3l-.9-.9v-.6h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.3-.4.5-.9.5-1.5v-1.5h-2v.6zm-11.8 0h-2v1.5c0 .5.2 1.1.5 1.5l.9 1 2.8 2.8.9-1c.4-.3 1-.5 1.5-.5H10v-2h-.6c-.2 0-.5.1-.7-.3l-.9-.9v-.6h-2v.6z"></path></svg>
-                <span id="moves">0</span>
-            </div>
+            <div id="player-name-display"></div>
         </div>
         <div class="controls-group">
             <button id="pause-btn" class="control-button" data-translate-title="pauseResumeTitle">
@@ -920,8 +1039,18 @@
                     </div>
                 </div>
                 <div id="options-panel" class="modal-panel">
-                    <h3 data-translate-key="favoriteGenresTitle">Géneros favoritos</h3>
+                    <h3 data-translate-key="editPlayerNameTitle"></h3>
+                    <div class="form-group">
+                        <input type="text" id="edit-player-name-input">
+                        <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
+                    </div>
+
+                    <h3 data-translate-key="favoriteGenresTitle"></h3>
                     <div id="genre-selector" class="genre-selector"></div>
+
+                    <h3 data-translate-key="resetGameTitle"></h3>
+                    <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
+                    <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
                 </div>
                 <div id="info-panel" class="modal-panel">
                     <p data-translate-key="aboutGameText"></p>
@@ -931,7 +1060,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.95</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.96</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -962,6 +1091,13 @@
                 highScoresList: document.getElementById('high-scores-list'),
                 idleCollage: document.getElementById('idle-background-collage'),
                 gameTitle: document.getElementById('game-title'),
+                playerNamePrompt: document.getElementById('player-name-prompt'),
+                playerNameForm: document.getElementById('player-name-form'),
+                playerNameInput: document.getElementById('player-name-input'),
+                playerNameDisplay: document.getElementById('player-name-display'),
+                editPlayerNameInput: document.getElementById('edit-player-name-input'),
+                saveEditedPlayerNameBtn: document.getElementById('save-edited-player-name-btn'),
+                resetGameBtn: document.getElementById('reset-game-btn'),
             };
 
             let state = {
@@ -1034,7 +1170,17 @@
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleCallToAction: "Toca 'Nuevo Juego' para iniciar una partida..."
+                    idleCallToAction: "Toca 'Nuevo Juego' para iniciar una partida...",
+                    playerNamePromptTitle: "Elige tu nombre de jugador",
+                    playerNamePlaceholder: "Tu nombre aquí...",
+                    saveNameButton: "Guardar",
+                    playerNameLabel: "Jugador:",
+                    editPlayerNameTitle: "Cambiar nombre de jugador",
+                    resetGameTitle: "Resetear Puzzletunes",
+                    resetGameButton: "Resetear Juego",
+                    resetGameWarning: "Esto eliminará todos tus récords, tiempo total y nombre de jugador. Esta acción no se puede deshacer.",
+                    resetConfirm: "¿Estás seguro de que quieres resetear el juego?",
+                    emptyNameError: "El nombre no puede estar vacío."
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1083,7 +1229,17 @@
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleCallToAction: "Tap 'New Game' to start a match..."
+                    idleCallToAction: "Tap 'New Game' to start a match...",
+                    playerNamePromptTitle: "Choose your player name",
+                    playerNamePlaceholder: "Your name here...",
+                    saveNameButton: "Save",
+                    playerNameLabel: "Player:",
+                    editPlayerNameTitle: "Change player name",
+                    resetGameTitle: "Reset Puzzletunes",
+                    resetGameButton: "Reset Game",
+                    resetGameWarning: "This will delete all your records, total playtime, and player name. This action cannot be undone.",
+                    resetConfirm: "Are you sure you want to reset the game?",
+                    emptyNameError: "Name cannot be empty."
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1132,7 +1288,17 @@
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleCallToAction: "Toque em 'Novo Jogo' para iniciar uma partida..."
+                    idleCallToAction: "Toque em 'Novo Jogo' para iniciar uma partida...",
+                    playerNamePromptTitle: "Escolha seu nome de jogador",
+                    playerNamePlaceholder: "Seu nome aqui...",
+                    saveNameButton: "Salvar",
+                    playerNameLabel: "Jogador:",
+                    editPlayerNameTitle: "Mudar nome de jogador",
+                    resetGameTitle: "Resetar Puzzletunes",
+                    resetGameButton: "Resetar Jogo",
+                    resetGameWarning: "Isso excluirá todos os seus recordes, tempo total e nome de jogador. Esta ação não pode ser desfeita.",
+                    resetConfirm: "Você tem certeza que quer resetar o jogo?",
+                    emptyNameError: "O nome não pode ficar em branco."
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1181,11 +1347,44 @@
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
-                    idleCallToAction: "Appuyez sur 'Nouveau Jeu' pour commencer une partie..."
+                    idleCallToAction: "Appuyez sur 'Nouveau Jeu' pour commencer une partie...",
+                    playerNamePromptTitle: "Choisissez votre nom de joueur",
+                    playerNamePlaceholder: "Votre nom ici...",
+                    saveNameButton: "Enregistrer",
+                    playerNameLabel: "Joueur :",
+                    editPlayerNameTitle: "Changer le nom du joueur",
+                    resetGameTitle: "Réinitialiser Puzzletunes",
+                    resetGameButton: "Réinitialiser le jeu",
+                    resetGameWarning: "Ceci supprimera tous vos records, votre temps de jeu total et votre nom de joueur. Cette action est irréversible.",
+                    resetConfirm: "Êtes-vous sûr de vouloir réinitialiser le jeu ?",
+                    emptyNameError: "Le nom ne peut pas être vide."
                 }
             };
 
             let currentStrings = { ...translations.es };
+
+            function getPlayerName() {
+                return localStorage.getItem('puzzletunesPlayerName');
+            }
+            
+            function savePlayerName(name) {
+                const trimmedName = name.trim();
+                if (trimmedName) {
+                    localStorage.setItem('puzzletunesPlayerName', trimmedName);
+                    return true;
+                }
+                return false;
+            }
+
+            function updatePlayerNameDisplay() {
+                const name = getPlayerName();
+                if (name) {
+                    elements.playerNameDisplay.textContent = `${getTranslatedString('playerNameLabel')} ${name}`;
+                    elements.editPlayerNameInput.value = name;
+                } else {
+                     elements.playerNameDisplay.textContent = '';
+                }
+            }
 
             function getTranslatedString(key, replacements = {}) {
                 let str = currentStrings[key] || translations.es[key] || key;
@@ -1230,6 +1429,10 @@
                 if (idleCtaEl) {
                     idleCtaEl.textContent = getTranslatedString('idleCallToAction');
                 }
+                
+                elements.playerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
+                elements.editPlayerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
+                updatePlayerNameDisplay();
             }
             
             function setLanguage(lang) {
@@ -1623,6 +1826,9 @@
                 });
             }
 
+            function isMobileDevice() {
+                return /Mobi|Android/i.test(navigator.userAgent);
+            }
 
             function handleWin() {
                 stopTimer();
@@ -1662,7 +1868,7 @@
 
                     overlay.appendChild(messageContainer);
 
-                    const canShareFiles = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([], '')] });
+                    const canShareFiles = isMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([], '')] });
 
                     if (canShareFiles) {
                         const shareBtn = document.createElement('button');
@@ -2438,6 +2644,13 @@
             }
             
             async function initGame() {
+                if (!getPlayerName()) {
+                    elements.playerNamePrompt.style.display = 'flex';
+                    return; 
+                }
+                
+                updatePlayerNameDisplay();
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const challengeId = urlParams.get('challenge');
 
@@ -2513,6 +2726,19 @@
                 elements.modalTitle.dataset.translateKey = titleKey;
             }
 
+            function resetGameFactory() {
+                 if (confirm(getTranslatedString('resetConfirm'))) {
+                    localStorage.removeItem('puzzletunesGameState');
+                    localStorage.removeItem('puzzletunesHighScores');
+                    localStorage.removeItem('puzzletunesTotalPlaytime');
+                    localStorage.removeItem('puzzletunesPlayerName');
+                    localStorage.removeItem('puzzletunesGenres');
+                    localStorage.removeItem('puzzletunesLanguage');
+                    localStorage.removeItem('puzzletunesAlbumHistory');
+                    window.location.reload();
+                }
+            }
+
             elements.artistSearch.addEventListener('dblclick', () => {
                 elements.artistSearch.value = '';
             });
@@ -2524,11 +2750,33 @@
                 const langBtn = e.target.closest('.lang-btn');
                 if(langBtn) setLanguage(langBtn.dataset.lang);
             });
+            
+            elements.playerNameForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = elements.playerNameInput.value;
+                if (savePlayerName(name)) {
+                    elements.playerNamePrompt.style.display = 'none';
+                    initGame();
+                } else {
+                    alert(getTranslatedString('emptyNameError'));
+                }
+            });
+            
+            elements.saveEditedPlayerNameBtn.addEventListener('click', () => {
+                const name = elements.editPlayerNameInput.value;
+                if (savePlayerName(name)) {
+                    updatePlayerNameDisplay();
+                    alert('OK!'); // Simple feedback
+                } else {
+                    alert(getTranslatedString('emptyNameError'));
+                }
+            });
+
+            elements.resetGameBtn.addEventListener('click', resetGameFactory);
 
             elements.newGameBtn.addEventListener('click', () => {
                 if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
                 
-                // This now correctly clears the previous game state before starting a new one.
                 if (state.gameInProgress) {
                     clearGameState();
                 }
@@ -2575,6 +2823,7 @@
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
                 renderGenreSelector();
+                updatePlayerNameDisplay(); // Ensure name is current in edit field
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
