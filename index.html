@@ -353,6 +353,7 @@
             font-weight: 600;
             z-index: 10;
             padding: 1rem;
+            border-radius: 12px; /* Ensure overlay fits inside container */
         }
         
         .overlay h2 {
@@ -361,7 +362,15 @@
         }
 
         .overlay p {
-            margin: 0.5rem 0;
+            margin: 0.25rem 0;
+        }
+        
+        .win-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .suggestions-container {
@@ -396,13 +405,16 @@
             font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.2s ease;
-            margin-top: 1.5rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
         .share-btn:hover {
             background-color: var(--primary-hover);
+        }
+        .share-btn:disabled {
+            background-color: #555;
+            cursor: wait;
         }
         .share-btn svg {
             width: 20px;
@@ -919,10 +931,11 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.92</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.93</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const SIZE = 3;
@@ -1017,7 +1030,8 @@
                     startButton: "Empezar",
                     newTopRecord: "¡Has logrado un nuevo récord personal en la posición {rank}!",
                     shareResultTitle: "Compartir Resultado",
-                    shareMessage: "¡Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes!",
+                    shareMessage: "¡Desafíame! Resolví el puzzle de {artist} - {album} en {time} con {moves} movimientos en Puzzletunes.",
+                    shareImageGenerating: "Generando imagen...",
                     favoriteGenresTitle: "Géneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clásica", electronic: "Electrónica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
@@ -1065,7 +1079,8 @@
                     startButton: "Start",
                     newTopRecord: "You've achieved a new personal best at rank {rank}!",
                     shareResultTitle: "Share Result",
-                    shareMessage: "I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes!",
+                    shareMessage: "Challenge me! I solved the {artist} - {album} puzzle in {time} with {moves} moves on Puzzletunes.",
+                    shareImageGenerating: "Generating image...",
                     favoriteGenresTitle: "Favorite Genres",
                     genreAll: "All",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classical", electronic: "Electronic", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latin", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
@@ -1113,7 +1128,8 @@
                     startButton: "Começar",
                     newTopRecord: "Você alcançou um novo recorde pessoal na posição {rank}!",
                     shareResultTitle: "Compartilhar Resultado",
-                    shareMessage: "Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes!",
+                    shareMessage: "Desafie-me! Resolvi o quebra-cabeça de {artist} - {album} em {time} com {moves} movimentos no Puzzletunes.",
+                    shareImageGenerating: "Gerando imagem...",
                     favoriteGenresTitle: "Gêneros favoritos",
                     genreAll: "Todos",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Clássica", electronic: "Eletrônica", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Metal", soul: "Soul", funk: "Funk", latin: "Latina", country: "Country", blues: "Blues", alternative: "Alternativa", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
@@ -1161,7 +1177,8 @@
                     startButton: "Commencer",
                     newTopRecord: "Vous avez réalisé un nouveau record personnel à la position {rank} !",
                     shareResultTitle: "Partager le Résultat",
-                    shareMessage: "J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes !",
+                    shareMessage: "Défiez-moi ! J'ai résolu le puzzle de {artist} - {album} en {time} avec {moves} mouvements sur Puzzletunes.",
+                    shareImageGenerating: "Génération de l'image...",
                     favoriteGenresTitle: "Genres favoris",
                     genreAll: "Tous",
                     rock: "Rock", pop: "Pop", jazz: "Jazz", classical: "Classique", electronic: "Électronique", hiphop: "Hip-Hop", reggae: "Reggae", metal: "Métal", soul: "Soul", funk: "Funk", latin: "Latine", country: "Country", blues: "Blues", alternative: "Alternative", reggaeton: "Reggaeton", cumbia: "Cumbia", numetal: "Nu Metal", kpop: "K-Pop", jpop: "J-Pop", folk: "Folk", indie: "Indie",
@@ -1565,10 +1582,38 @@
                 fire(150, { spread: 120, startVelocity: 45, decay: 0.91, scalar: 2 });
                 fire(250, { spread: 360, startVelocity: 30, decay: 0.92, scalar: 1.5 });
             }
+            
+            async function generateShareImage() {
+                const container = elements.puzzleContainer;
+                try {
+                    const canvas = await html2canvas(container, {
+                        useCORS: true, // Important for external images
+                        backgroundColor: null, // Transparent background
+                        allowTaint: true
+                    });
+                    return new Promise(resolve => {
+                        canvas.toBlob(blob => {
+                            if (blob) {
+                                resolve(new File([blob], 'puzzletunes-result.png', { type: 'image/png' }));
+                            } else {
+                                resolve(null);
+                            }
+                        }, 'image/png');
+                    });
+                } catch (error) {
+                    console.error('Error generating share image:', error);
+                    return null;
+                }
+            }
+
 
             function handleWin() {
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
+                
+                // Show final solved state
+                const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
+                renderBoard(state.currentAlbum.artworkUrl, boardState);
                 
                 triggerWinCelebration();
 
@@ -1586,41 +1631,59 @@
                     const winTitle = document.createElement('h2');
                     winTitle.textContent = getTranslatedString('winMessage');
                     
+                    const statsContainer = document.createElement('div');
+                    statsContainer.className = 'win-stats';
                     const timeStat = document.createElement('p');
                     timeStat.textContent = getTranslatedString('winTime', { time: formatTime(state.time) });
-                    
                     const movesStat = document.createElement('p');
                     movesStat.textContent = getTranslatedString('winMoves', { moves: state.moves });
-                    
+                    statsContainer.appendChild(timeStat);
+                    statsContainer.appendChild(movesStat);
+
                     messageContainer.appendChild(winTitle);
-                    messageContainer.appendChild(timeStat);
-                    messageContainer.appendChild(movesStat);
+                    messageContainer.appendChild(statsContainer);
 
                     overlay.appendChild(messageContainer);
 
-                    if (navigator.share) {
+                    const canShareFiles = navigator.share && navigator.canShare && navigator.canShare({ files: [new File([], '')] });
+
+                    if (canShareFiles) {
                         const shareBtn = document.createElement('button');
                         shareBtn.className = 'share-btn';
-                        shareBtn.title = getTranslatedString('shareResultTitle');
                         shareBtn.innerHTML = `
                             <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>
                             <span>${getTranslatedString('shareResultTitle')}</span>
                         `;
+                        
                         shareBtn.onclick = async () => {
+                            const originalText = shareBtn.querySelector('span').textContent;
+                            shareBtn.disabled = true;
+                            shareBtn.querySelector('span').textContent = getTranslatedString('shareImageGenerating');
+                            
+                            const imageFile = await generateShareImage();
+                            
+                            const baseUrl = window.location.origin + window.location.pathname;
+                            const challengeUrl = `${baseUrl}?challenge=${state.currentAlbum.collectionId}`;
+
                             const shareData = {
-                                title: 'Puzzletunes',
+                                title: 'Puzzletunes Challenge',
                                 text: getTranslatedString('shareMessage', {
                                     artist: state.currentAlbum.artistName,
                                     album: state.currentAlbum.collectionName,
                                     time: formatTime(state.time),
                                     moves: state.moves
                                 }),
-                                url: window.location.href
+                                url: challengeUrl,
+                                files: imageFile ? [imageFile] : []
                             };
+                            
                             try {
                                 await navigator.share(shareData);
                             } catch(err) {
                                 console.error("Share failed:", err);
+                            } finally {
+                                shareBtn.disabled = false;
+                                shareBtn.querySelector('span').textContent = originalText;
                             }
                         };
                         messageContainer.appendChild(shareBtn);
@@ -1637,7 +1700,7 @@
                 elements.audioPlayer.pause();
                 updateUI();
             }
-            
+
             function showTopRecordNotification(rank) {
                 const overlay = document.createElement('div');
                 overlay.className = 'personal-best-overlay';
@@ -1924,19 +1987,53 @@
                 };
             }
             
-            async function prepareNewGame(isFromSuggestion = false) {
-                const searchTerm = elements.artistSearch.value.trim();
-                const isArtistSearch = searchTerm.length > 0;
+             async function findAlbumById(id) {
+                try {
+                    const url = `https://itunes.apple.com/lookup?id=${id}&entity=song`;
+                    const response = await fetchWithProxyFallback(url);
+                    const data = await response.json();
+                    if (data.resultCount > 0) {
+                        const song = data.results.find(item => item.wrapperType === 'track');
+                        if (song && song.previewUrl) {
+                            return {
+                                artistName: song.artistName,
+                                collectionName: song.collectionName,
+                                artworkUrl: song.artworkUrl100,
+                                previewUrl: song.previewUrl,
+                                trackViewUrl: song.trackViewUrl,
+                                trackName: song.trackName,
+                                releaseDate: song.releaseDate,
+                                collectionId: song.collectionId,
+                            };
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error finding album by ID:', error);
+                    return null;
+                }
+            }
+            
+            async function prepareNewGame(isFromSuggestion = false, challengeId = null) {
+                let searchTerm = elements.artistSearch.value.trim();
+                let isArtistSearch = searchTerm.length > 0;
                 let retryCount = 0;
                 const MAX_RETRIES = 3;
 
                 const attemptSearch = async () => {
                     const title = getTranslatedString('loadingNewGame');
-                    const subtitle = isArtistSearch
+                    let subtitle = isArtistSearch
                         ? getTranslatedString('searchingForArtist', { searchTerm })
                         : getTranslatedString('randomArtist');
+                    if (challengeId) subtitle = ''; // No subtitle for challenges
+
                     const overlayHTML = `<h2>${title}</h2><p style="font-size: 1rem; color: var(--on-surface-secondary);">${subtitle}</p>`;
                     showOverlay(overlayHTML);
+                    
+                    if (challengeId) {
+                        const album = await findAlbumById(challengeId);
+                        return { finalAlbum: album };
+                    }
 
                     const { album, suggestions, retry } = await findAlbumWithMusic(searchTerm, isArtistSearch);
 
@@ -1973,15 +2070,20 @@
                 if (error || !finalAlbum) return;
 
                 state.currentAlbum = finalAlbum;
+                
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
-                img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                // Load image through proxy for html2canvas
+                const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+                img.src = proxiedImageUrl;
+                
                 img.onload = () => {
                     try {
                         const palette = colorThief.getPalette(img, 5);
                         palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                     } catch(e) { console.error("ColorThief failed:", e); }
-                    updateBackground(img.src);
+                    
+                    updateBackground(proxiedImageUrl);
                     hideOverlay();
                     playIntroAnimation();
                 };
@@ -2057,7 +2159,7 @@
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 
-                const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                const imageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                 const pieces = [];
 
                 for (let i = 0; i < SIZE * SIZE; i++) {
@@ -2133,7 +2235,7 @@
                     isEmpty: i === SIZE * SIZE - 1
                 }));
                 
-                const imageUrl = state.currentAlbum.artworkUrl;
+                const imageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                 const boardState = Array(SIZE*SIZE).fill(0);
                 state.pieces.forEach(p => {
                     boardState[p.currentIndex] = p.originalIndex;
@@ -2315,22 +2417,35 @@
                 ghostSolverLoop(allArtworks);
             }
             
-            function initGame() {
+            async function initGame() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const challengeId = urlParams.get('challenge');
+
+                if (challengeId) {
+                    // Clear the URL to avoid re-triggering the challenge on reload
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    cleanupPreviousGameResources();
+                    await prepareNewGame(false, challengeId);
+                    return;
+                }
+                
                 if (loadGameState() && state.gameInProgress) {
+                    const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
-                    img.src = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                    img.src = proxiedImageUrl;
+
                     img.onload = () => {
                         try {
                             const palette = colorThief.getPalette(img, 5);
                             palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         } catch(e) { console.error("ColorThief failed on load:", e); }
-                        updateBackground(img.src);
+                        updateBackground(proxiedImageUrl);
                         const boardState = Array(SIZE*SIZE).fill(0);
                         state.pieces.forEach(p => {
                            boardState[p.currentIndex] = p.originalIndex;
                         });
-                        renderBoard(img.src, boardState);
+                        renderBoard(proxiedImageUrl, boardState);
 
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
@@ -2345,7 +2460,6 @@
                      img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
                 } else {
                     cleanupPreviousGameResources();
-                    // showOverlay(getTranslatedString('startMessage')); // Replaced by idle animation
                     setupIdleAnimation();
                 }
             }
