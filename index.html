@@ -485,6 +485,7 @@
             display: flex;
             gap: 1rem;
             align-items: center;
+            justify-content: center;
             width: 100%;
         }
         
@@ -499,8 +500,7 @@
             min-width: 0;
         }
         
-        #new-game-btn {
-            background-color: var(--primary);
+        #new-game-btn, #restart-game-btn {
             color: var(--background);
             font-weight: 700;
             border-radius: 50px;
@@ -508,12 +508,30 @@
             font-size: 1rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s ease, box-shadow 0.4s ease;
+            transition: all 0.2s ease;
             white-space: nowrap;
+        }
+
+        #new-game-btn {
+            background-color: var(--primary);
+            transition-property: background-color, box-shadow;
         }
         #new-game-btn:hover {
             background-color: var(--primary-hover);
         }
+
+        #restart-game-btn {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: calc(0.75rem - 2px) calc(1.5rem - 2px);
+        }
+        #restart-game-btn:hover {
+            background-color: rgba(29, 185, 84, 0.1);
+            border-color: var(--primary-hover);
+            color: var(--primary-hover);
+        }
+
 
         @keyframes neon-pulse {
             0%, 100% {
@@ -533,18 +551,21 @@
                 flex-direction: column;
                 gap: 0.75rem;
             }
-            #artist-search, #new-game-btn {
+            #artist-search, #new-game-btn, #restart-game-btn {
                 width: 100%;
                 box-sizing: border-box;
             }
         }
         
         @media (max-height: 740px) {
-             #artist-search, #new-game-btn {
+             #artist-search, #new-game-btn, #restart-game-btn {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
             }
+             #restart-game-btn {
+                padding: calc(0.5rem - 2px) calc(1.5rem - 2px);
+             }
         }
 
         .modal-overlay {
@@ -1077,7 +1098,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.97</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.98</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1821,14 +1842,26 @@
                         // Overlay for text readability
                         const overlayHeight = canvas.height * 0.4;
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                        ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight);
+                        ctx.fillRect(0, 0, canvas.width, canvas.height); // Darken the whole image a bit
+                        
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                        ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight); // Darker bar at the bottom
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                        ctx.fillRect(0, 0, canvas.width, overlayHeight * 0.5); // Darker bar at the top
+
 
                         const baseFontSize = Math.max(24, Math.floor(img.width * 0.05));
-                        ctx.font = `bold ${baseFontSize}px ${getComputedStyle(document.body).fontFamily}`;
                         ctx.fillStyle = '#FFFFFF';
-                        ctx.textBaseline = 'bottom';
+                        ctx.textBaseline = 'top';
                         
                         const padding = Math.floor(img.width * 0.05);
+
+                        // Top line: Puzzletunes
+                        ctx.font = `bold ${baseFontSize * 1.1}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText("Puzzletunes", padding, padding);
+
+                        // Bottom lines
+                        ctx.textBaseline = 'bottom';
                         let currentY = canvas.height - padding;
                         
                         const movesText = `${getTranslatedString('winMoves', {moves: ''})} ${state.moves}`;
@@ -1843,10 +1876,6 @@
                         const playerText = `${getTranslatedString('playerNameLabel')} ${playerName}`;
                         ctx.font = `500 ${baseFontSize * 0.9}px ${getComputedStyle(document.body).fontFamily}`;
                         ctx.fillText(playerText, padding, currentY);
-                        currentY -= baseFontSize * 1.2;
-
-                        ctx.font = `bold ${baseFontSize * 1.1}px ${getComputedStyle(document.body).fontFamily}`;
-                        ctx.fillText("Puzzletunes", padding, currentY);
 
                         canvas.toBlob(blob => {
                             if (blob) {
@@ -1880,6 +1909,8 @@
                 state.gameInProgress = false;
 
                 const newRank = saveScore();
+                
+                updateGameControlsVisibility();
 
                 setTimeout(() => {
                     const overlay = document.createElement('div');
@@ -2241,7 +2272,7 @@
 
                 uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
                 
-                const selectionSize = Math.min(50, Math.ceil(uniqueAlbumArray.length * 0.6));
+                const selectionSize = Math.max(20, Math.ceil(uniqueAlbumArray.length * 0.2));
                 const newestAlbums = uniqueAlbumArray.slice(0, selectionSize);
                 
                 return {
@@ -2371,7 +2402,7 @@
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
-                elements.newGameBtn.classList.remove('pulsating-neon');
+                
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
                 
@@ -2379,7 +2410,8 @@
                     elements.gameTitle.innerHTML = '';
                     elements.gameTitle.removeAttribute('data-animated');
                 }
-
+                
+                updateGameControlsVisibility();
                 updateUI();
             }
 
@@ -2512,6 +2544,7 @@
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
                 elements.audioPlayer.muted = true;
+                updateGameControlsVisibility();
                 updateUI();
                 saveGameState();
             }
@@ -2666,7 +2699,8 @@
                 callToAction.id = 'idle-cta';
                 callToAction.textContent = getTranslatedString('idleCallToAction');
                 elements.puzzleContainer.appendChild(callToAction);
-                elements.newGameBtn.classList.add('pulsating-neon');
+                
+                updateGameControlsVisibility();
 
                 const backgroundLayers = elements.idleCollage.children;
                 allArtworks.forEach((url, i) => {
@@ -2732,6 +2766,7 @@
                     cleanupPreviousGameResources();
                     setupIdleAnimation();
                 }
+                 updateGameControlsVisibility();
             }
             
             function startTimer() {
