@@ -480,7 +480,6 @@
             fill: var(--on-surface-secondary);
         }
 
-
         .new-game-controls {
             display: flex;
             gap: 1rem;
@@ -499,8 +498,12 @@
             min-width: 0;
         }
         
-        #new-game-btn {
-            background-color: var(--primary);
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #new-game-btn, #restart-game-btn {
             color: var(--background);
             font-weight: 700;
             border-radius: 50px;
@@ -508,11 +511,25 @@
             font-size: 1rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s ease, box-shadow 0.4s ease;
+            transition: background-color 0.2s ease, box-shadow 0.4s ease, color 0.2s ease;
             white-space: nowrap;
+        }
+
+        #new-game-btn {
+             background-color: var(--primary);
         }
         #new-game-btn:hover {
             background-color: var(--primary-hover);
+        }
+
+        #restart-game-btn {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        #restart-game-btn:hover {
+            background-color: var(--primary);
+            color: var(--background);
         }
 
         @keyframes neon-pulse {
@@ -533,14 +550,17 @@
                 flex-direction: column;
                 gap: 0.75rem;
             }
-            #artist-search, #new-game-btn {
+            #artist-search, .action-buttons {
                 width: 100%;
                 box-sizing: border-box;
+            }
+            .action-buttons {
+                justify-content: center;
             }
         }
         
         @media (max-height: 740px) {
-             #artist-search, #new-game-btn {
+             #artist-search, #new-game-btn, #restart-game-btn {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -1022,7 +1042,10 @@
 
         <div class="new-game-controls">
             <input type="text" id="artist-search" data-translate-placeholder="artistSearchPlaceholder">
-            <button id="new-game-btn" data-translate-key="newGame">Nuevo Juego</button>
+            <div class="action-buttons">
+                <button id="new-game-btn" data-translate-key="newGame">Nuevo Juego</button>
+                <button id="restart-game-btn" data-translate-key="restartGame" style="display: none;"></button>
+            </div>
         </div>
     </div>
     
@@ -1077,7 +1100,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.97</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.98</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1089,6 +1112,7 @@
                 timer: document.getElementById('timer'),
                 moves: document.getElementById('moves'),
                 newGameBtn: document.getElementById('new-game-btn'),
+                restartGameBtn: document.getElementById('restart-game-btn'),
                 pauseBtn: document.getElementById('pause-btn'),
                 audioBtn: document.getElementById('audio-btn'),
                 menuBtn: document.getElementById('menu-btn'),
@@ -1197,7 +1221,9 @@
                     resetGameButton: "Resetear Juego",
                     resetGameWarning: "Esto eliminará todos tus récords, tiempo total y nombre de jugador. Esta acción no se puede deshacer.",
                     resetConfirm: "¿Estás seguro de que quieres resetear el juego?",
-                    emptyNameError: "El nombre no puede estar vacío."
+                    emptyNameError: "El nombre no puede estar vacío.",
+                    restartGame: "Reiniciar",
+                    restartConfirm: "¿Seguro que quieres reiniciar este puzzle?"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1256,7 +1282,9 @@
                     resetGameButton: "Reset Game",
                     resetGameWarning: "This will delete all your records, total playtime, and player name. This action cannot be undone.",
                     resetConfirm: "Are you sure you want to reset the game?",
-                    emptyNameError: "Name cannot be empty."
+                    emptyNameError: "Name cannot be empty.",
+                    restartGame: "Restart",
+                    restartConfirm: "Are you sure you want to restart this puzzle?"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1315,7 +1343,9 @@
                     resetGameButton: "Resetar Jogo",
                     resetGameWarning: "Isso excluirá todos os seus recordes, tempo total e nome de jogador. Esta ação não pode ser desfeita.",
                     resetConfirm: "Você tem certeza que quer resetar o jogo?",
-                    emptyNameError: "O nome não pode ficar em branco."
+                    emptyNameError: "O nome não pode ficar em branco.",
+                    restartGame: "Reiniciar",
+                    restartConfirm: "Tem certeza de que quer reiniciar este puzzle?"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1374,7 +1404,9 @@
                     resetGameButton: "Réinitialiser le jeu",
                     resetGameWarning: "Ceci supprimera tous vos records, votre temps de jeu total et votre nom de joueur. Cette action est irréversible.",
                     resetConfirm: "Êtes-vous sûr de vouloir réinitialiser le jeu ?",
-                    emptyNameError: "Le nom ne peut pas être vide."
+                    emptyNameError: "Le nom ne peut pas être vide.",
+                    restartGame: "Redémarrer",
+                    restartConfirm: "Êtes-vous sûr de vouloir redémarrer ce puzzle ?"
                 }
             };
 
@@ -1821,32 +1853,36 @@
                         // Overlay for text readability
                         const overlayHeight = canvas.height * 0.4;
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                        ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight);
+                        ctx.fillRect(0, 0, canvas.width, canvas.height); // Darken entire image for better text contrast
 
                         const baseFontSize = Math.max(24, Math.floor(img.width * 0.05));
                         ctx.font = `bold ${baseFontSize}px ${getComputedStyle(document.body).fontFamily}`;
                         ctx.fillStyle = '#FFFFFF';
-                        ctx.textBaseline = 'bottom';
+                        ctx.textBaseline = 'top';
                         
                         const padding = Math.floor(img.width * 0.05);
-                        let currentY = canvas.height - padding;
+                        let currentY = padding;
                         
-                        const movesText = `${getTranslatedString('winMoves', {moves: ''})} ${state.moves}`;
-                        ctx.font = `500 ${baseFontSize * 0.8}px ${getComputedStyle(document.body).fontFamily}`;
-                        ctx.fillText(movesText, padding, currentY);
-                        
-                        const timeText = `${getTranslatedString('winTime', {time: ''})} ${formatTime(state.time)}`;
-                        ctx.fillText(timeText, canvas.width - ctx.measureText(timeText).width - padding, currentY);
-                        currentY -= baseFontSize;
+                        // Puzzletunes Title
+                        ctx.font = `bold ${baseFontSize * 1.1}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText("Puzzletunes", padding, currentY);
+                        currentY += baseFontSize * 1.5;
 
+                        // Player Name
                         const playerName = getPlayerName() || 'Anonymous';
                         const playerText = `${getTranslatedString('playerNameLabel')} ${playerName}`;
                         ctx.font = `500 ${baseFontSize * 0.9}px ${getComputedStyle(document.body).fontFamily}`;
                         ctx.fillText(playerText, padding, currentY);
-                        currentY -= baseFontSize * 1.2;
+                        currentY += baseFontSize * 1.2;
+                        
+                        // Time and Moves
+                        const timeText = `${getTranslatedString('winTime', {time: ''})} ${formatTime(state.time)}`;
+                         ctx.font = `500 ${baseFontSize * 0.8}px ${getComputedStyle(document.body).fontFamily}`;
+                        ctx.fillText(timeText, padding, currentY);
+                        currentY += baseFontSize;
 
-                        ctx.font = `bold ${baseFontSize * 1.1}px ${getComputedStyle(document.body).fontFamily}`;
-                        ctx.fillText("Puzzletunes", padding, currentY);
+                        const movesText = `${getTranslatedString('winMoves', {moves: ''})} ${state.moves}`;
+                        ctx.fillText(movesText, padding, currentY);
 
                         canvas.toBlob(blob => {
                             if (blob) {
@@ -1869,6 +1905,7 @@
             function handleWin() {
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
+                elements.restartGameBtn.style.display = 'none';
                 
                 // Show final solved state
                 const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
@@ -2372,6 +2409,7 @@
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
                 elements.newGameBtn.classList.remove('pulsating-neon');
+                elements.restartGameBtn.style.display = 'none';
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
                 
@@ -2507,6 +2545,8 @@
                 
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
+                elements.newGameBtn.classList.remove('pulsating-neon');
+                elements.restartGameBtn.style.display = 'inline-block';
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
@@ -2719,6 +2759,8 @@
 
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
+                        elements.restartGameBtn.style.display = 'inline-block';
+                        elements.newGameBtn.classList.remove('pulsating-neon');
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
                         updateTrackText();
@@ -2776,6 +2818,46 @@
                 }
             }
 
+            function restartCurrentGame() {
+                if (!state.gameInProgress || !state.currentAlbum) return;
+                if (confirm(getTranslatedString('restartConfirm'))) {
+                    stopTimer();
+                    state.time = 0;
+                    state.moves = 0;
+                    state.isPaused = false;
+                    
+                    let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
+                    let emptyPosition = SIZE * SIZE - 1;
+                    
+                    const shuffleMoves = 150; 
+                    for (let i = 0; i < shuffleMoves; i++) {
+                        const validMoves = getValidMoves(emptyPosition);
+                        const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+                        [board[emptyPosition], board[move]] = [board[move], board[emptyPosition]];
+                        emptyPosition = move;
+                    }
+                    
+                    state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => ({
+                        el: null,
+                        originalIndex: i,
+                        currentIndex: board.indexOf(i),
+                        isEmpty: i === SIZE * SIZE - 1
+                    }));
+                    
+                    const imageUrl = state.currentAlbum.artworkUrl.replace('100x100', '600x600');
+                    const boardState = Array(SIZE*SIZE).fill(0);
+                    state.pieces.forEach(p => {
+                        boardState[p.currentIndex] = p.originalIndex;
+                    });
+                    renderBoard(imageUrl, boardState);
+                    
+                    startTimer();
+                    hideOverlay();
+                    updateUI();
+                    saveGameState();
+                }
+            }
+
             elements.artistSearch.addEventListener('dblclick', () => {
                 elements.artistSearch.value = '';
             });
@@ -2820,6 +2902,8 @@
                 cleanupPreviousGameResources();
                 prepareNewGame();
             });
+
+            elements.restartGameBtn.addEventListener('click', restartCurrentGame);
 
             elements.pauseBtn.addEventListener('click', () => {
                 if (!state.gameInProgress) return;
