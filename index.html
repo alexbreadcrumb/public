@@ -52,7 +52,6 @@
             box-sizing: border-box;
             min-height: 100vh;
             position: relative;
-            /* overflow: hidden; Removed to ensure footer is always visible */
         }
 
         body::before {
@@ -1010,7 +1009,6 @@
             font-size: 0.8rem;
             color: var(--on-surface-secondary);
             flex-shrink: 0;
-            /* margin-top: auto; This is handled by flex-grow on main-container */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1181,7 +1179,7 @@
     
     <footer>
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.03</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.04</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2507,11 +2505,6 @@
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
                 
-                if (elements.gameTitle) {
-                    elements.gameTitle.innerHTML = '';
-                    elements.gameTitle.removeAttribute('data-animated');
-                }
-
                 updateUI();
             }
 
@@ -2854,6 +2847,7 @@
                     // Clear the URL to avoid re-triggering the challenge on reload
                     window.history.replaceState({}, document.title, window.location.pathname);
                     cleanupPreviousGameResources();
+                    renderStaticTitle();
                     await prepareNewGame(false, challengeId);
                     return;
                 }
@@ -3008,6 +3002,7 @@
                         clearGameState();
                     }
                     cleanupPreviousGameResources();
+                    renderStaticTitle(); // Ensure title persists
                     prepareNewGame();
                 }
 
