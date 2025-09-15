@@ -50,7 +50,7 @@
             padding: 1rem;
             padding-top: 6rem; /* Adjusted for taller top-bar */
             box-sizing: border-box;
-            min-height: 100vh; /* Changed to vh for robustness */
+            min-height: 100vh;
             position: relative;
             overflow: hidden; /* Prevent scrollbars from idle collage */
         }
@@ -103,26 +103,6 @@
         #collage-8 { top: 65%; left: 45%; width: 40%; height: 40%; transform: translateX(-50%); opacity: 0.85; }
         #collage-9 { top: 10%; left: 50%; width: 35%; height: 35%;}
         #collage-10 { bottom: 5%; right: 50%; width: 30%; height: 30%; }
-
-
-        h1 {
-            margin: auto 0 0.5rem;
-            text-align: center;
-            font-weight: 700;
-            color: var(--primary);
-            width: 100%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            flex-wrap: nowrap;
-            height: 1.5em; /* Reserve space for the title */
-        }
-        
-        #game-title span {
-            position: relative;
-            display: inline-block;
-            will-change: transform, opacity, left, top;
-        }
 
         .top-bar {
             position: fixed;
@@ -544,7 +524,7 @@
             }
         }
 
-        #new-game-btn.pulsating-neon {
+        .pulsating-neon {
             animation: neon-pulse 2s ease-in-out infinite;
         }
         
@@ -582,7 +562,7 @@
                 width: 100%;
                 max-width: 350px;
             }
-             .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop {
+            .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -1030,6 +1010,25 @@
             color: var(--on-surface-secondary);
             flex-shrink: 0;
             margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        #footer-title {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.2rem;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-wrap: nowrap;
+            height: 1.5em; /* Reserve space */
+        }
+        #footer-title span {
+            position: relative;
+            display: inline-block;
+            will-change: transform, opacity, left, top;
         }
 
     </style>
@@ -1179,8 +1178,10 @@
         </div>
     </div>
     
-    <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.01</footer>
+    <footer>
+        <div id="footer-title"></div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.01</div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1208,7 +1209,7 @@
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
                 idleCollage: document.getElementById('idle-background-collage'),
-                gameTitle: document.getElementById('game-title'),
+                gameTitle: document.getElementById('footer-title'),
                 playerNamePrompt: document.getElementById('player-name-prompt'),
                 playerNameForm: document.getElementById('player-name-form'),
                 playerNameInput: document.getElementById('player-name-input'),
@@ -1538,7 +1539,7 @@
                 
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
-                    if (currentStrings[key] && el.id !== 'game-title') { 
+                    if (currentStrings[key]) { 
                         el.innerHTML = currentStrings[key];
                     }
                 });
@@ -1550,13 +1551,6 @@
                     const key = el.dataset.translateTitle;
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
-                
-                const footer = document.querySelector('footer');
-                if (footer) {
-                    const version = footer.textContent.match(/- v[\d\.]+/)[0];
-                    footer.innerHTML = `<span data-translate-key="gameBy">${getTranslatedString('gameBy')}</span> Ale Fernández PY-2025 ${version}`;
-                }
-
 
                 const idleCtaEl = document.getElementById('idle-cta');
                 if (idleCtaEl) {
@@ -2503,8 +2497,10 @@
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
                 
                 // Responsive button handling
-                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
-                newGameBtn.classList.remove('pulsating-neon');
+                const newGameBtnDesktop = elements.newGameBtnDesktop;
+                const newGameBtnMobile = elements.newGameBtnMobile;
+                newGameBtnDesktop.classList.remove('pulsating-neon');
+                newGameBtnMobile.classList.remove('pulsating-neon');
                 elements.restartGameBtnDesktop.style.display = 'none';
                 elements.restartGameBtnMobile.style.display = 'none';
                 
@@ -2645,8 +2641,10 @@
                 elements.puzzleContainer.classList.add('animated-gradient-border');
                 
                 // Responsive button handling
-                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
-                newGameBtn.classList.remove('pulsating-neon');
+                const newGameBtnDesktop = elements.newGameBtnDesktop;
+                const newGameBtnMobile = elements.newGameBtnMobile;
+                newGameBtnDesktop.classList.remove('pulsating-neon');
+                newGameBtnMobile.classList.remove('pulsating-neon');
                 elements.restartGameBtnDesktop.style.display = 'inline-block';
                 elements.restartGameBtnMobile.style.display = 'inline-block';
 
@@ -2672,6 +2670,12 @@
                     const rect = span.getBoundingClientRect();
                     return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
                 });
+                
+                // If rects are 0, means footer is off-screen, don't animate.
+                if (finalPositions.some(p => p.width === 0)) {
+                    titleEl.innerHTML = text; // Just set text
+                    return;
+                }
 
                 titleEl.style.height = `${finalPositions[0].height}px`;
 
@@ -2810,8 +2814,10 @@
                 callToAction.textContent = getTranslatedString('idleCallToAction');
                 elements.puzzleContainer.appendChild(callToAction);
                 
-                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
-                newGameBtn.classList.add('pulsating-neon');
+                const newGameBtnDesktop = elements.newGameBtnDesktop;
+                const newGameBtnMobile = elements.newGameBtnMobile;
+                newGameBtnDesktop.classList.add('pulsating-neon');
+                newGameBtnMobile.classList.add('pulsating-neon');
 
                 const backgroundLayers = elements.idleCollage.children;
                 allArtworks.forEach((url, i) => {
@@ -2866,8 +2872,10 @@
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         
                         // Responsive button handling
-                        const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
-                        newGameBtn.classList.remove('pulsating-neon');
+                        const newGameBtnDesktop = elements.newGameBtnDesktop;
+                        const newGameBtnMobile = elements.newGameBtnMobile;
+                        newGameBtnDesktop.classList.remove('pulsating-neon');
+                        newGameBtnMobile.classList.remove('pulsating-neon');
                         elements.restartGameBtnDesktop.style.display = 'inline-block';
                         elements.restartGameBtnMobile.style.display = 'inline-block';
 
@@ -2979,7 +2987,6 @@
             }
 
             function setupResponsiveControls() {
-                const isMobile = isMobileDevice();
                 const desktopSearch = elements.artistSearchDesktop;
                 const mobileSearch = elements.artistSearchMobile;
                 
