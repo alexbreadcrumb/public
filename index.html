@@ -1093,12 +1093,12 @@
         #footer-title {
             font-weight: 700;
             color: var(--primary);
-            font-size: 1.2rem;
+            font-size: 4.8rem;
             position: relative;
             display: flex;
             justify-content: center;
             flex-wrap: nowrap;
-            height: 1.5em; /* Reserve space */
+            height: 1.2em;
         }
         #footer-title span {
             position: relative;
@@ -1268,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.12</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.13</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1643,7 +1643,7 @@
                     noOnThisDayMusic: "Aucune musique trouvée sortie ce jour-là. Réessayez demain !",
                     randomButton: "Aléatoire",
                     randomModeButton: "Mode Aléatoire",
-                    artistModeButton: "Mode Artiste",
+                    artistModeButton: "Mode Artista",
                     idleCallToActionWithOnThisDay: "Appuyez sur 'Ce jour-là' ou 'Aléatoire' pour commencer une partie...",
                     idleCallToActionWithoutOnThisDay: "Appuyez sur 'Mode Aléatoire' pour commencer une partie..."
                 }
@@ -1721,6 +1721,10 @@
                 const onThisDayBtnDesktop = elements.onThisDayBtnDesktop;
                 const onThisDayBtnMobile = elements.onThisDayBtnMobile;
 
+                const showOnThisDay = isEnabled && !searchTerm && (state.isIdle || !state.gameInProgress);
+                onThisDayBtnDesktop.style.display = showOnThisDay ? 'inline-block' : 'none';
+                onThisDayBtnMobile.style.display = showOnThisDay ? 'inline-block' : 'none';
+
                 let newGameKey;
                 if (searchTerm) {
                     newGameKey = 'artistModeButton';
@@ -1738,11 +1742,16 @@
                     const ctaKey = isEnabled ? 'idleCallToActionWithOnThisDay' : 'idleCallToActionWithoutOnThisDay';
                     cta.textContent = getTranslatedString(ctaKey);
                 }
+                
+                newGameBtnDesktop.classList.remove('pulsating-neon');
+                newGameBtnMobile.classList.remove('pulsating-neon');
+                onThisDayBtnDesktop.classList.remove('pulsating-neon-secondary');
+                onThisDayBtnMobile.classList.remove('pulsating-neon-secondary');
 
                 if (state.isIdle) {
                     newGameBtnDesktop.classList.add('pulsating-neon');
                     newGameBtnMobile.classList.add('pulsating-neon');
-                    if (isEnabled) {
+                    if (showOnThisDay) {
                         onThisDayBtnDesktop.classList.add('pulsating-neon-secondary');
                         onThisDayBtnMobile.classList.add('pulsating-neon-secondary');
                     }
@@ -2767,12 +2776,7 @@
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
                 
                 // Responsive button handling
-                const newGameBtnDesktop = elements.newGameBtnDesktop;
-                const newGameBtnMobile = elements.newGameBtnMobile;
-                newGameBtnDesktop.classList.remove('pulsating-neon');
-                newGameBtnMobile.classList.remove('pulsating-neon');
-                elements.onThisDayBtnDesktop.classList.remove('pulsating-neon-secondary');
-                elements.onThisDayBtnMobile.classList.remove('pulsating-neon-secondary');
+                updateButtonAndTextLogic();
                 elements.restartGameBtnDesktop.style.display = 'none';
                 elements.restartGameBtnMobile.style.display = 'none';
                 
@@ -3281,8 +3285,8 @@
                     prepareNewGame(false, null, onThisDay);
                 }
 
-                desktopSearch.addEventListener('dblclick', () => desktopSearch.value = '');
-                mobileSearch.addEventListener('dblclick', () => mobileSearch.value = '');
+                desktopSearch.addEventListener('dblclick', () => { desktopSearch.value = ''; updateButtonAndTextLogic(); });
+                mobileSearch.addEventListener('dblclick', () => { mobileSearch.value = ''; updateButtonAndTextLogic(); });
 
                 desktopSearch.addEventListener('input', updateButtonAndTextLogic);
                 mobileSearch.addEventListener('input', updateButtonAndTextLogic);
