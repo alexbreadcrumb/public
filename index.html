@@ -18,6 +18,8 @@
             --surface: #1e1e1e;
             --primary: #1DB954;
             --primary-hover: #1ED760;
+            --secondary: #8a2be2; /* Purple for "On this day" */
+            --secondary-hover: #9932cc;
             --on-background: #FFFFFF;
             --on-surface: #E0E0E0;
             --on-surface-secondary: #B3B3B3;
@@ -486,7 +488,7 @@
             gap: 0.5rem;
         }
 
-        #new-game-btn-desktop, #new-game-btn-mobile, #restart-game-btn-desktop, #restart-game-btn-mobile {
+        #new-game-btn-desktop, #new-game-btn-mobile, #restart-game-btn-desktop, #restart-game-btn-mobile, #on-this-day-btn-desktop, #on-this-day-btn-mobile {
             color: var(--background);
             font-weight: 700;
             border-radius: 50px;
@@ -503,6 +505,14 @@
         }
         #new-game-btn-desktop:hover, #new-game-btn-mobile:hover {
             background-color: var(--primary-hover);
+        }
+        
+        #on-this-day-btn-desktop, #on-this-day-btn-mobile {
+            background-color: var(--secondary);
+            color: var(--on-background);
+        }
+        #on-this-day-btn-desktop:hover, #on-this-day-btn-mobile:hover {
+            background-color: var(--secondary-hover);
         }
 
         #restart-game-btn-desktop, #restart-game-btn-mobile {
@@ -562,7 +572,7 @@
                 width: 100%;
                 max-width: 350px;
             }
-            .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop {
+            .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop, .desktop-controls #on-this-day-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -570,8 +580,8 @@
         }
         
         @media (max-height: 740px) {
-             #artist-search-mobile, #new-game-btn-mobile, #restart-game-btn-mobile,
-             #artist-search-desktop, #new-game-btn-desktop, #restart-game-btn-desktop {
+             #artist-search-mobile, #new-game-btn-mobile, #restart-game-btn-mobile, #on-this-day-btn-mobile,
+             #artist-search-desktop, #new-game-btn-desktop, #restart-game-btn-desktop, #on-this-day-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -811,6 +821,60 @@
         }
         .genre-tag input:checked:hover + span {
              background-color: var(--primary-hover);
+        }
+
+        .setting-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: 1rem;
+        }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          transition: .4s;
+        }
+        input:checked + .slider {
+          background-color: var(--primary);
+        }
+        input:focus + .slider {
+          box-shadow: 0 0 1px var(--primary);
+        }
+        input:checked + .slider:before {
+          transform: translateX(26px);
+        }
+        .slider.round {
+          border-radius: 34px;
+        }
+        .slider.round:before {
+          border-radius: 50%;
         }
         
 
@@ -1074,6 +1138,7 @@
         <div class="new-game-controls desktop-controls">
             <input type="text" id="artist-search-desktop" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
+                <button id="on-this-day-btn-desktop" data-translate-key="onThisDayButton" style="display: none;"></button>
                 <button id="new-game-btn-desktop" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-desktop" data-translate-key="restartGame" style="display: none;"></button>
             </div>
@@ -1111,6 +1176,7 @@
         <div class="new-game-controls mobile-controls">
             <input type="text" id="artist-search-mobile" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
+                <button id="on-this-day-btn-mobile" data-translate-key="onThisDayButton" style="display: none;"></button>
                 <button id="new-game-btn-mobile" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-mobile" data-translate-key="restartGame" style="display: none;"></button>
             </div>
@@ -1148,6 +1214,7 @@
                     <div class="options-sub-tabs">
                          <button class="options-sub-tab-btn active" data-sub-tab="player">🦸‍♂️</button>
                          <button class="options-sub-tab-btn" data-sub-tab="genres">🎵</button>
+                         <button class="options-sub-tab-btn" data-sub-tab="on-this-day">🗓️</button>
                          <button class="options-sub-tab-btn" data-sub-tab="reset">🧩</button>
                     </div>
                     <div class="options-sub-panels">
@@ -1161,6 +1228,16 @@
                         <div id="genres-sub-panel" class="options-sub-panel">
                             <h3 data-translate-key="favoriteGenresTitle"></h3>
                             <div id="genre-selector" class="genre-selector"></div>
+                        </div>
+                        <div id="on-this-day-sub-panel" class="options-sub-panel">
+                            <h3 data-translate-key="onThisDayTitle"></h3>
+                            <div class="setting-switch">
+                                <span data-translate-key="onThisDayEnable"></span>
+                                <label class="switch">
+                                    <input type="checkbox" id="on-this-day-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
                         <div id="reset-sub-panel" class="options-sub-panel">
                              <div class="danger-zone">
@@ -1179,8 +1256,8 @@
     </div>
     
     <footer id="footer">
-        <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.05</div>
+        <div id="footer-title"></div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.06</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1225,9 +1302,11 @@
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
                 newGameBtnDesktop: document.getElementById('new-game-btn-desktop'),
                 restartGameBtnDesktop: document.getElementById('restart-game-btn-desktop'),
+                onThisDayBtnDesktop: document.getElementById('on-this-day-btn-desktop'),
                 artistSearchMobile: document.getElementById('artist-search-mobile'),
                 newGameBtnMobile: document.getElementById('new-game-btn-mobile'),
                 restartGameBtnMobile: document.getElementById('restart-game-btn-mobile'),
+                onThisDayBtnMobile: document.getElementById('on-this-day-btn-mobile'),
             };
 
             let state = {
@@ -1311,7 +1390,11 @@
                     resetConfirm: "¿Estás seguro de que quieres resetear el juego?",
                     emptyNameError: "El nombre no puede estar vacío.",
                     restartGame: "Reiniciar",
-                    restartConfirm: "¿Seguro que quieres reiniciar este puzzle?"
+                    restartConfirm: "¿Seguro que quieres reiniciar este puzzle?",
+                    onThisDayTitle: "Un día como hoy",
+                    onThisDayButton: "Un día como hoy...",
+                    onThisDayEnable: "Activar función 'Un día como hoy'",
+                    noOnThisDayMusic: "No se encontró música lanzada en un día como hoy. ¡Intenta mañana!"
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1371,7 +1454,11 @@
                     resetConfirm: "Are you sure you want to reset the game?",
                     emptyNameError: "Name cannot be empty.",
                     restartGame: "Restart",
-                    restartConfirm: "Are you sure you want to restart this puzzle?"
+                    restartConfirm: "Are you sure you want to restart this puzzle?",
+                    onThisDayTitle: "On This Day",
+                    onThisDayButton: "On This Day...",
+                    onThisDayEnable: "Enable 'On This Day' feature",
+                    noOnThisDayMusic: "No music found released on this day. Try again tomorrow!"
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1431,7 +1518,11 @@
                     resetConfirm: "Você tem certeza que quer resetar o jogo?",
                     emptyNameError: "O nome não pode ficar em branco.",
                     restartGame: "Reiniciar",
-                    restartConfirm: "Tem certeza de que quer reiniciar este puzzle?"
+                    restartConfirm: "Tem certeza de que quer reiniciar este puzzle?",
+                    onThisDayTitle: "Neste dia",
+                    onThisDayButton: "Neste dia...",
+                    onThisDayEnable: "Ativar recurso 'Neste dia'",
+                    noOnThisDayMusic: "Nenhuma música encontrada lançada neste dia. Tente amanhã!"
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1491,7 +1582,11 @@
                     resetConfirm: "Êtes-vous sûr de vouloir réinitialiser le jeu ?",
                     emptyNameError: "Le nom ne peut pas être vide.",
                     restartGame: "Redémarrer",
-                    restartConfirm: "Êtes-vous sûr de vouloir redémarrer ce puzzle ?"
+                    restartConfirm: "Êtes-vous sûr de vouloir redémarrer ce puzzle ?",
+                    onThisDayTitle: "Ce jour-là",
+                    onThisDayButton: "Ce jour-là...",
+                    onThisDayEnable: "Activer la fonction 'Ce jour-là'",
+                    noOnThisDayMusic: "Aucune musique trouvée sortie ce jour-là. Réessayez demain !"
                 }
             };
 
@@ -1568,6 +1663,7 @@
                 if (elements.menuModal.classList.contains('visible')) {
                     renderHighScores();
                     renderGenreSelector();
+                    renderOnThisDayOption();
                 }
             }
             
@@ -1649,6 +1745,30 @@
                         saveGenres(['all']);
                     }
                 }
+            }
+
+            // --- "On This Day" Feature ---
+            function getOnThisDaySetting() {
+                const setting = localStorage.getItem('puzzletunesOnThisDay');
+                return setting === null ? true : setting === 'true'; // Enabled by default
+            }
+
+            function saveOnThisDaySetting(isEnabled) {
+                localStorage.setItem('puzzletunesOnThisDay', isEnabled);
+                updateOnThisDayButtonVisibility();
+            }
+            
+            function renderOnThisDayOption() {
+                const toggle = document.getElementById('on-this-day-toggle');
+                if (!toggle) return;
+                toggle.checked = getOnThisDaySetting();
+                toggle.onchange = (e) => saveOnThisDaySetting(e.target.checked);
+            }
+
+            function updateOnThisDayButtonVisibility() {
+                const isEnabled = getOnThisDaySetting();
+                elements.onThisDayBtnDesktop.style.display = isEnabled ? 'inline-block' : 'none';
+                elements.onThisDayBtnMobile.style.display = isEnabled ? 'inline-block' : 'none';
             }
             
             function getAlbumHistory() {
@@ -2299,11 +2419,11 @@
                     return [];
                 }
             }
-
-            async function findAlbumWithMusic(searchTerm, isArtistSearch = false) {
+            
+            async function findAlbumWithMusic(searchTerm, isArtistSearch = false, onThisDay = false) {
                 const userGenres = getSavedGenres();
                 const genresToSearch = (userGenres.includes('all') || userGenres.length === 0) ? ALL_GENRES : userGenres;
-                let MAX_ATTEMPTS = 5;
+                let MAX_ATTEMPTS = onThisDay ? 10 : 5;
 
                 const searchAndProcess = async (url) => {
                     try {
@@ -2340,8 +2460,32 @@
                 
                 let result = null;
                 let finalSuggestions = [];
+                let foundOnThisDay = false;
 
-                if (isArtistSearch) {
+                if (onThisDay) {
+                    const today = new Date();
+                    const todayMonth = today.getMonth() + 1;
+                    const todayDate = today.getDate();
+
+                    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+                        const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
+                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                        const { albums } = await searchAndProcess(searchUrl);
+
+                        if (albums && albums.length > 0) {
+                            const matchingAlbums = albums.filter(album => {
+                                const releaseDate = new Date(album.releaseDate);
+                                return releaseDate.getMonth() + 1 === todayMonth && releaseDate.getDate() === todayDate;
+                            });
+
+                            if (matchingAlbums.length > 0) {
+                                result = matchingAlbums;
+                                foundOnThisDay = true;
+                                break;
+                            }
+                        }
+                    }
+                } else if (isArtistSearch) {
                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
                     const { albums, suggestions } = await searchAndProcess(searchUrl);
                     result = albums;
@@ -2359,7 +2503,9 @@
                     }
                 }
 
-                if (!result || result.length === 0) return { album: null, suggestions: finalSuggestions };
+                if (!result || result.length === 0) {
+                    return { album: null, suggestions: finalSuggestions, notFound: onThisDay && !foundOnThisDay };
+                }
 
                 const history = getAlbumHistory();
                 let uniqueAlbumArray = result.filter(album => !history.includes(album.collectionId));
@@ -2407,7 +2553,7 @@
                 }
             }
             
-            async function prepareNewGame(isFromSuggestion = false, challengeId = null) {
+            async function prepareNewGame(isFromSuggestion = false, challengeId = null, onThisDay = false) {
                 const artistSearchInput = isMobileDevice() ? elements.artistSearchMobile : elements.artistSearchDesktop;
                 let searchTerm = artistSearchInput.value.trim();
                 let isArtistSearch = searchTerm.length > 0;
@@ -2420,6 +2566,7 @@
                         ? getTranslatedString('searchingForArtist', { searchTerm })
                         : getTranslatedString('randomArtist');
                     if (challengeId) subtitle = ''; // No subtitle for challenges
+                    if (onThisDay) subtitle = getTranslatedString('onThisDayButton');
 
                     const overlayHTML = `<h2>${title}</h2><p style="font-size: 1rem; color: var(--on-surface-secondary);">${subtitle}</p>`;
                     showOverlay(overlayHTML);
@@ -2429,7 +2576,7 @@
                         return { finalAlbum: album };
                     }
 
-                    const { album, suggestions, retry } = await findAlbumWithMusic(searchTerm, isArtistSearch);
+                    const { album, suggestions, retry, notFound } = await findAlbumWithMusic(searchTerm, isArtistSearch, onThisDay);
 
                     if (album) {
                         return { finalAlbum: album };
@@ -2438,6 +2585,11 @@
                     if (retry && retryCount < MAX_RETRIES) {
                         retryCount++;
                         return attemptSearch(); // Recursive call
+                    }
+
+                    if (onThisDay && notFound) {
+                        showOverlay(getTranslatedString('noOnThisDayMusic'));
+                        return { error: true };
                     }
 
                     if (isArtistSearch && !isFromSuggestion) {
@@ -2661,11 +2813,11 @@
             
             async function animateTitle() {
                 const titleEl = elements.gameTitle;
-                if (!titleEl || titleEl.dataset.animated) return;
-                titleEl.dataset.animated = "true";
+                if (!titleEl || titleEl.dataset.animated === "true") return;
                 
-                // Ensure title is initially visible for animation calculations
-                titleEl.style.visibility = 'visible';
+                if(elements.footer.contains(titleEl)){
+                    titleEl.dataset.animated = "true";
+                }
 
                 const text = "Puzzletunes";
                 titleEl.innerHTML = text.split('').map(letter => `<span>${letter === ' ' ? '&nbsp;' : letter}</span>`).join('');
@@ -2805,7 +2957,9 @@
             function renderStaticTitle() {
                 const titleEl = elements.gameTitle;
                 if (titleEl) {
-                     titleEl.style.visibility = 'visible';
+                     if(!elements.footer.contains(titleEl)) {
+                        elements.footer.prepend(titleEl);
+                     }
                      if(titleEl.innerHTML.trim() === '') {
                         titleEl.textContent = 'Puzzletunes';
                      }
@@ -2853,6 +3007,7 @@
                 }
                 
                 updatePlayerNameDisplay();
+                updateOnThisDayButtonVisibility();
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const challengeId = urlParams.get('challenge');
@@ -2909,7 +3064,7 @@
                         showOverlay(getTranslatedString('loadSavedImageError'));
                      }
                 } else {
-                    elements.gameTitle.style.visibility = 'hidden';
+                    elements.gameTitle.innerHTML = '';
                     setupIdleAnimation();
                 }
             }
@@ -2962,6 +3117,7 @@
                     localStorage.removeItem('puzzletunesGenres');
                     localStorage.removeItem('puzzletunesLanguage');
                     localStorage.removeItem('puzzletunesAlbumHistory');
+                    localStorage.removeItem('puzzletunesOnThisDay');
                     window.location.reload();
                 }
             }
@@ -3005,12 +3161,12 @@
                     saveGameState();
                 }
             }
-
+            
             function setupResponsiveControls() {
                 const desktopSearch = elements.artistSearchDesktop;
                 const mobileSearch = elements.artistSearchMobile;
                 
-                function handleNewGameClick() {
+                function handleNewGameClick(onThisDay = false) {
                     if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
                     
                     if (state.gameInProgress) {
@@ -3018,14 +3174,16 @@
                     }
                     cleanupPreviousGameResources();
                     renderStaticTitle(); // Ensure title persists
-                    prepareNewGame();
+                    prepareNewGame(false, null, onThisDay);
                 }
 
                 desktopSearch.addEventListener('dblclick', () => desktopSearch.value = '');
                 mobileSearch.addEventListener('dblclick', () => mobileSearch.value = '');
 
-                elements.newGameBtnDesktop.addEventListener('click', handleNewGameClick);
-                elements.newGameBtnMobile.addEventListener('click', handleNewGameClick);
+                elements.newGameBtnDesktop.addEventListener('click', () => handleNewGameClick(false));
+                elements.newGameBtnMobile.addEventListener('click', () => handleNewGameClick(false));
+                elements.onThisDayBtnDesktop.addEventListener('click', () => handleNewGameClick(true));
+                elements.onThisDayBtnMobile.addEventListener('click', () => handleNewGameClick(true));
                 elements.restartGameBtnDesktop.addEventListener('click', restartCurrentGame);
                 elements.restartGameBtnMobile.addEventListener('click', restartCurrentGame);
 
@@ -3108,6 +3266,7 @@
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
                 renderGenreSelector();
+                renderOnThisDayOption();
                 updatePlayerNameDisplay(); // Ensure name is current in edit field
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
