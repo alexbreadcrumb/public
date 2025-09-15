@@ -1268,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.07</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.08</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2531,8 +2531,8 @@
 
                 if (onThisDay) {
                     const today = new Date();
-                    const todayMonth = today.getMonth() + 1;
-                    const todayDate = today.getDate();
+                    const todayMonth = today.getUTCMonth() + 1;
+                    const todayDate = today.getUTCDate();
 
                     for (let i = 0; i < MAX_ATTEMPTS; i++) {
                         const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
@@ -2541,8 +2541,9 @@
 
                         if (albums && albums.length > 0) {
                             const matchingAlbums = albums.filter(album => {
+                                if (!album.releaseDate) return false;
                                 const releaseDate = new Date(album.releaseDate);
-                                return releaseDate.getMonth() + 1 === todayMonth && releaseDate.getDate() === todayDate;
+                                return releaseDate.getUTCMonth() + 1 === todayMonth && releaseDate.getUTCDate() === todayDate;
                             });
 
                             if (matchingAlbums.length > 0) {
