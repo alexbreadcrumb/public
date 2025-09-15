@@ -1268,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.09</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.10</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1361,6 +1361,13 @@
                     paused: "Pausado",
                     startMessage: "Haz clic en 'Nuevo Juego' para empezar",
                     loadingNewGame: "Cargando partida nueva...",
+                    loadingMessages: [
+                        "🎶 Aguantá… la portada aún se maquilla.",
+                        "🧩 Seguimos barajando piezas, no te vayas.",
+                        "🎵 Esperá, el hit todavía ensaya coros.",
+                        "🎧 Ya casi… la música está afinando.",
+                        "✨ Un momento, el puzzle busca inspiración."
+                    ],
                     randomArtist: "-artista aleatorio-",
                     searchingForArtist: "-buscando a: {searchTerm}-",
                     didYouMean: "Quisiste decir:",
@@ -1430,6 +1437,13 @@
                     paused: "Paused",
                     startMessage: "Click 'New Game' to start",
                     loadingNewGame: "Loading new game...",
+                    loadingMessages: [
+                        "🎶 Hold on… the cover art is still doing its makeup.",
+                        "🧩 Still shuffling pieces, don't go anywhere.",
+                        "🎵 Wait, the hit is still rehearsing with the choir.",
+                        "🎧 Almost there… the music is tuning up.",
+                        "✨ One moment, the puzzle is looking for inspiration."
+                    ],
                     randomArtist: "-random artist-",
                     searchingForArtist: "-searching for: {searchTerm}-",
                     didYouMean: "Did you mean:",
@@ -1499,6 +1513,13 @@
                     paused: "Pausado",
                     startMessage: "Clique em 'Novo Jogo' para começar",
                     loadingNewGame: "Carregando novo jogo...",
+                    loadingMessages: [
+                        "🎶 Aguenta aí… a capa ainda está se maquiando.",
+                        "🧩 Continuamos embaralhando as peças, não vá embora.",
+                        "🎵 Espere, o sucesso ainda está ensaiando os coros.",
+                        "🎧 Quase lá… a música está afinando.",
+                        "✨ Um momento, o quebra-cabeça está buscando inspiração."
+                    ],
                     randomArtist: "-artista aleatório-",
                     searchingForArtist: "-procurando por: {searchTerm}-",
                     didYouMean: "Você quis dizer:",
@@ -1568,6 +1589,13 @@
                     paused: "En pause",
                     startMessage: "Cliquez sur 'Nouveau Jeu' pour commencer",
                     loadingNewGame: "Chargement d'une nouvelle partie...",
+                    loadingMessages: [
+                        "🎶 Attendez… la pochette se maquille encore.",
+                        "🧩 On mélange encore les pièces, ne partez pas.",
+                        "🎵 Un instant, le tube répète encore avec les chœurs.",
+                        "🎧 Presque… la musique s'accorde.",
+                        "✨ Un moment, le puzzle cherche l'inspiration."
+                    ],
                     randomArtist: "-artiste aléatoire-",
                     searchingForArtist: "-recherche de : {searchTerm}-",
                     didYouMean: "Vouliez-vous dire :",
@@ -2500,7 +2528,6 @@
             async function findAlbumWithMusic(searchTerm, isArtistSearch = false, onThisDay = false) {
                 const userGenres = getSavedGenres();
                 const genresToSearch = (userGenres.includes('all') || userGenres.length === 0) ? ALL_GENRES : userGenres;
-                const HISTORICAL_GENRES = ['pop', 'rock', 'soul', 'folk', 'classical', 'alternative', 'blues', 'jazz'];
 
                 const searchAndProcess = async (url) => {
                     try {
@@ -2544,7 +2571,7 @@
                     const todayMonth = today.getUTCMonth() + 1;
                     const todayDate = today.getUTCDate();
 
-                    const searchPromises = HISTORICAL_GENRES.map(genre => {
+                    const searchPromises = ALL_GENRES.map(genre => {
                         const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
                         return searchAndProcess(searchUrl);
                     });
@@ -2638,17 +2665,28 @@
                 let retryCount = 0;
                 const MAX_RETRIES = 3;
 
-                const attemptSearch = async () => {
-                    const title = getTranslatedString('loadingNewGame');
-                    let subtitle = isArtistSearch
-                        ? getTranslatedString('searchingForArtist', { searchTerm })
-                        : getTranslatedString('randomArtist');
-                    if (challengeId) subtitle = ''; // No subtitle for challenges
-                    if (onThisDay) subtitle = getTranslatedString('onThisDayButton');
+                const title = getTranslatedString('loadingNewGame');
+                let subtitle = isArtistSearch
+                    ? getTranslatedString('searchingForArtist', { searchTerm })
+                    : getTranslatedString('randomArtist');
+                if (challengeId) subtitle = ''; // No subtitle for challenges
+                if (onThisDay) subtitle = getTranslatedString('onThisDayButton');
 
-                    const overlayHTML = `<h2>${title}</h2><p style="font-size: 1rem; color: var(--on-surface-secondary);">${subtitle}</p>`;
-                    showOverlay(overlayHTML);
-                    
+                const overlayHTML = `<h2>${title}</h2><p style="font-size: 1rem; color: var(--on-surface-secondary);">${subtitle}</p>`;
+                showOverlay(overlayHTML);
+                
+                let loadingTimeout = setTimeout(() => {
+                    const loadingMessages = currentStrings.loadingMessages || [];
+                    if (loadingMessages.length > 0) {
+                        const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+                        const overlayDiv = elements.puzzleContainer.querySelector('.overlay div');
+                        if (overlayDiv) {
+                            overlayDiv.innerHTML = `<h2>${randomMessage}</h2>`;
+                        }
+                    }
+                }, 5000);
+
+                const attemptSearch = async () => {
                     if (challengeId) {
                         const album = await findAlbumById(challengeId);
                         return { finalAlbum: album };
@@ -2690,6 +2728,8 @@
                 };
                 
                 const { finalAlbum, error } = await attemptSearch();
+                
+                clearTimeout(loadingTimeout);
 
                 if (error || !finalAlbum) return;
 
@@ -3349,7 +3389,13 @@
 
             elements.highScoresList.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.score-delete-btn');
-                if (deleteBtn) deleteScore(parseInt(deleteBtn.dataset.id, 10));
+                if (deleteBtn) {
+                    const idToDelete = parseInt(deleteBtn.dataset.id, 10);
+                    let highScores = getHighScores();
+                    highScores = highScores.filter(score => score.id !== idToDelete);
+                    localStorage.setItem('puzzletunesHighScores', JSON.stringify(highScores));
+                    renderHighScores();
+                }
             });
             window.addEventListener('beforeunload', () => saveGameState());
             
