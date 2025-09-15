@@ -490,7 +490,7 @@
             width: 100%;
         }
         
-        #artist-search {
+        #artist-search-desktop, #artist-search-mobile {
             flex-grow: 1;
             background-color: var(--surface);
             border: 1px solid var(--on-surface-secondary);
@@ -506,7 +506,7 @@
             gap: 0.5rem;
         }
 
-        #new-game-btn, #restart-game-btn {
+        #new-game-btn-desktop, #new-game-btn-mobile, #restart-game-btn-desktop, #restart-game-btn-mobile {
             color: var(--background);
             font-weight: 700;
             border-radius: 50px;
@@ -518,19 +518,19 @@
             white-space: nowrap;
         }
 
-        #new-game-btn {
+        #new-game-btn-desktop, #new-game-btn-mobile {
              background-color: var(--primary);
         }
-        #new-game-btn:hover {
+        #new-game-btn-desktop:hover, #new-game-btn-mobile:hover {
             background-color: var(--primary-hover);
         }
 
-        #restart-game-btn {
+        #restart-game-btn-desktop, #restart-game-btn-mobile {
             background-color: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
         }
-        #restart-game-btn:hover {
+        #restart-game-btn-desktop:hover, #restart-game-btn-mobile:hover {
             background-color: var(--primary);
             color: var(--background);
         }
@@ -558,7 +558,7 @@
             flex-direction: column;
             gap: 0.75rem;
         }
-        .mobile-controls #artist-search, .mobile-controls .action-buttons {
+        .mobile-controls #artist-search-mobile, .mobile-controls .action-buttons {
             width: 100%;
             box-sizing: border-box;
         }
@@ -578,11 +578,11 @@
                 gap: 1rem;
                 margin: 0 2rem;
             }
-            .desktop-controls #artist-search {
+            .desktop-controls #artist-search-desktop {
                 width: 100%;
                 max-width: 350px;
             }
-             .desktop-controls #artist-search, .desktop-controls #new-game-btn, .desktop-controls #restart-game-btn {
+             .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -590,7 +590,8 @@
         }
         
         @media (max-height: 740px) {
-             #artist-search, #new-game-btn, #restart-game-btn {
+             #artist-search-mobile, #new-game-btn-mobile, #restart-game-btn-mobile,
+             #artist-search-desktop, #new-game-btn-desktop, #restart-game-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -1028,7 +1029,7 @@
             font-size: 0.8rem;
             color: var(--on-surface-secondary);
             flex-shrink: 0;
-            margin-top: 0;
+            margin-top: auto;
         }
 
     </style>
@@ -1074,7 +1075,7 @@
         <div class="new-game-controls desktop-controls">
             <input type="text" id="artist-search-desktop" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
-                <button id="new-game-btn-desktop" data-translate-key="newGame">Nuevo Juego</button>
+                <button id="new-game-btn-desktop" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-desktop" data-translate-key="restartGame" style="display: none;"></button>
             </div>
         </div>
@@ -1111,7 +1112,7 @@
         <div class="new-game-controls mobile-controls">
             <input type="text" id="artist-search-mobile" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
-                <button id="new-game-btn-mobile" data-translate-key="newGame">Nuevo Juego</button>
+                <button id="new-game-btn-mobile" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-mobile" data-translate-key="restartGame" style="display: none;"></button>
             </div>
         </div>
@@ -1120,7 +1121,7 @@
     <div id="menu-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title" data-translate-key="highScoresTitle">Mejores Tiempos</h2>
+                <h2 id="modal-title" data-translate-key="highScoresTitle"></h2>
                 <button class="close-btn" id="close-menu-btn">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
@@ -1138,10 +1139,10 @@
                 </div>
                 <div id="language-panel" class="modal-panel">
                     <div class="language-options">
-                        <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish">English</span></button>
-                        <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish">Español</span></button>
-                        <button class="lang-btn" data-lang="pt"><span>🇧🇷</span> <span data-translate-key="langPortuguese">Português</span></button>
-                        <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench">Français</span></button>
+                        <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish"></span></button>
+                        <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish"></span></button>
+                        <button class="lang-btn" data-lang="pt"><span>🇧🇷</span> <span data-translate-key="langPortuguese"></span></button>
+                        <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench"></span></button>
                     </div>
                 </div>
                 <div id="options-panel" class="modal-panel">
@@ -1179,7 +1180,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v2.0</footer>
+    <footer><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.01</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
