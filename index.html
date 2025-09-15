@@ -30,6 +30,9 @@
             --gradient-color-3: #FFFFFF;
             --gradient-color-4: #1DB954;
             --gradient-color-5: #1ED760;
+            --gold-bg: rgba(255, 215, 0, 0.15);
+            --silver-bg: rgba(192, 192, 192, 0.15);
+            --bronze-bg: rgba(205, 127, 50, 0.15);
         }
 
         html {
@@ -677,25 +680,50 @@
             background-color: rgba(29, 185, 84, 0.1);
         }
         
-        #info-panel p, #options-panel p {
+        #info-panel p {
             line-height: 1.6;
             color: var(--on-surface);
         }
 
+        /* --- Options Panel Sub-tabs --- */
+        .options-sub-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #444;
+        }
+        .options-sub-tab-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            font-size: 1.2rem;
+            color: var(--on-surface-secondary);
+        }
+        .options-sub-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .options-sub-panel {
+            display: none;
+        }
+        .options-sub-panel.active {
+            display: block;
+        }
         #options-panel h3 {
-            margin-top: 1rem;
+            margin-top: 0;
             margin-bottom: 0.75rem;
             color: var(--on-surface);
-        }
-        #options-panel h3:first-child {
-            margin-top: 0;
         }
         
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         .form-group input {
             background-color: #333;
@@ -721,7 +749,6 @@
         }
         
         .danger-zone {
-            margin-top: 2rem;
             padding: 1rem;
             border: 2px dashed var(--danger-color);
             border-radius: 8px;
@@ -803,7 +830,12 @@
             border-radius: 8px;
             background-color: rgba(0,0,0,0.2);
             margin-bottom: 0.5rem;
+            transition: background-color 0.3s ease;
         }
+        .score-item.gold { background-color: var(--gold-bg); }
+        .score-item.silver { background-color: var(--silver-bg); }
+        .score-item.bronze { background-color: var(--bronze-bg); }
+
         .score-rank {
             font-size: 1.1rem;
             font-weight: 700;
@@ -1077,19 +1109,30 @@
                     </div>
                 </div>
                 <div id="options-panel" class="modal-panel">
-                    <h3 data-translate-key="editPlayerNameTitle"></h3>
-                    <div class="form-group">
-                        <input type="text" id="edit-player-name-input">
-                        <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
+                    <div class="options-sub-tabs">
+                         <button class="options-sub-tab-btn active" data-sub-tab="player">🦸‍♂️</button>
+                         <button class="options-sub-tab-btn" data-sub-tab="genres">🎵</button>
+                         <button class="options-sub-tab-btn" data-sub-tab="reset">🧩</button>
                     </div>
-
-                    <h3 data-translate-key="favoriteGenresTitle"></h3>
-                    <div id="genre-selector" class="genre-selector"></div>
-                    
-                    <div class="danger-zone">
-                        <h3 data-translate-key="resetGameTitle"></h3>
-                        <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
-                        <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
+                    <div class="options-sub-panels">
+                        <div id="player-sub-panel" class="options-sub-panel active">
+                            <h3 data-translate-key="editPlayerNameTitle"></h3>
+                            <div class="form-group">
+                                <input type="text" id="edit-player-name-input">
+                                <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
+                            </div>
+                        </div>
+                        <div id="genres-sub-panel" class="options-sub-panel">
+                            <h3 data-translate-key="favoriteGenresTitle"></h3>
+                            <div id="genre-selector" class="genre-selector"></div>
+                        </div>
+                        <div id="reset-sub-panel" class="options-sub-panel">
+                             <div class="danger-zone">
+                                <h3 data-translate-key="resetGameTitle"></h3>
+                                <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
+                                <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="info-panel" class="modal-panel">
@@ -1100,7 +1143,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.98</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.99</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1139,6 +1182,7 @@
                 editPlayerNameInput: document.getElementById('edit-player-name-input'),
                 saveEditedPlayerNameBtn: document.getElementById('save-edited-player-name-btn'),
                 resetGameBtn: document.getElementById('reset-game-btn'),
+                optionsPanel: document.getElementById('options-panel'),
             };
 
             let state = {
@@ -2119,9 +2163,13 @@
                     const year = item.album.releaseDate ? new Date(item.album.releaseDate).getFullYear() : '';
                     const artistText = year ? `${item.album.artistName} (${year})` : item.album.artistName;
 
+                    const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                    const rankContent = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1;
+
+
                     const html = `
-                        <li class="score-item">
-                            <span class="score-rank">${index + 1}</span>
+                        <li class="score-item ${rankClass}">
+                            <span class="score-rank">${rankContent}</span>
                             <img src="${item.album.artworkUrl}" class="score-thumbnail" alt="Artwork for ${item.album.collectionName}">
                             <div class="score-info">
                                 <p class="score-artist">${artistText}</p>
@@ -2803,6 +2851,16 @@
                 else if (tabName === 'info') titleKey = 'aboutTitle';
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
+
+                if (tabName === 'options') {
+                    switchSubTab('player');
+                }
+            }
+
+            function switchSubTab(subTabName) {
+                const optionsPanel = elements.optionsPanel;
+                optionsPanel.querySelectorAll('.options-sub-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.subTab === subTabName));
+                optionsPanel.querySelectorAll('.options-sub-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${subTabName}-sub-panel`));
             }
 
             function resetGameFactory() {
@@ -2868,6 +2926,9 @@
 
                 const langBtn = e.target.closest('.lang-btn');
                 if(langBtn) setLanguage(langBtn.dataset.lang);
+
+                const subTabBtn = e.target.closest('.options-sub-tab-btn');
+                if (subTabBtn) switchSubTab(subTabBtn.dataset.subTab);
             });
             
             elements.playerNameForm.addEventListener('submit', (e) => {
