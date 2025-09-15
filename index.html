@@ -52,7 +52,7 @@
             box-sizing: border-box;
             min-height: 100vh;
             position: relative;
-            overflow: hidden; /* Prevent scrollbars from idle collage */
+            /* overflow: hidden; Removed to ensure footer is always visible */
         }
 
         body::before {
@@ -82,6 +82,7 @@
             z-index: -3;
             opacity: 0;
             transition: opacity 0.7s ease-in-out;
+            overflow: hidden;
         }
         #idle-background-collage.visible {
             opacity: 1;
@@ -1009,7 +1010,7 @@
             font-size: 0.8rem;
             color: var(--on-surface-secondary);
             flex-shrink: 0;
-            margin-top: auto;
+            /* margin-top: auto; This is handled by flex-grow on main-container */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1180,7 +1181,7 @@
     
     <footer>
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.02</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.03</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1854,7 +1855,6 @@
                 if (piece1El && piece2El) {
                     const tempGridArea = piece1El.style.gridArea;
                     piece1El.style.gridArea = piece2El.style.gridArea;
-                    piece2El.style.gridArea = tempGridArea;
                 }
                 
                 // For live games, re-render is simpler and safer
@@ -2798,12 +2798,20 @@
                 return null; // Should not happen for solvable puzzles
             }
             
+            function renderStaticTitle() {
+                const titleEl = elements.gameTitle;
+                if (titleEl && titleEl.innerHTML.trim() === '') {
+                    titleEl.textContent = 'Puzzletunes';
+                }
+            }
+
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
                 if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
                     // Fallback if fetch fails or user starts game during fetch
                     showOverlay(getTranslatedString('startMessage'));
+                    renderStaticTitle();
                     return;
                 }
                 
@@ -2857,6 +2865,7 @@
                     img.src = proxiedImageUrl;
 
                     img.onload = () => {
+                        renderStaticTitle();
                         try {
                             const palette = colorThief.getPalette(img, 5);
                             palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
@@ -2887,9 +2896,11 @@
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
                         }
                     };
-                     img.onerror = () => showOverlay(getTranslatedString('loadSavedImageError'));
+                     img.onerror = () => {
+                        renderStaticTitle();
+                        showOverlay(getTranslatedString('loadSavedImageError'));
+                     }
                 } else {
-                    cleanupPreviousGameResources();
                     setupIdleAnimation();
                 }
             }
