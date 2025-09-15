@@ -1268,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.08</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.09</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2354,6 +2354,16 @@
                 return (newRank > 0 && newRank <= 3) ? newRank : -1;
             }
 
+            function formatFullDate(isoString) {
+                if (!isoString) return '';
+                const date = new Date(isoString);
+                if (isNaN(date)) return '';
+                
+                const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+                return date.toLocaleDateString(lang, options);
+            }
 
             function renderHighScores() {
                 const highScores = getHighScores();
@@ -2397,8 +2407,8 @@
 
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
                     const wrapperId = `marquee-wrapper-${item.id}`;
-                    const year = item.album.releaseDate ? new Date(item.album.releaseDate).getFullYear() : '';
-                    const artistText = year ? `${item.album.artistName} (${year})` : item.album.artistName;
+                    const dateText = formatFullDate(item.album.releaseDate);
+                    const artistText = dateText ? `${item.album.artistName} (${dateText})` : item.album.artistName;
 
                     const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
                     const rankContent = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1;
@@ -2490,7 +2500,7 @@
             async function findAlbumWithMusic(searchTerm, isArtistSearch = false, onThisDay = false) {
                 const userGenres = getSavedGenres();
                 const genresToSearch = (userGenres.includes('all') || userGenres.length === 0) ? ALL_GENRES : userGenres;
-                let MAX_ATTEMPTS = onThisDay ? 10 : 5;
+                const HISTORICAL_GENRES = ['pop', 'rock', 'soul', 'folk', 'classical', 'alternative', 'blues', 'jazz'];
 
                 const searchAndProcess = async (url) => {
                     try {
@@ -2527,52 +2537,52 @@
                 
                 let result = null;
                 let finalSuggestions = [];
-                let foundOnThisDay = false;
+                let notFoundOnThisDay = false;
 
                 if (onThisDay) {
                     const today = new Date();
                     const todayMonth = today.getUTCMonth() + 1;
                     const todayDate = today.getUTCDate();
 
-                    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-                        const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
+                    const searchPromises = HISTORICAL_GENRES.map(genre => {
                         const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
-                        const { albums } = await searchAndProcess(searchUrl);
+                        return searchAndProcess(searchUrl);
+                    });
 
+                    const allResults = await Promise.all(searchPromises);
+                    let allMatchingAlbums = [];
+
+                    allResults.forEach(({ albums }) => {
                         if (albums && albums.length > 0) {
-                            const matchingAlbums = albums.filter(album => {
+                            const matching = albums.filter(album => {
                                 if (!album.releaseDate) return false;
                                 const releaseDate = new Date(album.releaseDate);
                                 return releaseDate.getUTCMonth() + 1 === todayMonth && releaseDate.getUTCDate() === todayDate;
                             });
-
-                            if (matchingAlbums.length > 0) {
-                                result = matchingAlbums;
-                                foundOnThisDay = true;
-                                break;
-                            }
+                            allMatchingAlbums.push(...matching);
                         }
+                    });
+
+                    if (allMatchingAlbums.length > 0) {
+                        result = allMatchingAlbums;
+                    } else {
+                        notFoundOnThisDay = true;
                     }
+
                 } else if (isArtistSearch) {
                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
                     const { albums, suggestions } = await searchAndProcess(searchUrl);
                     result = albums;
                     finalSuggestions = suggestions;
                 } else {
-                     for (let i = 0; i < MAX_ATTEMPTS; i++) {
-                        const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
-                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
-                        const { albums } = await searchAndProcess(searchUrl);
-                        if (albums && albums.length > 0) {
-                            result = albums;
-                            break;
-                        }
-                        console.warn(`Random search attempt ${i + 1} for genre ${genre} failed. Retrying...`);
-                    }
+                     const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
+                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                     const { albums } = await searchAndProcess(searchUrl);
+                     result = albums;
                 }
 
                 if (!result || result.length === 0) {
-                    return { album: null, suggestions: finalSuggestions, notFound: onThisDay && !foundOnThisDay };
+                    return { album: null, suggestions: finalSuggestions, notFound: notFoundOnThisDay };
                 }
 
                 const history = getAlbumHistory();
@@ -2766,8 +2776,8 @@
                     elements.trackText.innerHTML = '';
                     return;
                 }
-                const year = state.currentAlbum.releaseDate ? new Date(state.currentAlbum.releaseDate).getFullYear() : '';
-                const artistText = year ? `${state.currentAlbum.artistName} (${year})` : state.currentAlbum.artistName;
+                const dateText = formatFullDate(state.currentAlbum.releaseDate);
+                const artistText = dateText ? `${state.currentAlbum.artistName} (${dateText})` : state.currentAlbum.artistName;
                 elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${artistText}</p>`;
             }
 
