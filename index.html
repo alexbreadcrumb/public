@@ -50,7 +50,7 @@
             padding: 1rem;
             padding-top: 6rem; /* Adjusted for taller top-bar */
             box-sizing: border-box;
-            min-height: 100%;
+            min-height: 100vh; /* Changed to vh for robustness */
             position: relative;
             overflow: hidden; /* Prevent scrollbars from idle collage */
         }
@@ -548,17 +548,44 @@
             animation: neon-pulse 2s ease-in-out infinite;
         }
         
-        @media (max-width: 480px) {
-            .new-game-controls {
-                flex-direction: column;
-                gap: 0.75rem;
+        /* --- Responsive Controls Logic --- */
+
+        .top-bar .desktop-controls {
+            display: none;
+        }
+
+        .mobile-controls {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .mobile-controls #artist-search, .mobile-controls .action-buttons {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .mobile-controls .action-buttons {
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-controls {
+                display: none;
             }
-            #artist-search, .action-buttons {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            .action-buttons {
+            .top-bar .desktop-controls {
+                display: flex;
+                flex-grow: 1;
                 justify-content: center;
+                align-items: center;
+                gap: 1rem;
+                margin: 0 2rem;
+            }
+            .desktop-controls #artist-search {
+                width: 100%;
+                max-width: 350px;
+            }
+             .desktop-controls #artist-search, .desktop-controls #new-game-btn, .desktop-controls #restart-game-btn {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+                font-size: 0.9rem;
             }
         }
         
@@ -1043,6 +1070,15 @@
             </div>
             <div id="player-name-display"></div>
         </div>
+        
+        <div class="new-game-controls desktop-controls">
+            <input type="text" id="artist-search-desktop" data-translate-placeholder="artistSearchPlaceholder">
+            <div class="action-buttons">
+                <button id="new-game-btn-desktop" data-translate-key="newGame">Nuevo Juego</button>
+                <button id="restart-game-btn-desktop" data-translate-key="restartGame" style="display: none;"></button>
+            </div>
+        </div>
+
         <div class="controls-group">
             <button id="pause-btn" class="control-button" data-translate-title="pauseResumeTitle">
                 <svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 7h3v10H8zm5 0h3v10h-3z"></path></svg>
@@ -1072,11 +1108,11 @@
             </div>
         </div>
 
-        <div class="new-game-controls">
-            <input type="text" id="artist-search" data-translate-placeholder="artistSearchPlaceholder">
+        <div class="new-game-controls mobile-controls">
+            <input type="text" id="artist-search-mobile" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
-                <button id="new-game-btn" data-translate-key="newGame">Nuevo Juego</button>
-                <button id="restart-game-btn" data-translate-key="restartGame" style="display: none;"></button>
+                <button id="new-game-btn-mobile" data-translate-key="newGame">Nuevo Juego</button>
+                <button id="restart-game-btn-mobile" data-translate-key="restartGame" style="display: none;"></button>
             </div>
         </div>
     </div>
@@ -1143,7 +1179,7 @@
     </div>
     
     <h1 id="game-title"></h1>
-    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v1.99</footer>
+    <footer><span data-translate-key="gameBy">Juego por:</span> Ale Fernández PY-2025 - v2.0</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -1154,12 +1190,9 @@
                 puzzleContainer: document.getElementById('puzzle-container'),
                 timer: document.getElementById('timer'),
                 moves: document.getElementById('moves'),
-                newGameBtn: document.getElementById('new-game-btn'),
-                restartGameBtn: document.getElementById('restart-game-btn'),
                 pauseBtn: document.getElementById('pause-btn'),
                 audioBtn: document.getElementById('audio-btn'),
                 menuBtn: document.getElementById('menu-btn'),
-                artistSearch: document.getElementById('artist-search'),
                 trackInfo: document.getElementById('current-track-info'),
                 trackText: document.getElementById('track-text'),
                 appleMusicLink: document.getElementById('apple-music-link'),
@@ -1183,6 +1216,14 @@
                 saveEditedPlayerNameBtn: document.getElementById('save-edited-player-name-btn'),
                 resetGameBtn: document.getElementById('reset-game-btn'),
                 optionsPanel: document.getElementById('options-panel'),
+
+                // Responsive Controls
+                artistSearchDesktop: document.getElementById('artist-search-desktop'),
+                newGameBtnDesktop: document.getElementById('new-game-btn-desktop'),
+                restartGameBtnDesktop: document.getElementById('restart-game-btn-desktop'),
+                artistSearchMobile: document.getElementById('artist-search-mobile'),
+                newGameBtnMobile: document.getElementById('new-game-btn-mobile'),
+                restartGameBtnMobile: document.getElementById('restart-game-btn-mobile'),
             };
 
             let state = {
@@ -1509,14 +1550,12 @@
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
                 
-                const gameBySpan = document.querySelector('footer > span');
                 const footer = document.querySelector('footer');
-                if (gameBySpan && footer) {
-                    const versionText = footer.textContent.match(/- v[\d\.]+/);
-                    const version = versionText ? versionText[0] : '';
-                    gameBySpan.textContent = getTranslatedString('gameBy');
-                    footer.innerHTML = `${gameBySpan.outerHTML} Ale Fernández PY-2025 ${version}`;
+                if (footer) {
+                    const version = footer.textContent.match(/- v[\d\.]+/)[0];
+                    footer.innerHTML = `<span data-translate-key="gameBy">${getTranslatedString('gameBy')}</span> Ale Fernández PY-2025 ${version}`;
                 }
+
 
                 const idleCtaEl = document.getElementById('idle-cta');
                 if (idleCtaEl) {
@@ -1949,7 +1988,10 @@
             function handleWin() {
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
-                elements.restartGameBtn.style.display = 'none';
+                
+                // Responsive button handling
+                elements.restartGameBtnDesktop.style.display = 'none';
+                elements.restartGameBtnMobile.style.display = 'none';
                 
                 // Show final solved state
                 const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
@@ -2224,7 +2266,8 @@
                         btn.className = 'suggestion-btn';
                         btn.textContent = suggestion;
                         btn.onclick = () => {
-                            elements.artistSearch.value = suggestion;
+                            const artistSearchInput = isMobileDevice() ? elements.artistSearchMobile : elements.artistSearchDesktop;
+                            artistSearchInput.value = suggestion;
                             prepareNewGame(true);
                         };
                         suggestionsContainer.appendChild(btn);
@@ -2363,7 +2406,8 @@
             }
             
             async function prepareNewGame(isFromSuggestion = false, challengeId = null) {
-                let searchTerm = elements.artistSearch.value.trim();
+                const artistSearchInput = isMobileDevice() ? elements.artistSearchMobile : elements.artistSearchDesktop;
+                let searchTerm = artistSearchInput.value.trim();
                 let isArtistSearch = searchTerm.length > 0;
                 let retryCount = 0;
                 const MAX_RETRIES = 3;
@@ -2456,8 +2500,13 @@
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
-                elements.newGameBtn.classList.remove('pulsating-neon');
-                elements.restartGameBtn.style.display = 'none';
+                
+                // Responsive button handling
+                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
+                newGameBtn.classList.remove('pulsating-neon');
+                elements.restartGameBtnDesktop.style.display = 'none';
+                elements.restartGameBtnMobile.style.display = 'none';
+                
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
                 
@@ -2593,8 +2642,13 @@
                 
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
-                elements.newGameBtn.classList.remove('pulsating-neon');
-                elements.restartGameBtn.style.display = 'inline-block';
+                
+                // Responsive button handling
+                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
+                newGameBtn.classList.remove('pulsating-neon');
+                elements.restartGameBtnDesktop.style.display = 'inline-block';
+                elements.restartGameBtnMobile.style.display = 'inline-block';
+
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
@@ -2754,7 +2808,9 @@
                 callToAction.id = 'idle-cta';
                 callToAction.textContent = getTranslatedString('idleCallToAction');
                 elements.puzzleContainer.appendChild(callToAction);
-                elements.newGameBtn.classList.add('pulsating-neon');
+                
+                const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
+                newGameBtn.classList.add('pulsating-neon');
 
                 const backgroundLayers = elements.idleCollage.children;
                 allArtworks.forEach((url, i) => {
@@ -2807,8 +2863,13 @@
 
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
-                        elements.restartGameBtn.style.display = 'inline-block';
-                        elements.newGameBtn.classList.remove('pulsating-neon');
+                        
+                        // Responsive button handling
+                        const newGameBtn = isMobileDevice() ? elements.newGameBtnMobile : elements.newGameBtnDesktop;
+                        newGameBtn.classList.remove('pulsating-neon');
+                        elements.restartGameBtnDesktop.style.display = 'inline-block';
+                        elements.restartGameBtnMobile.style.display = 'inline-block';
+
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
                         updateTrackText();
@@ -2916,9 +2977,34 @@
                 }
             }
 
-            elements.artistSearch.addEventListener('dblclick', () => {
-                elements.artistSearch.value = '';
-            });
+            function setupResponsiveControls() {
+                const isMobile = isMobileDevice();
+                const desktopSearch = elements.artistSearchDesktop;
+                const mobileSearch = elements.artistSearchMobile;
+                
+                function handleNewGameClick() {
+                    if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
+                    
+                    if (state.gameInProgress) {
+                        clearGameState();
+                    }
+                    cleanupPreviousGameResources();
+                    prepareNewGame();
+                }
+
+                desktopSearch.addEventListener('dblclick', () => desktopSearch.value = '');
+                mobileSearch.addEventListener('dblclick', () => mobileSearch.value = '');
+
+                elements.newGameBtnDesktop.addEventListener('click', handleNewGameClick);
+                elements.newGameBtnMobile.addEventListener('click', handleNewGameClick);
+                elements.restartGameBtnDesktop.addEventListener('click', restartCurrentGame);
+                elements.restartGameBtnMobile.addEventListener('click', restartCurrentGame);
+
+                // Sync search input values
+                desktopSearch.addEventListener('input', () => mobileSearch.value = desktopSearch.value);
+                mobileSearch.addEventListener('input', () => desktopSearch.value = mobileSearch.value);
+            }
+            
 
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
@@ -2953,18 +3039,6 @@
             });
 
             elements.resetGameBtn.addEventListener('click', resetGameFactory);
-
-            elements.newGameBtn.addEventListener('click', () => {
-                if (state.gameInProgress && !confirm(getTranslatedString('newGameConfirm'))) return;
-                
-                if (state.gameInProgress) {
-                    clearGameState();
-                }
-                cleanupPreviousGameResources();
-                prepareNewGame();
-            });
-
-            elements.restartGameBtn.addEventListener('click', restartCurrentGame);
 
             elements.pauseBtn.addEventListener('click', () => {
                 if (!state.gameInProgress) return;
@@ -3045,6 +3119,7 @@
             }
             
             initializeLocalization();
+            setupResponsiveControls();
             initGame();
         });
     </script>
