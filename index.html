@@ -1268,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.10</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.11</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1849,7 +1849,6 @@
 
             function saveOnThisDaySetting(isEnabled) {
                 localStorage.setItem('puzzletunesOnThisDay', isEnabled);
-                updateOnThisDayButtonVisibility();
                 updateButtonAndTextLogic();
             }
             
@@ -1858,12 +1857,6 @@
                 if (!toggle) return;
                 toggle.checked = getOnThisDaySetting();
                 toggle.onchange = (e) => saveOnThisDaySetting(e.target.checked);
-            }
-
-            function updateOnThisDayButtonVisibility() {
-                const isEnabled = getOnThisDaySetting();
-                elements.onThisDayBtnDesktop.style.display = isEnabled ? 'inline-block' : 'none';
-                elements.onThisDayBtnMobile.style.display = isEnabled ? 'inline-block' : 'none';
             }
             
             function getAlbumHistory() {
@@ -3121,7 +3114,7 @@
                 }
                 
                 updatePlayerNameDisplay();
-                updateOnThisDayButtonVisibility();
+                updateButtonAndTextLogic();
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const challengeId = urlParams.get('challenge');
