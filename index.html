@@ -533,9 +533,20 @@
                 box-shadow: 0 0 10px var(--primary-hover), 0 0 20px var(--primary-hover), 0 0 30px var(--primary);
             }
         }
+        @keyframes neon-pulse-secondary {
+            0%, 100% {
+                box-shadow: 0 0 5px var(--secondary), 0 0 10px var(--secondary), 0 0 15px var(--secondary-hover);
+            }
+            50% {
+                box-shadow: 0 0 10px var(--secondary-hover), 0 0 20px var(--secondary-hover), 0 0 30px var(--secondary);
+            }
+        }
 
         .pulsating-neon {
             animation: neon-pulse 2s ease-in-out infinite;
+        }
+        .pulsating-neon-secondary {
+            animation: neon-pulse-secondary 2s ease-in-out infinite;
         }
         
         /* --- Responsive Controls Logic --- */
@@ -1257,7 +1268,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.06</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.07</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1394,7 +1405,12 @@
                     onThisDayTitle: "Un día como hoy",
                     onThisDayButton: "Un día como hoy...",
                     onThisDayEnable: "Activar función 'Un día como hoy'",
-                    noOnThisDayMusic: "No se encontró música lanzada en un día como hoy. ¡Intenta mañana!"
+                    noOnThisDayMusic: "No se encontró música lanzada en un día como hoy. ¡Intenta mañana!",
+                    randomButton: "Aleatorio",
+                    randomModeButton: "Modo Aleatorio",
+                    artistModeButton: "Modo Artista",
+                    idleCallToActionWithOnThisDay: "Toca 'Un día como hoy' o 'Aleatorio' para iniciar una partida...",
+                    idleCallToActionWithoutOnThisDay: "Toca 'Modo Aleatorio' para iniciar una partida..."
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1458,7 +1474,12 @@
                     onThisDayTitle: "On This Day",
                     onThisDayButton: "On This Day...",
                     onThisDayEnable: "Enable 'On This Day' feature",
-                    noOnThisDayMusic: "No music found released on this day. Try again tomorrow!"
+                    noOnThisDayMusic: "No music found released on this day. Try again tomorrow!",
+                    randomButton: "Random",
+                    randomModeButton: "Random Mode",
+                    artistModeButton: "Artist Mode",
+                    idleCallToActionWithOnThisDay: "Tap 'On This Day' or 'Random' to start a match...",
+                    idleCallToActionWithoutOnThisDay: "Tap 'Random Mode' to start a match..."
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1522,7 +1543,12 @@
                     onThisDayTitle: "Neste dia",
                     onThisDayButton: "Neste dia...",
                     onThisDayEnable: "Ativar recurso 'Neste dia'",
-                    noOnThisDayMusic: "Nenhuma música encontrada lançada neste dia. Tente amanhã!"
+                    noOnThisDayMusic: "Nenhuma música encontrada lançada neste dia. Tente amanhã!",
+                    randomButton: "Aleatório",
+                    randomModeButton: "Modo Aleatório",
+                    artistModeButton: "Modo Artista",
+                    idleCallToActionWithOnThisDay: "Toque em 'Neste dia' ou 'Aleatório' para iniciar uma partida...",
+                    idleCallToActionWithoutOnThisDay: "Toque em 'Modo Aleatório' para iniciar uma partida..."
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1586,7 +1612,12 @@
                     onThisDayTitle: "Ce jour-là",
                     onThisDayButton: "Ce jour-là...",
                     onThisDayEnable: "Activer la fonction 'Ce jour-là'",
-                    noOnThisDayMusic: "Aucune musique trouvée sortie ce jour-là. Réessayez demain !"
+                    noOnThisDayMusic: "Aucune musique trouvée sortie ce jour-là. Réessayez demain !",
+                    randomButton: "Aléatoire",
+                    randomModeButton: "Mode Aléatoire",
+                    artistModeButton: "Mode Artiste",
+                    idleCallToActionWithOnThisDay: "Appuyez sur 'Ce jour-là' ou 'Aléatoire' pour commencer une partie...",
+                    idleCallToActionWithoutOnThisDay: "Appuyez sur 'Mode Aléatoire' pour commencer une partie..."
                 }
             };
 
@@ -1645,14 +1676,49 @@
                     if (currentStrings[key]) el.title = currentStrings[key];
                 });
 
-                const idleCtaEl = document.getElementById('idle-cta');
-                if (idleCtaEl) {
-                    idleCtaEl.textContent = getTranslatedString('idleCallToAction');
-                }
+                updateButtonAndTextLogic();
                 
                 elements.playerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
                 elements.editPlayerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
                 updatePlayerNameDisplay();
+            }
+
+            function updateButtonAndTextLogic() {
+                const isEnabled = getOnThisDaySetting();
+                const artistSearchInput = isMobileDevice() ? elements.artistSearchMobile : elements.artistSearchDesktop;
+                const searchTerm = artistSearchInput.value.trim();
+
+                const newGameBtnDesktop = elements.newGameBtnDesktop;
+                const newGameBtnMobile = elements.newGameBtnMobile;
+                const onThisDayBtnDesktop = elements.onThisDayBtnDesktop;
+                const onThisDayBtnMobile = elements.onThisDayBtnMobile;
+
+                let newGameKey;
+                if (searchTerm) {
+                    newGameKey = 'artistModeButton';
+                } else if (isEnabled) {
+                    newGameKey = 'randomButton';
+                } else {
+                    newGameKey = 'randomModeButton';
+                }
+                
+                newGameBtnDesktop.innerHTML = getTranslatedString(newGameKey);
+                newGameBtnMobile.innerHTML = getTranslatedString(newGameKey);
+                
+                const cta = document.getElementById('idle-cta');
+                if (cta) {
+                    const ctaKey = isEnabled ? 'idleCallToActionWithOnThisDay' : 'idleCallToActionWithoutOnThisDay';
+                    cta.textContent = getTranslatedString(ctaKey);
+                }
+
+                if (state.isIdle) {
+                    newGameBtnDesktop.classList.add('pulsating-neon');
+                    newGameBtnMobile.classList.add('pulsating-neon');
+                    if (isEnabled) {
+                        onThisDayBtnDesktop.classList.add('pulsating-neon-secondary');
+                        onThisDayBtnMobile.classList.add('pulsating-neon-secondary');
+                    }
+                }
             }
             
             function setLanguage(lang) {
@@ -1756,6 +1822,7 @@
             function saveOnThisDaySetting(isEnabled) {
                 localStorage.setItem('puzzletunesOnThisDay', isEnabled);
                 updateOnThisDayButtonVisibility();
+                updateButtonAndTextLogic();
             }
             
             function renderOnThisDayOption() {
@@ -2660,6 +2727,8 @@
                 const newGameBtnMobile = elements.newGameBtnMobile;
                 newGameBtnDesktop.classList.remove('pulsating-neon');
                 newGameBtnMobile.classList.remove('pulsating-neon');
+                elements.onThisDayBtnDesktop.classList.remove('pulsating-neon-secondary');
+                elements.onThisDayBtnMobile.classList.remove('pulsating-neon-secondary');
                 elements.restartGameBtnDesktop.style.display = 'none';
                 elements.restartGameBtnMobile.style.display = 'none';
                 
@@ -2795,10 +2864,8 @@
                 elements.puzzleContainer.classList.add('animated-gradient-border');
                 
                 // Responsive button handling
-                const newGameBtnDesktop = elements.newGameBtnDesktop;
-                const newGameBtnMobile = elements.newGameBtnMobile;
-                newGameBtnDesktop.classList.remove('pulsating-neon');
-                newGameBtnMobile.classList.remove('pulsating-neon');
+                updateButtonAndTextLogic();
+
                 elements.restartGameBtnDesktop.style.display = 'inline-block';
                 elements.restartGameBtnMobile.style.display = 'inline-block';
 
@@ -2980,14 +3047,10 @@
                 const callToAction = document.createElement('div');
                 callToAction.className = 'idle-call-to-action';
                 callToAction.id = 'idle-cta';
-                callToAction.textContent = getTranslatedString('idleCallToAction');
                 elements.puzzleContainer.appendChild(callToAction);
-                
-                const newGameBtnDesktop = elements.newGameBtnDesktop;
-                const newGameBtnMobile = elements.newGameBtnMobile;
-                newGameBtnDesktop.classList.add('pulsating-neon');
-                newGameBtnMobile.classList.add('pulsating-neon');
 
+                updateButtonAndTextLogic();
+                
                 const backgroundLayers = elements.idleCollage.children;
                 allArtworks.forEach((url, i) => {
                     if (backgroundLayers[i]) {
@@ -3044,10 +3107,7 @@
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         
                         // Responsive button handling
-                        const newGameBtnDesktop = elements.newGameBtnDesktop;
-                        const newGameBtnMobile = elements.newGameBtnMobile;
-                        newGameBtnDesktop.classList.remove('pulsating-neon');
-                        newGameBtnMobile.classList.remove('pulsating-neon');
+                        updateButtonAndTextLogic();
                         elements.restartGameBtnDesktop.style.display = 'inline-block';
                         elements.restartGameBtnMobile.style.display = 'inline-block';
 
@@ -3179,6 +3239,9 @@
 
                 desktopSearch.addEventListener('dblclick', () => desktopSearch.value = '');
                 mobileSearch.addEventListener('dblclick', () => mobileSearch.value = '');
+
+                desktopSearch.addEventListener('input', updateButtonAndTextLogic);
+                mobileSearch.addEventListener('input', updateButtonAndTextLogic);
 
                 elements.newGameBtnDesktop.addEventListener('click', () => handleNewGameClick(false));
                 elements.newGameBtnMobile.addEventListener('click', () => handleNewGameClick(false));
