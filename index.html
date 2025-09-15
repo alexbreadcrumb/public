@@ -54,6 +54,7 @@
             box-sizing: border-box;
             min-height: 100vh;
             position: relative;
+            overflow-x: hidden;
         }
 
         body::before {
@@ -1149,9 +1150,9 @@
         <div class="new-game-controls desktop-controls">
             <input type="text" id="artist-search-desktop" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
-                <button id="on-this-day-btn-desktop" data-translate-key="onThisDayButton" style="display: none;"></button>
+                <button id="on-this-day-btn-desktop" data-translate-key="onThisDayButton" hidden></button>
                 <button id="new-game-btn-desktop" data-translate-key="newGame"></button>
-                <button id="restart-game-btn-desktop" data-translate-key="restartGame" style="display: none;"></button>
+                <button id="restart-game-btn-desktop" data-translate-key="restartGame" hidden></button>
             </div>
         </div>
 
@@ -1187,9 +1188,9 @@
         <div class="new-game-controls mobile-controls">
             <input type="text" id="artist-search-mobile" data-translate-placeholder="artistSearchPlaceholder">
             <div class="action-buttons">
-                <button id="on-this-day-btn-mobile" data-translate-key="onThisDayButton" style="display: none;"></button>
+                <button id="on-this-day-btn-mobile" data-translate-key="onThisDayButton" hidden></button>
                 <button id="new-game-btn-mobile" data-translate-key="newGame"></button>
-                <button id="restart-game-btn-mobile" data-translate-key="restartGame" style="display: none;"></button>
+                <button id="restart-game-btn-mobile" data-translate-key="restartGame" hidden></button>
             </div>
         </div>
     </div>
@@ -1268,7 +1269,7 @@
     
     <footer id="footer">
         <div id="footer-title"></div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.13</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.14</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1330,6 +1331,7 @@
                 currentAlbum: null,
                 gameInProgress: false,
                 isIdle: false, // For controlling the idle animation
+                gameMode: null, // 'random', 'artist', 'onThisDay', 'challenge'
             };
 
             const PROXIES = [
@@ -1722,8 +1724,8 @@
                 const onThisDayBtnMobile = elements.onThisDayBtnMobile;
 
                 const showOnThisDay = isEnabled && !searchTerm && (state.isIdle || !state.gameInProgress);
-                onThisDayBtnDesktop.style.display = showOnThisDay ? 'inline-block' : 'none';
-                onThisDayBtnMobile.style.display = showOnThisDay ? 'inline-block' : 'none';
+                onThisDayBtnDesktop.hidden = !showOnThisDay;
+                onThisDayBtnMobile.hidden = !showOnThisDay;
 
                 let newGameKey;
                 if (searchTerm) {
@@ -1939,6 +1941,7 @@
                     isMuted: state.isMuted,
                     album: state.currentAlbum,
                     gameInProgress: state.gameInProgress,
+                    gameMode: state.gameMode,
                 };
                 localStorage.setItem('puzzletunesGameState', JSON.stringify(gameState));
             }
@@ -1956,6 +1959,7 @@
                         state.isMuted = savedState.isMuted;
                         state.currentAlbum = savedState.album;
                         state.gameInProgress = savedState.gameInProgress;
+                        state.gameMode = savedState.gameMode || 'random';
                         state.isPaused = true;
                         
                         const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
@@ -2199,8 +2203,8 @@
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 
                 // Responsive button handling
-                elements.restartGameBtnDesktop.style.display = 'none';
-                elements.restartGameBtnMobile.style.display = 'none';
+                elements.restartGameBtnDesktop.hidden = true;
+                elements.restartGameBtnMobile.hidden = true;
                 
                 // Show final solved state
                 const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
@@ -2384,15 +2388,19 @@
                 return (newRank > 0 && newRank <= 3) ? newRank : -1;
             }
 
-            function formatFullDate(isoString) {
+            function formatReleaseDate(isoString, formatType) {
                 if (!isoString) return '';
                 const date = new Date(isoString);
                 if (isNaN(date)) return '';
                 
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 
-                const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
-                return date.toLocaleDateString(lang, options);
+                if (formatType === 'full') {
+                    const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+                    return date.toLocaleDateString(lang, options);
+                }
+                // Default to year only
+                return date.getUTCFullYear().toString();
             }
 
             function renderHighScores() {
@@ -2437,7 +2445,7 @@
 
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
                     const wrapperId = `marquee-wrapper-${item.id}`;
-                    const dateText = formatFullDate(item.album.releaseDate);
+                    const dateText = formatReleaseDate(item.album.releaseDate, 'year');
                     const artistText = dateText ? `${item.album.artistName} (${dateText})` : item.album.artistName;
 
                     const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
@@ -2573,7 +2581,9 @@
                     const todayMonth = today.getUTCMonth() + 1;
                     const todayDate = today.getUTCDate();
 
-                    const searchPromises = ALL_GENRES.map(genre => {
+                    // Search more genres for better results
+                    const genresForOnThisDay = ALL_GENRES; // Search all genres now
+                    const searchPromises = genresForOnThisDay.map(genre => {
                         const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
                         return searchAndProcess(searchUrl);
                     });
@@ -2591,9 +2601,11 @@
                             allMatchingAlbums.push(...matching);
                         }
                     });
-
+                    
                     if (allMatchingAlbums.length > 0) {
-                        result = allMatchingAlbums;
+                        // Remove duplicates by collectionId
+                        const uniqueAlbums = Array.from(new Map(allMatchingAlbums.map(item => [item['collectionId'], item])).values());
+                        result = uniqueAlbums;
                     } else {
                         notFoundOnThisDay = true;
                     }
@@ -2666,6 +2678,8 @@
                 let isArtistSearch = searchTerm.length > 0;
                 let retryCount = 0;
                 const MAX_RETRIES = 3;
+
+                state.gameMode = challengeId ? 'challenge' : onThisDay ? 'onThisDay' : isArtistSearch ? 'artist' : 'random';
 
                 const title = getTranslatedString('loadingNewGame');
                 let subtitle = isArtistSearch
@@ -2771,14 +2785,15 @@
                 state.isPaused = true;
                 state.time = 0;
                 state.moves = 0;
+                state.gameMode = null;
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
                 
                 // Responsive button handling
                 updateButtonAndTextLogic();
-                elements.restartGameBtnDesktop.style.display = 'none';
-                elements.restartGameBtnMobile.style.display = 'none';
+                elements.restartGameBtnDesktop.hidden = true;
+                elements.restartGameBtnMobile.hidden = true;
                 
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
@@ -2813,7 +2828,8 @@
                     elements.trackText.innerHTML = '';
                     return;
                 }
-                const dateText = formatFullDate(state.currentAlbum.releaseDate);
+                const dateFormat = state.gameMode === 'onThisDay' ? 'full' : 'year';
+                const dateText = formatReleaseDate(state.currentAlbum.releaseDate, dateFormat);
                 const artistText = dateText ? `${state.currentAlbum.artistName} (${dateText})` : state.currentAlbum.artistName;
                 elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${artistText}</p>`;
             }
@@ -2914,8 +2930,8 @@
                 // Responsive button handling
                 updateButtonAndTextLogic();
 
-                elements.restartGameBtnDesktop.style.display = 'inline-block';
-                elements.restartGameBtnMobile.style.display = 'inline-block';
+                elements.restartGameBtnDesktop.hidden = false;
+                elements.restartGameBtnMobile.hidden = false;
 
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
@@ -2928,12 +2944,13 @@
             
             async function animateTitle() {
                 const titleEl = elements.gameTitle;
-                if (!titleEl || titleEl.dataset.animated === "true") return;
-                
-                if(elements.footer.contains(titleEl)){
-                    titleEl.dataset.animated = "true";
+                if (!titleEl || titleEl.dataset.animated === "true") {
+                    renderStaticTitle(); // Ensure title is visible even if animation already ran
+                    return;
                 }
-
+                
+                titleEl.dataset.animated = "true";
+                
                 const text = "Puzzletunes";
                 titleEl.innerHTML = text.split('').map(letter => `<span>${letter === ' ' ? '&nbsp;' : letter}</span>`).join('');
                 const spans = Array.from(titleEl.children);
@@ -3156,8 +3173,8 @@
                         
                         // Responsive button handling
                         updateButtonAndTextLogic();
-                        elements.restartGameBtnDesktop.style.display = 'inline-block';
-                        elements.restartGameBtnMobile.style.display = 'inline-block';
+                        elements.restartGameBtnDesktop.hidden = false;
+                        elements.restartGameBtnMobile.hidden = false;
 
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
