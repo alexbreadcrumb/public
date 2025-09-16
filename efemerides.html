@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Efemérides de Artista</title>
+    <style>
+        :root {
+            --background: #121212;
+            --surface: #1e1e1e;
+            --primary: #1DB954;
+            --on-background: #FFFFFF;
+            --on-surface-secondary: #B3B3B3;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background);
+            color: var(--on-background);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: var(--primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        #artist-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #artist-input {
+            background-color: var(--surface);
+            border: 1px solid var(--on-surface-secondary);
+            border-radius: 50px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            color: var(--on-background);
+            min-width: 250px;
+        }
+        #artist-form button {
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #loading-spinner {
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .popup {
+            margin-top: 1.5rem;
+            background-color: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border-left: 5px solid var(--primary);
+            display: none;
+        }
+        .popup p {
+            margin: 0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0"
+  }
+}
+</script>
+</head>
+<body>
+
+    <h1>Test de Efemérides de Artista</h1>
+
+    <form id="artist-form">
+        <input type="text" id="artist-input" placeholder="Nombre del artista" required>
+        <button type="submit">Buscar Efeméride</button>
+    </form>
+
+    <div id="loading-spinner">Buscando...</div>
+
+    <div id="result-popup" class="popup">
+        <p id="result-text"></p>
+    </div>
+
+    <script type="module" src="./efemerides.tsx"></script>
+    <script>
+        const form = document.getElementById('artist-form');
+        const input = document.getElementById('artist-input');
+        const popup = document.getElementById('result-popup');
+        const resultText = document.getElementById('result-text');
+        const loading = document.getElementById('loading-spinner');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const artistName = input.value.trim();
+            if (!artistName) return;
+
+            popup.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const trivia = await window.fetchArtistTriviaForToday(artistName);
+
+                if (trivia) {
+                    resultText.textContent = trivia;
+                } else {
+                    resultText.textContent = `Sin resultados para "${artistName}" en la fecha de hoy.`;
+                }
+            } catch (error) {
+                console.error("Error en la prueba:", error);
+                resultText.textContent = `Ocurrió un error al buscar: ${error.message}`;
+            } finally {
+                loading.style.display = 'none';
+                popup.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
