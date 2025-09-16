@@ -20,6 +20,8 @@
             --primary-hover: #1ED760;
             --secondary: #8a2be2; /* Purple for "On this day" */
             --secondary-hover: #9932cc;
+            --tertiary: #2E77D0; /* Blue for "Next" button */
+            --tertiary-hover: #3E87E0;
             --on-background: #FFFFFF;
             --on-surface: #E0E0E0;
             --on-surface-secondary: #B3B3B3;
@@ -489,7 +491,7 @@
             gap: 0.5rem;
         }
 
-        #new-game-btn-desktop, #new-game-btn-mobile, #restart-game-btn-desktop, #restart-game-btn-mobile, #on-this-day-btn-desktop, #on-this-day-btn-mobile {
+        #new-game-btn-desktop, #new-game-btn-mobile, #restart-game-btn-desktop, #restart-game-btn-mobile, #on-this-day-btn-desktop, #on-this-day-btn-mobile, #next-album-btn-desktop, #next-album-btn-mobile {
             color: var(--background);
             font-weight: 700;
             border-radius: 50px;
@@ -524,6 +526,14 @@
         #restart-game-btn-desktop:hover, #restart-game-btn-mobile:hover {
             background-color: var(--primary);
             color: var(--background);
+        }
+
+        #next-album-btn-desktop, #next-album-btn-mobile {
+            background-color: var(--tertiary);
+            color: var(--on-background);
+        }
+        #next-album-btn-desktop:hover, #next-album-btn-mobile:hover {
+            background-color: var(--tertiary-hover);
         }
 
         @keyframes neon-pulse {
@@ -584,7 +594,7 @@
                 width: 100%;
                 max-width: 350px;
             }
-            .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop, .desktop-controls #on-this-day-btn-desktop {
+            .desktop-controls #artist-search-desktop, .desktop-controls #new-game-btn-desktop, .desktop-controls #restart-game-btn-desktop, .desktop-controls #on-this-day-btn-desktop, .desktop-controls #next-album-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -592,8 +602,8 @@
         }
         
         @media (max-height: 740px) {
-             #artist-search-mobile, #new-game-btn-mobile, #restart-game-btn-mobile, #on-this-day-btn-mobile,
-             #artist-search-desktop, #new-game-btn-desktop, #restart-game-btn-desktop, #on-this-day-btn-desktop {
+             #artist-search-mobile, #new-game-btn-mobile, #restart-game-btn-mobile, #on-this-day-btn-mobile, #next-album-btn-mobile,
+             #artist-search-desktop, #new-game-btn-desktop, #restart-game-btn-desktop, #on-this-day-btn-desktop, #next-album-btn-desktop {
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
                 font-size: 0.9rem;
@@ -1153,6 +1163,7 @@
                 <button id="on-this-day-btn-desktop" data-translate-key="onThisDayButton" hidden></button>
                 <button id="new-game-btn-desktop" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-desktop" data-translate-key="restartGame" hidden></button>
+                <button id="next-album-btn-desktop" data-translate-key="nextAlbumButton" hidden></button>
             </div>
         </div>
 
@@ -1191,6 +1202,7 @@
                 <button id="on-this-day-btn-mobile" data-translate-key="onThisDayButton" hidden></button>
                 <button id="new-game-btn-mobile" data-translate-key="newGame"></button>
                 <button id="restart-game-btn-mobile" data-translate-key="restartGame" hidden></button>
+                <button id="next-album-btn-mobile" data-translate-key="nextAlbumButton" hidden></button>
             </div>
         </div>
     </div>
@@ -1269,7 +1281,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.18</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.19</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1315,10 +1327,12 @@
                 newGameBtnDesktop: document.getElementById('new-game-btn-desktop'),
                 restartGameBtnDesktop: document.getElementById('restart-game-btn-desktop'),
                 onThisDayBtnDesktop: document.getElementById('on-this-day-btn-desktop'),
+                nextAlbumBtnDesktop: document.getElementById('next-album-btn-desktop'),
                 artistSearchMobile: document.getElementById('artist-search-mobile'),
                 newGameBtnMobile: document.getElementById('new-game-btn-mobile'),
                 restartGameBtnMobile: document.getElementById('restart-game-btn-mobile'),
                 onThisDayBtnMobile: document.getElementById('on-this-day-btn-mobile'),
+                nextAlbumBtnMobile: document.getElementById('next-album-btn-mobile'),
             };
 
             let state = {
@@ -1332,6 +1346,8 @@
                 gameInProgress: false,
                 isIdle: false, // For controlling the idle animation
                 gameMode: null, // 'random', 'artist', 'onThisDay', 'challenge'
+                artistAlbumQueue: [],
+                currentAlbumIndex: -1,
             };
 
             const PROXIES = [
@@ -1422,6 +1438,7 @@
                     randomButton: "Aleatorio",
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
+                    nextAlbumButton: "Siguiente...",
                     idleCallToActionWithOnThisDay: "Toca 'Un día como hoy' o 'Aleatorio' para iniciar una partida...",
                     idleCallToActionWithoutOnThisDay: "Toca 'Modo Aleatorio' para iniciar una partida..."
                 },
@@ -1498,6 +1515,7 @@
                     randomButton: "Random",
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
+                    nextAlbumButton: "Next...",
                     idleCallToActionWithOnThisDay: "Tap 'On This Day' or 'Random' to start a match...",
                     idleCallToActionWithoutOnThisDay: "Tap 'Random Mode' to start a match..."
                 },
@@ -1574,6 +1592,7 @@
                     randomButton: "Aleatório",
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
+                    nextAlbumButton: "Próximo...",
                     idleCallToActionWithOnThisDay: "Toque em 'Neste dia' ou 'Aleatório' para iniciar uma partida...",
                     idleCallToActionWithoutOnThisDay: "Toque em 'Modo Aleatório' para iniciar uma partida..."
                 },
@@ -1649,7 +1668,8 @@
                     noOnThisDayMusic: "Aucune musique trouvée sortie ce jour-là. Réessayez demain !",
                     randomButton: "Aléatoire",
                     randomModeButton: "Mode Aléatoire",
-                    artistModeButton: "Mode Artista",
+                    artistModeButton: "Mode Artiste",
+                    nextAlbumButton: "Suivant...",
                     idleCallToActionWithOnThisDay: "Appuyez sur 'Ce jour-là' ou 'Aléatoire' pour commencer une partie...",
                     idleCallToActionWithoutOnThisDay: "Appuyez sur 'Mode Aléatoire' pour commencer une partie..."
                 }
@@ -1726,6 +1746,10 @@
                 const newGameBtnMobile = elements.newGameBtnMobile;
                 const onThisDayBtnDesktop = elements.onThisDayBtnDesktop;
                 const onThisDayBtnMobile = elements.onThisDayBtnMobile;
+                const restartBtnDesktop = elements.restartGameBtnDesktop;
+                const restartBtnMobile = elements.restartGameBtnMobile;
+                const nextBtnDesktop = elements.nextAlbumBtnDesktop;
+                const nextBtnMobile = elements.nextAlbumBtnMobile;
 
                 const showOnThisDay = isEnabled && !searchTerm && (state.isIdle || !state.gameInProgress);
                 onThisDayBtnDesktop.hidden = !showOnThisDay;
@@ -1742,6 +1766,13 @@
                 
                 newGameBtnDesktop.innerHTML = getTranslatedString(newGameKey);
                 newGameBtnMobile.innerHTML = getTranslatedString(newGameKey);
+
+                restartBtnDesktop.hidden = !state.gameInProgress;
+                restartBtnMobile.hidden = !state.gameInProgress;
+
+                const showNextButton = state.gameMode === 'artist' && state.artistAlbumQueue.length > 0 && state.gameInProgress;
+                nextBtnDesktop.hidden = !showNextButton;
+                nextBtnMobile.hidden = !showNextButton;
                 
                 const cta = document.getElementById('idle-cta');
                 if (cta) {
@@ -1946,6 +1977,8 @@
                     album: state.currentAlbum,
                     gameInProgress: state.gameInProgress,
                     gameMode: state.gameMode,
+                    artistAlbumQueue: state.artistAlbumQueue,
+                    currentAlbumIndex: state.currentAlbumIndex
                 };
                 localStorage.setItem('puzzletunesGameState', JSON.stringify(gameState));
             }
@@ -1964,6 +1997,8 @@
                         state.currentAlbum = savedState.album;
                         state.gameInProgress = savedState.gameInProgress;
                         state.gameMode = savedState.gameMode || 'random';
+                        state.artistAlbumQueue = savedState.artistAlbumQueue || [];
+                        state.currentAlbumIndex = savedState.currentAlbumIndex || -1;
                         state.isPaused = true;
                         
                         const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
@@ -2202,8 +2237,7 @@
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 
                 // Responsive button handling
-                elements.restartGameBtnDesktop.hidden = true;
-                elements.restartGameBtnMobile.hidden = true;
+                updateButtonAndTextLogic();
                 
                 // Show final solved state
                 const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
@@ -2293,8 +2327,21 @@
                 if (newRank !== -1) {
                     setTimeout(() => showTopRecordNotification(newRank), 1200);
                 }
+                
+                // Check if there are more albums in the queue to show the "Next" button
+                if (state.gameMode === 'artist' && state.currentAlbumIndex < state.artistAlbumQueue.length -1) {
+                    elements.nextAlbumBtnDesktop.hidden = false;
+                    elements.nextAlbumBtnMobile.hidden = false;
+                } else {
+                    // If queue is finished or it wasn't artist mode, reset
+                    state.artistAlbumQueue = [];
+                    state.currentAlbumIndex = -1;
+                    elements.nextAlbumBtnDesktop.hidden = true;
+                    elements.nextAlbumBtnMobile.hidden = true;
+                }
 
-                clearGameState();
+
+                clearGameState(); // Clear state except for the artist queue
                 elements.audioPlayer.pause();
                 updateUI();
             }
@@ -2596,7 +2643,7 @@
                     }
                 };
                 
-                let result = null;
+                let resultAlbums = [];
                 let finalSuggestions = [];
                 let notFoundOnThisDay = false;
 
@@ -2627,76 +2674,53 @@
                     
                     if (allMatchingAlbums.length > 0) {
                         const uniqueAlbums = Array.from(new Map(allMatchingAlbums.map(item => [item['collectionId'], item])).values());
-                        result = uniqueAlbums;
+                        resultAlbums = uniqueAlbums;
                     } else {
                         notFoundOnThisDay = true;
                     }
 
                 } else if (isArtistSearch) {
-                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50&attribute=artistTerm`;
+                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=100&attribute=artistTerm`;
                     const { albums, suggestions } = await searchAndProcess(searchUrl);
-                    result = albums;
+                    resultAlbums = albums;
                     finalSuggestions = suggestions;
-                } else {
+                } else { // Random search
                      const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
                      const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=50`;
                      const { albums } = await searchAndProcess(searchUrl);
-                     result = albums;
+                     if (albums.length > 0) {
+                         resultAlbums = [albums[Math.floor(Math.random() * albums.length)]];
+                     }
                 }
 
-                if (!result || result.length === 0) {
-                    return { album: null, suggestions: finalSuggestions, notFound: notFoundOnThisDay };
+                if (!resultAlbums || resultAlbums.length === 0) {
+                    return { albums: [], suggestions: finalSuggestions, notFound: notFoundOnThisDay };
                 }
-
+                
                 const history = getAlbumHistory();
-                let uniqueAlbumArray = result.filter(album => !history.includes(album.collectionId));
+                let uniqueAlbumArray = resultAlbums.filter(album => !history.includes(album.collectionId));
                 
+                if (uniqueAlbumArray.length === 0 && resultAlbums.length > 0) {
+                     console.warn("All found albums are in recent history, using them anyway.");
+                     uniqueAlbumArray = resultAlbums;
+                }
+
                 if (uniqueAlbumArray.length === 0) {
-                     console.warn("All found albums are in recent history. Retrying search...");
-                     return { album: null, suggestions: finalSuggestions, retry: true };
+                    return { albums: [], suggestions: finalSuggestions, retry: true };
                 }
 
-                if (isArtistSearch) {
-                    const lowerSearchTerm = searchTerm.toLowerCase();
-                    const collabKeywords = [' & ', ' ft', ' feat', ' vs ', ' with '];
-                    const searchTermIsCollab = collabKeywords.some(kw => lowerSearchTerm.includes(kw));
-
-                    uniqueAlbumArray.sort((a, b) => {
-                        const lowerArtistA = a.artistName.toLowerCase();
-                        const lowerArtistB = b.artistName.toLowerCase();
-                        
-                        let scoreA = 0;
-                        let scoreB = 0;
-
-                        // Penalize if it's a collaboration and the user wasn't searching for one
-                        if (!searchTermIsCollab) {
-                            if (collabKeywords.some(kw => lowerArtistA.includes(kw))) scoreA += 10;
-                            if (collabKeywords.some(kw => lowerArtistB.includes(kw))) scoreB += 10;
-                        }
-                        
-                        // Prioritize albums where the artist name is a closer match
-                        if (lowerArtistA !== lowerSearchTerm) scoreA += 1;
-                        if (lowerArtistB !== lowerSearchTerm) scoreB += 1;
-                        if (!lowerArtistA.startsWith(lowerSearchTerm)) scoreA += 5;
-                        if (!lowerArtistB.startsWith(lowerSearchTerm)) scoreB += 5;
-
-                        if (scoreA !== scoreB) {
-                            return scoreA - scoreB;
-                        }
-
-                        // If scores are the same, sort by release date (newest first)
-                        return new Date(b.releaseDate) - new Date(a.releaseDate);
-                    });
-                } else {
-                    // For random or 'on this day' searches, just sort by date
-                    uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                // Sort ALL modes by date now for consistency, artist mode will have more to sort.
+                uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                
+                if(isArtistSearch) {
+                    return {
+                        albums: uniqueAlbumArray.slice(0, 15),
+                        suggestions: finalSuggestions
+                    };
                 }
-                
-                const selectionSize = Math.min(50, Math.ceil(uniqueAlbumArray.length * 0.6));
-                const newestAlbums = uniqueAlbumArray.slice(0, selectionSize);
-                
+
                 return {
-                    album: newestAlbums[Math.floor(Math.random() * newestAlbums.length)],
+                    albums: uniqueAlbumArray, // For random/onThisDay, return all found and sorted
                     suggestions: finalSuggestions
                 };
             }
@@ -2737,6 +2761,13 @@
 
                 state.gameMode = challengeId ? 'challenge' : onThisDay ? 'onThisDay' : isArtistSearch ? 'artist' : 'random';
 
+                // On new artist search, reset queue
+                if (state.gameMode === 'artist') {
+                    state.artistAlbumQueue = [];
+                    state.currentAlbumIndex = -1;
+                }
+                updateButtonAndTextLogic();
+
                 const title = getTranslatedString('loadingNewGame');
                 let subtitle = isArtistSearch
                     ? getTranslatedString('searchingForArtist', { searchTerm })
@@ -2761,13 +2792,13 @@
                 const attemptSearch = async () => {
                     if (challengeId) {
                         const album = await findAlbumById(challengeId);
-                        return { finalAlbum: album };
+                        return { finalAlbums: album ? [album] : [] };
                     }
 
-                    const { album, suggestions, retry, notFound } = await findAlbumWithMusic(searchTerm, isArtistSearch, onThisDay);
+                    const { albums, suggestions, retry, notFound } = await findAlbumWithMusic(searchTerm, isArtistSearch, onThisDay);
 
-                    if (album) {
-                        return { finalAlbum: album };
+                    if (albums && albums.length > 0) {
+                        return { finalAlbums: albums, suggestions: suggestions };
                     }
 
                     if (retry && retryCount < MAX_RETRIES) {
@@ -2779,8 +2810,8 @@
                         showOverlay(getTranslatedString('noOnThisDayMusic'));
                         return { error: true };
                     }
-
-                    if (isArtistSearch && !isFromSuggestion) {
+                    
+                    if (isArtistSearch && !isFromSuggestion && suggestions) {
                         const filteredSuggestions = [...new Set(suggestions)]
                             .map(name => ({ name, distance: calculateLevenshteinDistance(searchTerm.toLowerCase(), name.toLowerCase()) }))
                             .filter(item => item.distance < 4 && item.name.toLowerCase() !== searchTerm.toLowerCase())
@@ -2799,18 +2830,30 @@
                     return { error: true };
                 };
                 
-                const { finalAlbum, error } = await attemptSearch();
+                const { finalAlbums, error } = await attemptSearch();
                 
                 clearTimeout(loadingTimeout);
 
-                if (error || !finalAlbum) return;
+                if (error || !finalAlbums || finalAlbums.length === 0) return;
 
-                state.currentAlbum = finalAlbum;
-                
+                if (state.gameMode === 'artist') {
+                    state.artistAlbumQueue = finalAlbums;
+                    state.currentAlbumIndex = 0;
+                    loadGameWithAlbum(state.artistAlbumQueue[0]);
+                } else {
+                    // For random, 'on this day', or challenge modes, pick a random one from the results
+                    const albumToPlay = finalAlbums[Math.floor(Math.random() * finalAlbums.length)];
+                    loadGameWithAlbum(albumToPlay);
+                }
+            }
+            
+            async function loadGameWithAlbum(album) {
+                if (!album) return;
+                state.currentAlbum = album;
+
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
-                // Load image through proxy for color thief
-                const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
+                const proxiedImageUrl = `${PROXIES[0]}${album.artworkUrl.replace('100x100', '600x600')}`;
                 img.src = proxiedImageUrl;
                 
                 img.onload = () => {
@@ -2841,15 +2884,17 @@
                 state.isPaused = true;
                 state.time = 0;
                 state.moves = 0;
+                
+                if(state.gameMode !== 'artist') {
+                    state.artistAlbumQueue = [];
+                    state.currentAlbumIndex = -1;
+                }
                 state.gameMode = null;
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
                 
-                // Responsive button handling
                 updateButtonAndTextLogic();
-                elements.restartGameBtnDesktop.hidden = true;
-                elements.restartGameBtnMobile.hidden = true;
                 
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
@@ -2887,7 +2932,12 @@
                 const dateFormat = state.gameMode === 'onThisDay' ? 'full' : 'year';
                 const dateText = formatReleaseDate(state.currentAlbum.releaseDate, dateFormat);
                 const artistText = dateText ? `${state.currentAlbum.artistName} (${dateText})` : state.currentAlbum.artistName;
-                elements.trackText.innerHTML = `<h2>${state.currentAlbum.collectionName}</h2><p>${artistText}</p>`;
+
+                let albumName = state.currentAlbum.collectionName;
+                if(state.gameMode === 'artist' && state.artistAlbumQueue.length > 1) {
+                    albumName += ` (${state.currentAlbumIndex + 1}/${state.artistAlbumQueue.length})`
+                }
+                elements.trackText.innerHTML = `<h2>${albumName}</h2><p>${artistText}</p>`;
             }
 
             function playIntroAnimation() {
@@ -2983,11 +3033,7 @@
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
                 
-                // Responsive button handling
                 updateButtonAndTextLogic();
-
-                elements.restartGameBtnDesktop.hidden = false;
-                elements.restartGameBtnMobile.hidden = false;
 
                 updateTrackText();
                 updateTrackLinks(state.currentAlbum);
@@ -3227,10 +3273,7 @@
                         startTimer();
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         
-                        // Responsive button handling
                         updateButtonAndTextLogic();
-                        elements.restartGameBtnDesktop.hidden = false;
-                        elements.restartGameBtnMobile.hidden = false;
 
                         updateUI();
                         showOverlay(getTranslatedString('paused'));
@@ -3291,14 +3334,7 @@
 
             function resetGameFactory() {
                  if (confirm(getTranslatedString('resetConfirm'))) {
-                    localStorage.removeItem('puzzletunesGameState');
-                    localStorage.removeItem('puzzletunesHighScores');
-                    localStorage.removeItem('puzzletunesTotalPlaytime');
-                    localStorage.removeItem('puzzletunesPlayerName');
-                    localStorage.removeItem('puzzletunesGenres');
-                    localStorage.removeItem('puzzletunesLanguage');
-                    localStorage.removeItem('puzzletunesAlbumHistory');
-                    localStorage.removeItem('puzzletunesOnThisDay');
+                    localStorage.clear();
                     window.location.reload();
                 }
             }
@@ -3358,6 +3394,24 @@
                     prepareNewGame(false, null, onThisDay);
                 }
 
+                function handleNextAlbumClick() {
+                    if (state.gameMode !== 'artist' || state.artistAlbumQueue.length === 0) return;
+                    
+                    state.currentAlbumIndex++;
+                    
+                    // If queue is exhausted, trigger a fresh search for the same artist
+                    if (state.currentAlbumIndex >= state.artistAlbumQueue.length) {
+                        handleNewGameClick(false);
+                        return;
+                    }
+
+                    // Load the next album from the pre-fetched queue
+                    const nextAlbum = state.artistAlbumQueue[state.currentAlbumIndex];
+                    cleanupPreviousGameResources();
+                    state.gameMode = 'artist'; // Restore game mode after cleanup
+                    loadGameWithAlbum(nextAlbum);
+                }
+
                 desktopSearch.addEventListener('dblclick', () => { desktopSearch.value = ''; updateButtonAndTextLogic(); });
                 mobileSearch.addEventListener('dblclick', () => { mobileSearch.value = ''; updateButtonAndTextLogic(); });
 
@@ -3370,6 +3424,9 @@
                 elements.onThisDayBtnMobile.addEventListener('click', () => handleNewGameClick(true));
                 elements.restartGameBtnDesktop.addEventListener('click', restartCurrentGame);
                 elements.restartGameBtnMobile.addEventListener('click', restartCurrentGame);
+                elements.nextAlbumBtnDesktop.addEventListener('click', handleNextAlbumClick);
+                elements.nextAlbumBtnMobile.addEventListener('click', handleNextAlbumClick);
+
 
                 // Sync search input values
                 desktopSearch.addEventListener('input', () => mobileSearch.value = desktopSearch.value);
