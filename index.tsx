@@ -71,13 +71,17 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         });
 
         const triviaText = response.text.trim();
+        console.log(`Gemini response for '${artistName}':`, triviaText);
 
-        // 3. Validate the response BEFORE caching
-        const isInvalidResponse = triviaText === NO_EVENT_FLAG || 
-                                  triviaText.length < 15 || // Too short to be a meaningful sentence
-                                  !triviaText.toLowerCase().includes(artistName.split(' ')[0].toLowerCase()); // Must at least contain the artist's first name
+        // 3. Validate the response BEFORE caching.
+        // A valid response must NOT be the NO_EVENT_FLAG, must start with the expected prefix,
+        // and should contain at least the first name of the artist to be relevant.
+        const isValidResponse = triviaText !== NO_EVENT_FLAG &&
+                                triviaText.startsWith(expectedPrefix) &&
+                                triviaText.toLowerCase().includes(artistName.split(' ')[0].toLowerCase());
 
-        if (isInvalidResponse) {
+        if (!isValidResponse) {
+            console.log("Response deemed invalid by validation rules.");
             try {
                 localStorage.setItem(cacheKey, NO_EVENT_FLAG);
             } catch (error) {
