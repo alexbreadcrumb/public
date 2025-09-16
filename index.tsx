@@ -8,9 +8,10 @@ declare global {
 
 async function fetchArtistTriviaForToday(artistName: string): Promise<string | null> {
     const today = new Date();
-    const year = today.getUTCFullYear();
-    const month = today.getUTCMonth(); // 0-indexed
-    const day = today.getUTCDate();
+    // Use local date parts instead of UTC to align with the user's "today"
+    const year = today.getFullYear();
+    const month = today.getMonth(); // 0-indexed
+    const day = today.getDate();
     const cacheKey = `puzzletunesTrivia-${artistName.replace(/\s+/g, '-')}-${year}-${month + 1}-${day}`;
     const NO_EVENT_FLAG = "NO_EVENT";
 
@@ -35,7 +36,8 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
-        const monthName = today.toLocaleString(lang, { month: 'long', timeZone: 'UTC' });
+        // Get month name based on user's local timezone
+        const monthName = today.toLocaleString(lang, { month: 'long' });
 
         let prompt = `Search music history for a notable event for the artist "${artistName}" (like their birthday, the release of an iconic album or single, a memorable concert, or a milestone) that occurred on the exact date ${monthName} ${day} of any year. Respond with a single, concise sentence starting with "On this day...". If you find no specific event, reply only with "NO_EVENT".`;
         let expectedPrefix = "On this day...";
@@ -46,7 +48,7 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
                 expectedPrefix = "Un día como hoy...";
                 break;
             case 'pt':
-                prompt = `Pesquise na história da música por um evento notável para o artista "${artistName}" (como o aniversário dele, o lançamento de um álbum ou single icônico, um show memorável ou um marco) que ocorreu na data exata de ${day} de ${monthName} de qualquer ano. Responda com uma única frase concisa começando com "Neste dia...". Se você não encontrar nenhum evento específico, responda apenas com "NO_EVENT".`;
+                prompt = `Pesquise na história da música por um evento notável para o artista "${artistName}" (como o aniversário dele, o lançamento de um álbum ou single icônico, um show memorável ou um marco) que ocorreu na data exata de ${day} de ${monthName} de qualquer ano. Responda com una única frase concisa começando com "Neste dia...". Se você não encontrar nenhum evento específico, responda apenas com "NO_EVENT".`;
                 expectedPrefix = "Neste dia...";
                 break;
             case 'fr':
