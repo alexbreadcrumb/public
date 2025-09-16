@@ -1016,29 +1016,44 @@
         /* --- Trivia Popup --- */
         .trivia-popup {
             position: fixed;
-            top: 20%;
+            top: 50%;
             left: 50%;
-            transform: translate(-50%, -20px);
-            background-color: rgba(30, 30, 30, 0.85);
-            backdrop-filter: blur(10px);
+            transform: translate(-50%, calc(-50% - 20px));
+            background-color: rgba(30, 30, 30, 0.9);
+            backdrop-filter: blur(15px);
             color: var(--on-surface);
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px var(--shadow-color);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px var(--shadow-color);
             z-index: 2000;
             width: 90%;
-            max-width: 450px;
+            max-width: 400px;
             text-align: center;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             cursor: pointer;
-            border-left: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
         }
         .trivia-popup.visible {
             opacity: 1;
             visibility: visible;
-            transform: translate(-50%, 0);
+            transform: translate(-50%, -50%);
+        }
+        #trivia-popup-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            display: none; /* Hidden by default */
+        }
+        /* Show only if src is not empty */
+        #trivia-popup-image[src]:not([src=""]) {
+            display: block;
         }
         .trivia-popup p {
             margin: 0;
@@ -1101,6 +1116,7 @@
     </div>
 
     <div id="trivia-popup" class="trivia-popup">
+        <img id="trivia-popup-image" src="" alt="Imagen del artista">
         <p id="trivia-popup-text"></p>
     </div>
 
@@ -1230,7 +1246,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.32</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.33</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1274,6 +1290,7 @@
                 credits: document.getElementById('credits'),
                 triviaPopup: document.getElementById('trivia-popup'),
                 triviaPopupText: document.getElementById('trivia-popup-text'),
+                triviaPopupImage: document.getElementById('trivia-popup-image'),
 
                 // Responsive Controls
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
@@ -3117,6 +3134,13 @@
                 
                 // Show trivia popup
                 elements.triviaPopupText.textContent = triviaSentence;
+                if (artworks.length > 0) {
+                    elements.triviaPopupImage.src = artworks[0];
+                    elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
+                } else {
+                    elements.triviaPopupImage.src = '';
+                }
+
                 elements.triviaPopup.classList.add('visible');
                 document.body.addEventListener('click', () => {
                      elements.triviaPopup.classList.remove('visible');
