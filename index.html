@@ -825,63 +825,7 @@
         .genre-tag input:checked:hover + span {
              background-color: var(--primary-hover);
         }
-
-        .setting-switch {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            font-size: 1rem;
-            color: var(--on-surface);
-        }
-        .switch {
-          position: relative;
-          display: inline-block;
-          width: 60px;
-          height: 34px;
-        }
-        .switch input { 
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: #ccc;
-          transition: .4s;
-        }
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 26px;
-          width: 26px;
-          left: 4px;
-          bottom: 4px;
-          background-color: white;
-          transition: .4s;
-        }
-        input:checked + .slider {
-          background-color: var(--primary);
-        }
-        input:focus + .slider {
-          box-shadow: 0 0 1px var(--primary);
-        }
-        input:checked + .slider:before {
-          transform: translateX(26px);
-        }
-        .slider.round {
-          border-radius: 34px;
-        }
-        .slider.round:before {
-          border-radius: 50%;
-        }
         
-
         #total-playtime {
             text-align: center;
             margin-bottom: 1rem;
@@ -1075,7 +1019,8 @@
             top: 20%;
             left: 50%;
             transform: translate(-50%, -20px);
-            background-color: var(--surface);
+            background-color: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(10px);
             color: var(--on-surface);
             padding: 1rem 1.5rem;
             border-radius: 12px;
@@ -1131,13 +1076,6 @@
         }
 
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0"
-  }
-}
-</script>
 </head>
 <body>
     <audio id="audio-player" crossorigin="anonymous" loop playsinline></audio>
@@ -1269,13 +1207,6 @@
                                 <input type="text" id="edit-player-name-input">
                                 <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
                             </div>
-                            <div class="setting-switch" style="margin-top: 1.5rem;">
-                                <label for="trivia-toggle" data-translate-key="enableTriviaLabel"></label>
-                                <label class="switch">
-                                    <input type="checkbox" id="trivia-toggle">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
                         </div>
                         <div id="genres-sub-panel" class="options-sub-panel">
                             <h3 data-translate-key="favoriteGenresTitle"></h3>
@@ -1299,11 +1230,12 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.31</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.32</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script src="triviaData.js"></script>
     <script type="module" src="index.tsx"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1340,7 +1272,6 @@
                 optionsPanel: document.getElementById('options-panel'),
                 footer: document.getElementById('footer'),
                 credits: document.getElementById('credits'),
-                triviaToggle: document.getElementById('trivia-toggle'),
                 triviaPopup: document.getElementById('trivia-popup'),
                 triviaPopupText: document.getElementById('trivia-popup-text'),
 
@@ -1454,7 +1385,6 @@
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Siguiente...",
-                    enableTriviaLabel: "Mostrar datos curiosos del artista",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1525,7 +1455,6 @@
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
                     nextAlbumButton: "Next...",
-                    enableTriviaLabel: "Show 'On This Day' artist trivia",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1596,7 +1525,6 @@
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Próximo...",
-                    enableTriviaLabel: "Mostrar curiosidades do artista",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1667,7 +1595,6 @@
                     randomModeButton: "Mode Aléatoire",
                     artistModeButton: "Mode Artiste",
                     nextAlbumButton: "Suivant...",
-                    enableTriviaLabel: "Afficher les anecdotes sur l'artiste",
                 }
             };
 
@@ -2511,6 +2438,27 @@
                 elements.puzzleContainer.appendChild(overlay);
             }
             
+            async function fetchArtworksForArtist(artistName, count = 10) {
+                try {
+                    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=album&limit=50`;
+                    const response = await fetchWithProxyFallback(url);
+                    const data = await response.json();
+                    
+                    const artworks = data.results.map(item => item.artworkUrl100.replace('100x100', '300x300'));
+                    const uniqueArtworks = [...new Set(artworks)];
+                    
+                    // Shuffle
+                    for (let i = uniqueArtworks.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [uniqueArtworks[i], uniqueArtworks[j]] = [uniqueArtworks[j], uniqueArtworks[i]];
+                    }
+                    return uniqueArtworks.slice(0, count);
+                } catch (error) {
+                    console.error(`Failed to fetch artworks for ${artistName}:`, error);
+                    return [];
+                }
+            }
+
             async function fetchRandomArtworks(count) {
                  try {
                     const genre = ALL_GENRES[Math.floor(Math.random() * ALL_GENRES.length)];
@@ -2869,7 +2817,7 @@
                 };
             }
 
-            function playIntroAnimation() {
+            async function playIntroAnimation() {
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 elements.puzzleContainer.classList.add('intro-animation-active');
@@ -2897,30 +2845,8 @@
                     }, i * 100);
                 });
                 
-                setTimeout(async () => {
-                    if (getTriviaSetting() && state.currentAlbum?.artistName) {
-                        try {
-                            const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
-                            if (triviaText) {
-                                elements.triviaPopupText.textContent = triviaText;
-                                elements.triviaPopup.classList.add('visible');
-
-                                elements.triviaPopup.addEventListener('click', function handleTriviaClick() {
-                                    elements.triviaPopup.classList.remove('visible');
-                                    showStartButtonOverlay();
-                                    elements.triviaPopup.removeEventListener('click', handleTriviaClick);
-                                }, { once: true });
-
-                            } else {
-                                showStartButtonOverlay();
-                            }
-                        } catch (e) {
-                            console.error("Trivia fetch failed during intro, showing start button directly.", e);
-                            showStartButtonOverlay();
-                        }
-                    } else {
-                        showStartButtonOverlay();
-                    }
+                setTimeout(() => {
+                    showStartButtonOverlay();
                 }, (shuffledIndices.length * 100) + 800);
             }
 
@@ -3130,12 +3056,78 @@
                      }
                 }
             }
+            
+            async function setupThemedWelcome(eventsForToday) {
+                state.isIdle = true;
+
+                // Cycling logic for trivia
+                const today = new Date().toISOString().slice(0, 10);
+                let lastTriviaState = { date: '', index: -1 };
+                try {
+                    const stored = localStorage.getItem('puzzletunesLastTrivia');
+                    if (stored) lastTriviaState = JSON.parse(stored);
+                } catch (e) { /* ignore parsing errors */ }
+                
+                const nextIndex = (lastTriviaState.date === today) 
+                    ? (lastTriviaState.index + 1) % eventsForToday.length 
+                    : 0;
+                
+                localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
+                
+                const event = eventsForToday[nextIndex];
+                
+                const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
+                const descriptionKey = `description_${lang}`;
+                const description = event[descriptionKey] || event.description_es;
+                let triviaSentence = '';
+
+                switch (lang) {
+                    case 'pt': triviaSentence = `Neste dia, em ${event.year}, ${description}`; break;
+                    case 'fr': triviaSentence = `En ce jour, en ${event.year}, ${description}`; break;
+                    case 'en': triviaSentence = `On this day, in ${event.year}, ${description}`; break;
+                    default: triviaSentence = `Un día como hoy, en ${event.year}, ${description}`; break;
+                }
+                
+                const artworks = await fetchArtworksForArtist(event.artist);
+                
+                if (!state.isIdle || !artworks || artworks.length < 10) {
+                    await setupIdleAnimation(); // Fallback to random if fetch fails
+                    return;
+                }
+
+                // Setup themed UI
+                elements.puzzleContainer.classList.add('idle-mode');
+                const callToAction = document.createElement('div');
+                callToAction.className = 'idle-call-to-action';
+                callToAction.id = 'idle-cta';
+                elements.puzzleContainer.appendChild(callToAction);
+                
+                updateButtonAndTextLogic();
+
+                const backgroundLayers = elements.idleCollage.children;
+                artworks.forEach((url, i) => {
+                    if (backgroundLayers[i]) {
+                        backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                    }
+                });
+                elements.idleCollage.classList.add('visible');
+
+                animateTitle();
+                ghostSolverLoop(artworks);
+                
+                // Show trivia popup
+                elements.triviaPopupText.textContent = triviaSentence;
+                elements.triviaPopup.classList.add('visible');
+                document.body.addEventListener('click', () => {
+                     elements.triviaPopup.classList.remove('visible');
+                }, { once: true });
+            }
+
 
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
                 if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
-                    // Fallback if fetch fails or user starts game during fetch
                     showOverlay(getTranslatedString('startMessage'));
                     renderStaticTitle();
                     return;
@@ -3161,6 +3153,24 @@
                 ghostSolverLoop(allArtworks);
             }
             
+            async function initializeWelcomeScreen() {
+                const today = new Date();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                const day = today.getDate().toString().padStart(2, '0');
+                const todayKey = `${month}-${day}`;
+                
+                const eventsForToday = window.triviaData && window.triviaData[todayKey] && window.triviaData[todayKey].length > 0
+                    ? window.triviaData[todayKey]
+                    : null;
+
+                if (eventsForToday) {
+                    await setupThemedWelcome(eventsForToday);
+                } else {
+                    await setupIdleAnimation();
+                }
+            }
+
+
             async function initGame() {
                 if (!getPlayerName()) {
                     elements.playerNamePrompt.style.display = 'flex';
@@ -3174,7 +3184,6 @@
                 const challengeId = urlParams.get('challenge');
 
                 if (challengeId) {
-                    // Clear the URL to avoid re-triggering the challenge on reload
                     window.history.replaceState({}, document.title, window.location.pathname);
                     cleanupPreviousGameResources();
                     renderStaticTitle();
@@ -3220,7 +3229,7 @@
                      }
                 } else {
                     elements.gameTitle.innerHTML = '';
-                    setupIdleAnimation();
+                    await initializeWelcomeScreen();
                 }
             }
             
@@ -3360,21 +3369,6 @@
                 mobileSearch.addEventListener('input', () => desktopSearch.value = mobileSearch.value);
             }
             
-            // --- Trivia Feature Settings ---
-            function getTriviaSetting() {
-                const setting = localStorage.getItem('puzzletunesTriviaEnabled');
-                return setting === null ? true : setting === 'true'; // Default to true
-            }
-
-            function saveTriviaSetting(isEnabled) {
-                localStorage.setItem('puzzletunesTriviaEnabled', isEnabled);
-            }
-
-            elements.triviaToggle.addEventListener('change', (e) => {
-                saveTriviaSetting(e.target.checked);
-            });
-            // --- End Trivia Feature ---
-
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
                 if (tabBtn) switchTab(tabBtn.dataset.tab);
@@ -3452,8 +3446,7 @@
             elements.menuBtn.addEventListener('click', () => {
                 renderHighScores();
                 renderGenreSelector();
-                updatePlayerNameDisplay(); // Ensure name is current in edit field
-                elements.triviaToggle.checked = getTriviaSetting();
+                updatePlayerNameDisplay();
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
