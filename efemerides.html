@@ -20,7 +20,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             margin: 0;
             padding: 1rem;
@@ -67,7 +66,7 @@
             padding: 1rem 1.5rem;
             border-radius: 12px;
             width: 90%;
-            max-width: 450px;
+            max-width: 600px;
             text-align: center;
             border-left: 5px solid var(--primary);
             display: none;
@@ -76,6 +75,29 @@
             margin: 0;
             font-size: 1.1rem;
             line-height: 1.5;
+        }
+        .debug-container {
+            margin-top: 1rem;
+            background-color: #282c34;
+            padding: 1rem;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .debug-container h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1rem;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .debug-container pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #abb2bf;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
     </style>
 <script type="importmap">
@@ -97,6 +119,17 @@
 
     <div id="loading-spinner">Buscando...</div>
 
+    <div id="debug-info" style="display: none; width: 90%; max-width: 600px;">
+        <div class="debug-container">
+            <h3>Consulta a Gemini:</h3>
+            <pre id="prompt-display"></pre>
+        </div>
+        <div class="debug-container">
+            <h3>Respuesta de Gemini (JSON crudo):</h3>
+            <pre id="response-display"></pre>
+        </div>
+    </div>
+
     <div id="result-popup" class="popup">
         <p id="result-text"></p>
     </div>
@@ -109,6 +142,9 @@
         const popup = document.getElementById('result-popup');
         const resultText = document.getElementById('result-text');
         const loading = document.getElementById('loading-spinner');
+        const debugInfo = document.getElementById('debug-info');
+        const promptDisplay = document.getElementById('prompt-display');
+        const responseDisplay = document.getElementById('response-display');
 
         async function fetchArtistTriviaForToday(artistName) {
             const today = new Date();
@@ -132,7 +168,7 @@
                 if (!process.env.API_KEY) {
                     const msg = "Gemini API key not found in environment variables.";
                     console.error(msg);
-                    alert(msg); // Alert the user directly in the test page
+                    alert(msg);
                     return null;
                 }
                 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -177,6 +213,9 @@
                         sentenceConstructor = (data) => `Un día como hoy, en ${data.year}, ${data.description}.`;
                         break;
                 }
+                
+                // Display the prompt being sent
+                promptDisplay.textContent = `prompt: "${prompt}"\n\nsystemInstruction: "${systemInstruction}"`;
 
                 const response = await ai.models.generateContent({
                     model: "gemini-2.5-flash",
@@ -191,6 +230,14 @@
 
                 const jsonText = response.text.trim();
                 console.log(`Gemini JSON response for '${artistName}':`, jsonText);
+
+                // Display the raw response
+                try {
+                    const formattedJson = JSON.stringify(JSON.parse(jsonText), null, 2);
+                    responseDisplay.textContent = formattedJson;
+                } catch {
+                    responseDisplay.textContent = jsonText; // Show raw text if not valid JSON
+                }
 
                 let triviaData;
                 try {
@@ -232,6 +279,7 @@
 
             } catch (error) {
                 console.error(`Error fetching trivia for '${artistName}' from Gemini:`, error);
+                responseDisplay.textContent = `Error en la API: ${error.message}`;
                 return null;
             }
         }
@@ -242,7 +290,11 @@
             if (!artistName) return;
 
             popup.style.display = 'none';
+            debugInfo.style.display = 'none';
             loading.style.display = 'block';
+            promptDisplay.textContent = '';
+            responseDisplay.textContent = '';
+
 
             try {
                 const trivia = await fetchArtistTriviaForToday(artistName);
@@ -257,6 +309,7 @@
             } finally {
                 loading.style.display = 'none';
                 popup.style.display = 'block';
+                debugInfo.style.display = 'block';
             }
         });
     </script>
