@@ -1118,6 +1118,13 @@
         }
 
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0"
+  }
+}
+</script>
 </head>
 <body>
     <audio id="audio-player" crossorigin="anonymous" loop playsinline></audio>
@@ -1281,11 +1288,12 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.23</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.24</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script type="module" src="index.tsx"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const SIZE = 3;
@@ -2640,38 +2648,58 @@
                 
                 let resultAlbums = [];
                 let finalSuggestions = [];
-                let notFoundOnThisDay = false;
 
                 if (onThisDay) {
-                    const today = new Date();
-                    const todayMonth = today.getUTCMonth() + 1;
-                    const todayDate = today.getUTCDate();
+                    const geminiAlbums = await window.fetchOnThisDayAlbumsFromGemini();
+                    if (geminiAlbums.length === 0) {
+                        return { albums: [], suggestions: [], notFound: true };
+                    }
 
-                    const genresForOnThisDay = ALL_GENRES;
-                    const searchPromises = genresForOnThisDay.map(genre => {
-                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=50`;
-                        return searchAndProcess(searchUrl);
-                    });
+                    const searchItunesForSpecificAlbum = async (artist, albumName) => {
+                        const searchTerm = `${artist} ${albumName}`;
+                        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=album&limit=5`;
+                        const response = await fetchWithProxyFallback(url);
+                        const data = await response.json();
+                        // Find the most likely match
+                        const album = data.results.find(r => 
+                            r.artistName.toLowerCase() === artist.toLowerCase() && 
+                            r.collectionName.toLowerCase().startsWith(albumName.toLowerCase().substring(0, 10))
+                        );
+                        return album || (data.results.length > 0 ? data.results[0] : null);
+                    };
 
-                    const allResults = await Promise.all(searchPromises);
-                    let allMatchingAlbums = [];
-
-                    allResults.forEach(({ albums }) => {
-                        if (albums && albums.length > 0) {
-                            const matching = albums.filter(album => {
-                                if (!album.releaseDate) return false;
-                                const releaseDate = new Date(album.releaseDate);
-                                return releaseDate.getUTCMonth() + 1 === todayMonth && releaseDate.getUTCDate() === todayDate;
-                            });
-                            allMatchingAlbums.push(...matching);
-                        }
-                    });
+                    const itunesSearchPromises = geminiAlbums.map(album => 
+                        searchItunesForSpecificAlbum(album.artistName, album.albumName)
+                    );
                     
-                    if (allMatchingAlbums.length > 0) {
-                        const uniqueAlbums = Array.from(new Map(allMatchingAlbums.map(item => [item['collectionId'], item])).values());
-                        resultAlbums = uniqueAlbums;
-                    } else {
-                        notFoundOnThisDay = true;
+                    const foundAlbums = (await Promise.all(itunesSearchPromises)).filter(Boolean);
+
+                    if (foundAlbums.length > 0) {
+                         const processedAlbums = foundAlbums.map(album => ({
+                            artistName: album.artistName,
+                            collectionName: album.collectionName,
+                            artworkUrl: album.artworkUrl100,
+                            previewUrl: album.previewUrl, // This will be undefined, lookup needed
+                            trackViewUrl: album.collectionViewUrl,
+                            trackName: "Track Preview", // Placeholder
+                            releaseDate: album.releaseDate,
+                            collectionId: album.collectionId
+                         }));
+                         
+                        // Perform a single lookup for the first valid album to get a preview URL
+                        const firstAlbum = processedAlbums[0];
+                        const lookupUrl = `https://itunes.apple.com/lookup?id=${firstAlbum.collectionId}&entity=song`;
+                        const lookupResponse = await fetchWithProxyFallback(lookupUrl);
+                        const lookupData = await lookupResponse.json();
+                        const songWithPreview = lookupData.results.find(item => item.wrapperType === 'track' && item.previewUrl);
+                        
+                        if(songWithPreview) {
+                            firstAlbum.previewUrl = songWithPreview.previewUrl;
+                            firstAlbum.trackName = songWithPreview.trackName;
+                            resultAlbums = [firstAlbum];
+                        } else {
+                            resultAlbums = []; // No playable track found
+                        }
                     }
 
                 } else if (isArtistSearch) {
@@ -2689,7 +2717,7 @@
                 }
 
                 if (!resultAlbums || resultAlbums.length === 0) {
-                    return { albums: [], suggestions: finalSuggestions, notFound: notFoundOnThisDay };
+                    return { albums: [], suggestions: finalSuggestions, notFound: onThisDay };
                 }
                 
                 const history = getAlbumHistory();
