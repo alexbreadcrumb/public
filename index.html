@@ -1069,6 +1069,37 @@
             transition: background-color 0.2s ease;
         }
 
+        /* --- Trivia Popup --- */
+        .trivia-popup {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20px);
+            background-color: var(--surface);
+            color: var(--on-surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            z-index: 2000;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            cursor: pointer;
+            border-left: 5px solid var(--primary);
+        }
+        .trivia-popup.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+        .trivia-popup p {
+            margin: 0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
 
         footer {
             width: 100%;
@@ -1129,6 +1160,10 @@
             <input type="text" id="player-name-input" required minlength="1">
             <button type="submit" id="save-player-name-btn" data-translate-key="saveNameButton"></button>
         </form>
+    </div>
+
+    <div id="trivia-popup" class="trivia-popup">
+        <p id="trivia-popup-text"></p>
     </div>
 
     <div class="top-bar">
@@ -1264,7 +1299,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.29</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.30</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1306,6 +1341,8 @@
                 footer: document.getElementById('footer'),
                 credits: document.getElementById('credits'),
                 triviaToggle: document.getElementById('trivia-toggle'),
+                triviaPopup: document.getElementById('trivia-popup'),
+                triviaPopupText: document.getElementById('trivia-popup-text'),
 
                 // Responsive Controls
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
@@ -2865,18 +2902,15 @@
                         try {
                             const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
                             if (triviaText) {
-                                const triviaOverlay = document.createElement('div');
-                                triviaOverlay.className = 'overlay';
-                                triviaOverlay.style.cursor = 'pointer';
-                                triviaOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                                triviaOverlay.innerHTML = `<p style="font-size: 1.1rem; font-weight: 500;">${triviaText}</p>`;
-                                
-                                triviaOverlay.onclick = () => {
-                                    triviaOverlay.remove();
+                                elements.triviaPopupText.textContent = triviaText;
+                                elements.triviaPopup.classList.add('visible');
+
+                                elements.triviaPopup.addEventListener('click', function handleTriviaClick() {
+                                    elements.triviaPopup.classList.remove('visible');
                                     showStartButtonOverlay();
-                                };
-                                
-                                elements.puzzleContainer.appendChild(triviaOverlay);
+                                    elements.triviaPopup.removeEventListener('click', handleTriviaClick);
+                                }, { once: true });
+
                             } else {
                                 showStartButtonOverlay();
                             }
