@@ -1288,7 +1288,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.24</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.25</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2675,30 +2675,33 @@
                     const foundAlbums = (await Promise.all(itunesSearchPromises)).filter(Boolean);
 
                     if (foundAlbums.length > 0) {
-                         const processedAlbums = foundAlbums.map(album => ({
-                            artistName: album.artistName,
-                            collectionName: album.collectionName,
-                            artworkUrl: album.artworkUrl100,
-                            previewUrl: album.previewUrl, // This will be undefined, lookup needed
-                            trackViewUrl: album.collectionViewUrl,
-                            trackName: "Track Preview", // Placeholder
-                            releaseDate: album.releaseDate,
-                            collectionId: album.collectionId
-                         }));
-                         
-                        // Perform a single lookup for the first valid album to get a preview URL
-                        const firstAlbum = processedAlbums[0];
-                        const lookupUrl = `https://itunes.apple.com/lookup?id=${firstAlbum.collectionId}&entity=song`;
-                        const lookupResponse = await fetchWithProxyFallback(lookupUrl);
-                        const lookupData = await lookupResponse.json();
-                        const songWithPreview = lookupData.results.find(item => item.wrapperType === 'track' && item.previewUrl);
-                        
-                        if(songWithPreview) {
-                            firstAlbum.previewUrl = songWithPreview.previewUrl;
-                            firstAlbum.trackName = songWithPreview.trackName;
-                            resultAlbums = [firstAlbum];
-                        } else {
-                            resultAlbums = []; // No playable track found
+                        // Iterate through ALL found albums until we find one with a preview
+                        for (const album of foundAlbums) {
+                            const lookupUrl = `https://itunes.apple.com/lookup?id=${album.collectionId}&entity=song`;
+                            try {
+                                const lookupResponse = await fetchWithProxyFallback(lookupUrl);
+                                const lookupData = await lookupResponse.json();
+                                const songWithPreview = lookupData.results.find(item => item.wrapperType === 'track' && item.previewUrl);
+
+                                if (songWithPreview) {
+                                    // SUCCESS! We found a playable album.
+                                    const playableAlbum = {
+                                        artistName: album.artistName,
+                                        collectionName: album.collectionName,
+                                        artworkUrl: album.artworkUrl100,
+                                        previewUrl: songWithPreview.previewUrl,
+                                        trackViewUrl: album.collectionViewUrl || songWithPreview.trackViewUrl,
+                                        trackName: songWithPreview.trackName,
+                                        releaseDate: album.releaseDate,
+                                        collectionId: album.collectionId
+                                    };
+                                    resultAlbums = [playableAlbum]; // Set the result
+                                    break; // Exit the loop, we are done.
+                                }
+                                // If no preview, the loop continues to the next album.
+                            } catch (error) {
+                                console.warn(`Lookup failed for album ID ${album.collectionId}, skipping.`, error);
+                            }
                         }
                     }
 
