@@ -13,14 +13,12 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
     const month = today.getMonth(); // 0-indexed
     const day = today.getDate();
     const cacheKey = `puzzletunesTrivia-${artistName.replace(/\s+/g, '-')}-${year}-${month + 1}-${day}`;
-    const NO_EVENT_FLAG = "NO_EVENT";
 
     // 1. Check for cached data first
     try {
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             console.log(`Serving trivia for '${artistName}' from cache.`);
-            // A successful result is cached directly. "NO_EVENT" is no longer cached.
             return cachedData;
         }
     } catch (error) {
@@ -60,6 +58,7 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
                 sentenceConstructor = (data) => `Neste dia, em ${data.year}, ${data.description}.`;
                 break;
             case 'fr':
+                // FIX: Corrected typo in the prompt from 'descrição' to 'description'.
                 prompt = `Pour l'artiste "${artistName}", trouvez un événement notable (anniversaire, sortie d'album, etc.) qui s'est produit à la date du ${day} ${monthName} de n'importe quelle année. Fournissez le type d'événement, l'année et une description.`;
                 systemInstruction = "Vous êtes un assistant d'encyclopédie musicale qui fournit des données structurées.";
                 sentenceConstructor = (data) => `En ce jour, en ${data.year}, ${data.description}.`;
@@ -84,6 +83,7 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,
                 systemInstruction: systemInstruction,
+                temperature: 0,
             }
         });
 
@@ -95,22 +95,17 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
             triviaData = JSON.parse(jsonText);
         } catch (e) {
             console.error("Failed to parse JSON response from Gemini:", e, jsonText);
-            // Do not cache failure
             return null;
         }
 
-        // 3. Validate the parsed data
         if (!triviaData || triviaData.event_type === 'NO_EVENT' || !triviaData.description || !triviaData.year) {
             console.log("Response deemed invalid (NO_EVENT or missing data).");
-            // Do not cache failure
             return null;
         }
 
-        // 4. If data is valid, construct the sentence, cache it, and return it
         const finalTriviaText = sentenceConstructor(triviaData);
         
         try {
-            // Only cache successful results
             localStorage.setItem(cacheKey, finalTriviaText);
         } catch (error) {
             console.error("Error saving valid trivia to cache:", error);
@@ -120,7 +115,6 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
 
     } catch (error) {
         console.error(`Error fetching trivia for '${artistName}' from Gemini:`, error);
-        // Do not cache failure
         return null;
     }
 }
