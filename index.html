@@ -1281,7 +1281,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.19</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.20</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1770,7 +1770,15 @@
                 restartBtnDesktop.hidden = !state.gameInProgress;
                 restartBtnMobile.hidden = !state.gameInProgress;
 
-                const showNextButton = state.gameMode === 'artist' && state.artistAlbumQueue.length > 0 && state.gameInProgress;
+                // Corrected logic for the "Next..." button
+                const hasNextAlbumInQueue = state.gameMode === 'artist' 
+                                         && state.artistAlbumQueue.length > 0
+                                         && state.currentAlbumIndex < state.artistAlbumQueue.length - 1;
+
+                const isWinScreen = !state.gameInProgress && state.moves > 0;
+                
+                const showNextButton = hasNextAlbumInQueue && isWinScreen;
+
                 nextBtnDesktop.hidden = !showNextButton;
                 nextBtnMobile.hidden = !showNextButton;
                 
@@ -2236,10 +2244,6 @@
                 stopTimer();
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
                 
-                // Responsive button handling
-                updateButtonAndTextLogic();
-                
-                // Show final solved state
                 const boardState = Array.from({length: SIZE*SIZE}, (_, i) => i);
                 renderBoard(state.currentAlbum.artworkUrl, boardState);
                 
@@ -2247,6 +2251,8 @@
 
                 state.isPaused = true;
                 state.gameInProgress = false;
+                
+                updateButtonAndTextLogic();
 
                 const newRank = saveScore();
 
@@ -2328,20 +2334,12 @@
                     setTimeout(() => showTopRecordNotification(newRank), 1200);
                 }
                 
-                // Check if there are more albums in the queue to show the "Next" button
-                if (state.gameMode === 'artist' && state.currentAlbumIndex < state.artistAlbumQueue.length -1) {
-                    elements.nextAlbumBtnDesktop.hidden = false;
-                    elements.nextAlbumBtnMobile.hidden = false;
-                } else {
-                    // If queue is finished or it wasn't artist mode, reset
+                if (state.gameMode === 'artist' && state.currentAlbumIndex >= state.artistAlbumQueue.length - 1) {
                     state.artistAlbumQueue = [];
                     state.currentAlbumIndex = -1;
-                    elements.nextAlbumBtnDesktop.hidden = true;
-                    elements.nextAlbumBtnMobile.hidden = true;
                 }
 
-
-                clearGameState(); // Clear state except for the artist queue
+                clearGameState();
                 elements.audioPlayer.pause();
                 updateUI();
             }
