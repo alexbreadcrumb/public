@@ -1281,7 +1281,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.22</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.23</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1370,7 +1370,7 @@
                     pauseResumeTitle: "Pausar/Reanudar",
                     toggleSoundTitle: "Activar/Desactivar Sonido",
                     menuTitle: "Menú",
-                    highScoresTitle: "Mejores Tiempos",
+                    highScoresTitle: "Meores Tiempos",
                     languageTitle: "Idioma",
                     optionsTitle: "Opciones",
                     aboutTitle: "Acerca de",
@@ -2858,6 +2858,7 @@
                     
                     updateBackground(proxiedImageUrl);
                     hideOverlay();
+                    updateButtonAndTextLogic();
                     playIntroAnimation();
                 };
                 img.onerror = () => showOverlay(getTranslatedString('imageError'));
@@ -2881,8 +2882,6 @@
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
-                
-                updateButtonAndTextLogic();
                 
                 const cta = document.getElementById('idle-cta');
                 if (cta) cta.remove();
@@ -3384,17 +3383,17 @@
 
                 function handleNextAlbumClick() {
                     if (state.gameMode !== 'artist' || state.artistAlbumQueue.length === 0) return;
+
+                    // This button should be hidden on the last item, so this click shouldn't happen.
+                    // But as a safeguard, we check.
+                    if (state.currentAlbumIndex >= state.artistAlbumQueue.length - 1) {
+                        return;
+                    }
                     
                     state.currentAlbumIndex++;
                     
-                    if (state.currentAlbumIndex >= state.artistAlbumQueue.length) {
-                        handleNewGameClick(false);
-                        return;
-                    }
-
                     const nextAlbum = state.artistAlbumQueue[state.currentAlbumIndex];
                     cleanupPreviousGameResources();
-                    state.gameMode = 'artist'; // We must restore the game mode here after cleanup
                     loadGameWithAlbum(nextAlbum);
                 }
 
