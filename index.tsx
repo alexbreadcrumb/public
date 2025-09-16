@@ -37,20 +37,20 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
         const monthName = today.toLocaleString(lang, { month: 'long', timeZone: 'UTC' });
 
-        let prompt = `Search music history for an important event for the artist "${artistName}" that occurred on the exact date ${monthName} ${day} of any year. It could be a release, a key concert, or a milestone. Respond with a single, concise sentence starting with "On this day...". If there is absolutely nothing, reply only with "NO_EVENT".`;
+        let prompt = `Search music history for a notable event for the artist "${artistName}" (like the release of an iconic album or single, a memorable concert, or a milestone) that occurred on the exact date ${monthName} ${day} of any year. Respond with a single, concise sentence starting with "On this day...". If you find no specific event, reply only with "NO_EVENT".`;
         let expectedPrefix = "On this day...";
         
         switch (lang) {
             case 'es':
-                prompt = `Busca en la historia de la música un evento importante para el artista "${artistName}" que ocurriera exactamente en la fecha ${day} de ${monthName} de cualquier año. Puede ser un lanzamiento, un concierto clave o un hito. Responde con una sola frase concisa que empiece con "Un día como hoy...". Si no hay absolutamente nada, responde solo con "NO_EVENT".`;
+                prompt = `Busca en la historia de la música un hecho notable para el artista "${artistName}" (como el lanzamiento de un álbum o sencillo icónico, un concierto memorable, o un hito) que ocurriera exactamente en la fecha ${day} de ${monthName} de cualquier año. Responde con una sola frase concisa que empiece con "Un día como hoy...". Si no encuentras un evento específico, responde solo con "NO_EVENT".`;
                 expectedPrefix = "Un día como hoy...";
                 break;
             case 'pt':
-                prompt = `Pesquise na história da música por um evento importante para o artista "${artistName}" que ocorreu na data exata de ${day} de ${monthName} de qualquer ano. Pode ser um lançamento, um show importante ou um marco. Responda com uma única frase concisa começando com "Neste dia...". Se não houver absolutamente nada, responda apenas com "NO_EVENT".`;
+                prompt = `Pesquise na história da música por um evento notável para o artista "${artistName}" (como o lançamento de um álbum ou single icônico, um show memorável ou um marco) que ocorreu na data exata de ${day} de ${monthName} de qualquer ano. Responda com uma única frase concisa começando com "Neste dia...". Se você não encontrar nenhum evento específico, responda apenas com "NO_EVENT".`;
                 expectedPrefix = "Neste dia...";
                 break;
             case 'fr':
-                prompt = `Recherchez dans l'histoire de la musique un événement important pour l'artiste "${artistName}" qui s'est produit à la date exacte du ${day} ${monthName} de n'importe quelle année. Il peut s'agir d'une sortie, d'un concert clé ou d'un jalon. Répondez par une seule phrase concise commençant par "En ce jour...". S'il n'y a absolument rien, répondez uniquement par "NO_EVENT".`;
+                prompt = `Recherchez dans l'histoire de la musique un événement notable pour l'artiste "${artistName}" (comme la sortie d'un album ou single emblématique, un concert mémorable ou une étape importante) qui s'est produit à la date exacte du ${day} ${monthName} de n'importe quelle année. Répondez par une seule phrase concise commençant par "En ce jour...". Si vous ne trouvez aucun événement spécifique, répondez uniquement par "NO_EVENT".`;
                 expectedPrefix = "En ce jour...";
                 break;
         }
