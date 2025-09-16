@@ -14,12 +14,12 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
     const day = today.getDate();
     const cacheKey = `puzzletunesTrivia-${artistName.replace(/\s+/g, '-')}-${year}-${month + 1}-${day}`;
 
-    // 1. Check for cached data first
+    // 1. Check for cached data first (including negative cache)
     try {
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             console.log(`Serving trivia for '${artistName}' from cache.`);
-            return cachedData;
+            return cachedData === 'NO_EVENT' ? null : cachedData;
         }
     } catch (error) {
         console.error("Error reading trivia from cache:", error);
@@ -53,24 +53,23 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
 
         switch (lang) {
             case 'pt':
-                prompt = `Para o artista "${artistName}", encontre um evento notável (aniversário, lançamento de álbum, etc.) que ocorreu na data ${day} de ${monthName} de qualquer ano. Forneça o tipo de evento, ano e uma descrição.`;
+                prompt = `Qual é o evento musical mais notável para o artista "${artistName}" na data de ${day} de ${monthName}? Considere aniversários ou lançamentos. Responda com dados estruturados.`;
                 systemInstruction = "Você é um assistente de enciclopédia musical que fornece dados estruturados.";
                 sentenceConstructor = (data) => `Neste dia, em ${data.year}, ${data.description}.`;
                 break;
             case 'fr':
-                // FIX: Corrected typo in the prompt from 'descrição' to 'description'.
-                prompt = `Pour l'artiste "${artistName}", trouvez un événement notable (anniversaire, sortie d'album, etc.) qui s'est produit à la date du ${day} ${monthName} de n'importe quelle année. Fournissez le type d'événement, l'année et une description.`;
+                prompt = `Quel est l'événement musical le plus notable pour l'artiste "${artistName}" à la date du ${day} ${monthName} ? Considérez les anniversaires ou les sorties. Répondez avec des données structurées.`;
                 systemInstruction = "Vous êtes un assistant d'encyclopédie musicale qui fournit des données structurées.";
                 sentenceConstructor = (data) => `En ce jour, en ${data.year}, ${data.description}.`;
                 break;
             case 'en':
-                prompt = `For the artist "${artistName}", find a notable event (birthday, album release, etc.) that occurred on the date ${monthName} ${day} of any year. Provide the event type, year, and a description.`;
+                prompt = `What is the most notable musical event for the artist "${artistName}" on the date ${monthName} ${day}? Consider birthdays or releases. Respond with structured data.`;
                 systemInstruction = "You are a musical encyclopedia assistant providing structured data.";
                 sentenceConstructor = (data) => `On this day, in ${data.year}, ${data.description}.`;
                 break;
             case 'es':
             default:
-                prompt = `Para el artista "${artistName}", busca un evento notable (su cumpleaños, lanzamiento de álbum o canción, aniversario de fallecimiento, primer concierto, rol en una película, etc.) que ocurrió en la fecha ${day} de ${monthName} de cualquier año. Proporciona el tipo de evento, el año y una descripción concisa.`;
+                prompt = `¿Cuál es la efeméride musical más notable para el artista "${artistName}" en la fecha ${day} de ${monthName}? Considera cumpleaños o lanzamientos. Responde con los datos estructurados.`;
                 systemInstruction = "Eres un asistente de enciclopedia musical que proporciona datos estructurados.";
                 sentenceConstructor = (data) => `Un día como hoy, en ${data.year}, ${data.description}.`;
                 break;
@@ -97,9 +96,24 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
             console.error("Failed to parse JSON response from Gemini:", e, jsonText);
             return null;
         }
+        
+        if (!triviaData || !triviaData.event_type || !triviaData.description) {
+            console.log("Response is malformed or missing key data.", triviaData);
+            return null; 
+        }
 
-        if (!triviaData || triviaData.event_type === 'NO_EVENT' || !triviaData.description || !triviaData.year) {
-            console.log("Response deemed invalid (NO_EVENT or missing data).");
+        if (triviaData.event_type === 'NO_EVENT') {
+            console.log(`Gemini confirmed NO_EVENT for '${artistName}' today.`);
+            try {
+                localStorage.setItem(cacheKey, 'NO_EVENT');
+            } catch (error) {
+                console.error("Error saving NO_EVENT to cache:", error);
+            }
+            return null;
+        }
+        
+        if (!triviaData.year || triviaData.year === 0) {
+            console.log(`Response for '${artistName}' is missing a valid year. Discarding.`, triviaData);
             return null;
         }
 
