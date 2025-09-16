@@ -1264,7 +1264,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.28</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.29</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1988,14 +1988,7 @@
             }
 
             function onPieceClick(clickedIndex) {
-                if (state.isPaused) {
-                    // If a trivia overlay exists, the first click should dismiss it.
-                    const triviaOverlay = elements.puzzleContainer.querySelector('.overlay');
-                    if(triviaOverlay) {
-                        triviaOverlay.remove();
-                    }
-                    return;
-                };
+                if (state.isPaused) return;
 
                 const emptyPiece = state.pieces.find(p => p.isEmpty);
                 const clickedPiece = state.pieces.find(p => p.currentIndex === clickedIndex);
@@ -2813,6 +2806,32 @@
                 elements.trackText.innerHTML = `<h2>${albumName}</h2><p>${artistText}</p>`;
             }
 
+            function showStartButtonOverlay() {
+                const startOverlay = document.createElement('div');
+                startOverlay.className = 'overlay';
+                startOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                const startButton = document.createElement('button');
+                startButton.id = 'start-game-btn';
+                startButton.textContent = getTranslatedString('startButton');
+                startOverlay.appendChild(startButton);
+                elements.puzzleContainer.appendChild(startOverlay);
+
+                startButton.onclick = () => {
+                    startOverlay.remove();
+                    elements.puzzleContainer.classList.add('swirl-animation');
+                    setTimeout(async () => {
+                        elements.puzzleContainer.classList.remove('swirl-animation', 'intro-animation-active');
+                        elements.puzzleContainer.style.opacity = '0';
+                        await startNewGame();
+                        requestAnimationFrame(() => {
+                            elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
+                            elements.puzzleContainer.style.opacity = '1';
+                            setTimeout(() => { elements.puzzleContainer.style.transition = ''; elements.puzzleContainer.style.opacity = ''; }, 400);
+                        });
+                    }, 800);
+                };
+            }
+
             function playIntroAnimation() {
                 elements.puzzleContainer.innerHTML = '';
                 elements.puzzleContainer.classList.remove('animated-gradient-border');
@@ -2841,42 +2860,34 @@
                     }, i * 100);
                 });
                 
-                setTimeout(() => {
-                    const startOverlay = document.createElement('div');
-                    startOverlay.className = 'overlay';
-                    startOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                    const startButton = document.createElement('button');
-                    startButton.id = 'start-game-btn';
-                    startButton.textContent = getTranslatedString('startButton');
-                    startOverlay.appendChild(startButton);
-                    elements.puzzleContainer.appendChild(startOverlay);
-
-                    startButton.onclick = async () => {
-                        startOverlay.remove();
-                        elements.puzzleContainer.classList.add('swirl-animation');
-                        setTimeout(async () => {
-                            elements.puzzleContainer.classList.remove('swirl-animation', 'intro-animation-active');
-                            elements.puzzleContainer.style.opacity = '0';
-                            await startNewGame();
-                            requestAnimationFrame(() => {
-                                elements.puzzleContainer.style.transition = 'opacity 0.4s ease';
-                                elements.puzzleContainer.style.opacity = '1';
-                                setTimeout(() => { elements.puzzleContainer.style.transition = ''; elements.puzzleContainer.style.opacity = ''; }, 400);
-                            });
-                        }, 800);
-                    };
+                setTimeout(async () => {
+                    if (getTriviaSetting() && state.currentAlbum?.artistName) {
+                        try {
+                            const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
+                            if (triviaText) {
+                                const triviaOverlay = document.createElement('div');
+                                triviaOverlay.className = 'overlay';
+                                triviaOverlay.style.cursor = 'pointer';
+                                triviaOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                                triviaOverlay.innerHTML = `<p style="font-size: 1.1rem; font-weight: 500;">${triviaText}</p>`;
+                                
+                                triviaOverlay.onclick = () => {
+                                    triviaOverlay.remove();
+                                    showStartButtonOverlay();
+                                };
+                                
+                                elements.puzzleContainer.appendChild(triviaOverlay);
+                            } else {
+                                showStartButtonOverlay();
+                            }
+                        } catch (e) {
+                            console.error("Trivia fetch failed during intro, showing start button directly.", e);
+                            showStartButtonOverlay();
+                        }
+                    } else {
+                        showStartButtonOverlay();
+                    }
                 }, (shuffledIndices.length * 100) + 800);
-            }
-
-            function displayTriviaOverlay(text) {
-                const overlay = document.createElement('div');
-                overlay.className = 'overlay';
-                overlay.style.cursor = 'pointer';
-                // When an overlay is present, clicking any piece will just dismiss it.
-                // This is handled in onPieceClick.
-                overlay.innerHTML = `<p style="font-size: 1.1rem; font-weight: 500;">${text}</p>`;
-                
-                elements.puzzleContainer.appendChild(overlay);
             }
 
             async function startNewGame() {
@@ -2887,7 +2898,6 @@
                 
                 addAlbumToHistory(state.currentAlbum.collectionId);
 
-                // Create and render the board FIRST.
                 let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let emptyPosition = SIZE * SIZE - 1;
                 
@@ -2912,26 +2922,6 @@
                     boardState[p.currentIndex] = p.originalIndex;
                 });
                 renderBoard(imageUrl, boardState);
-
-                // Now, fetch and display trivia on top of the rendered board, if enabled.
-                if (getTriviaSetting()) {
-                    try {
-                        // Pause the game while the trivia is displayed
-                        state.isPaused = true;
-                        const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
-                        if (triviaText) {
-                            displayTriviaOverlay(triviaText);
-                        } else {
-                            // If no trivia, unpause immediately
-                            state.isPaused = false;
-                        }
-                    } catch(e) {
-                        console.error("Trivia fetch failed, continuing without it.", e);
-                        state.isPaused = false; // Ensure game is playable on error
-                    }
-                } else {
-                    state.isPaused = false;
-                }
                 
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
