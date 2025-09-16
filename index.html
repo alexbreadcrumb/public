@@ -1269,7 +1269,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.16</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.17</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2557,22 +2557,39 @@
                                     trackViewUrl: song.trackViewUrl,
                                     trackName: song.trackName,
                                     releaseDate: song.releaseDate,
-                                    collectionId: song.collectionId,
-                                    songs: []
+                                    collectionId: song.collectionId
                                 };
                             }
-                            acc[song.collectionId].songs.push(song);
                             return acc;
                         }, {});
                         
-                        // Filter out compilations
-                        const singleArtistAlbums = Object.values(albumsByCollection).filter(album => {
-                            if (album.songs.length === 0) return false;
-                            const firstArtist = album.songs[0].artistName;
-                            return album.songs.every(song => song.artistName === firstArtist);
+                        const potentialAlbums = Object.values(albumsByCollection);
+
+                        const verificationPromises = potentialAlbums.map(async (album) => {
+                            try {
+                                const lookupUrl = `https://itunes.apple.com/lookup?id=${album.collectionId}&entity=song`;
+                                const lookupResponse = await fetchWithProxyFallback(lookupUrl);
+                                const lookupData = await lookupResponse.json();
+
+                                if (lookupData.resultCount > 1) {
+                                    const tracks = lookupData.results.filter(item => item.wrapperType === 'track');
+                                    if (tracks.length > 0) {
+                                        const mainArtistName = album.artistName;
+                                        const isCompilation = tracks.some(track => track.artistName !== mainArtistName);
+                                        return !isCompilation;
+                                    }
+                                }
+                                return true;
+                            } catch (e) {
+                                console.warn(`Verification failed for album ${album.collectionId}, assuming it's valid.`, e);
+                                return true;
+                            }
                         });
 
-                        return { albums: singleArtistAlbums, suggestions };
+                        const verificationResults = await Promise.all(verificationPromises);
+                        const verifiedAlbums = potentialAlbums.filter((_, index) => verificationResults[index]);
+                        
+                        return { albums: verifiedAlbums, suggestions };
                     } catch (error) {
                         console.error('Error in searchAndProcess:', error);
                         return { albums: [], suggestions: [] };
@@ -2590,7 +2607,7 @@
 
                     const genresForOnThisDay = ALL_GENRES;
                     const searchPromises = genresForOnThisDay.map(genre => {
-                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                        const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=50`;
                         return searchAndProcess(searchUrl);
                     });
 
@@ -2616,13 +2633,13 @@
                     }
 
                 } else if (isArtistSearch) {
-                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=200&attribute=artistTerm`;
+                    const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=50&attribute=artistTerm`;
                     const { albums, suggestions } = await searchAndProcess(searchUrl);
                     result = albums;
                     finalSuggestions = suggestions;
                 } else {
                      const genre = genresToSearch[Math.floor(Math.random() * genresToSearch.length)];
-                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=200`;
+                     const searchUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genre)}&entity=song&limit=50`;
                      const { albums } = await searchAndProcess(searchUrl);
                      result = albums;
                 }
