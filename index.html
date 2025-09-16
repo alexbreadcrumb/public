@@ -832,6 +832,7 @@
             align-items: center;
             padding: 0.5rem 0;
             font-size: 1rem;
+            color: var(--on-surface);
         }
         .switch {
           position: relative;
@@ -1233,6 +1234,13 @@
                                 <input type="text" id="edit-player-name-input">
                                 <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
                             </div>
+                            <div class="setting-switch" style="margin-top: 1.5rem;">
+                                <label for="trivia-toggle" data-translate-key="enableTriviaLabel"></label>
+                                <label class="switch">
+                                    <input type="checkbox" id="trivia-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
                         <div id="genres-sub-panel" class="options-sub-panel">
                             <h3 data-translate-key="favoriteGenresTitle"></h3>
@@ -1256,7 +1264,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.27</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.28</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1297,6 +1305,7 @@
                 optionsPanel: document.getElementById('options-panel'),
                 footer: document.getElementById('footer'),
                 credits: document.getElementById('credits'),
+                triviaToggle: document.getElementById('trivia-toggle'),
 
                 // Responsive Controls
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
@@ -1408,6 +1417,7 @@
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Siguiente...",
+                    enableTriviaLabel: "Mostrar datos curiosos del artista",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1478,6 +1488,7 @@
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
                     nextAlbumButton: "Next...",
+                    enableTriviaLabel: "Show 'On This Day' artist trivia",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1548,6 +1559,7 @@
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Próximo...",
+                    enableTriviaLabel: "Mostrar curiosidades do artista",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1618,6 +1630,7 @@
                     randomModeButton: "Mode Aléatoire",
                     artistModeButton: "Mode Artiste",
                     nextAlbumButton: "Suivant...",
+                    enableTriviaLabel: "Afficher les anecdotes sur l'artiste",
                 }
             };
 
@@ -1939,7 +1952,7 @@
                 const container = elements.puzzleContainer;
                 
                 // Optimized clear
-                const piecesToRemove = container.querySelectorAll('.puzzle-piece');
+                const piecesToRemove = container.querySelectorAll('.puzzle-piece, .overlay');
                 piecesToRemove.forEach(p => p.remove());
 
                 if (!imageUrl || !boardState) return;
@@ -1975,7 +1988,14 @@
             }
 
             function onPieceClick(clickedIndex) {
-                if (state.isPaused) return;
+                if (state.isPaused) {
+                    // If a trivia overlay exists, the first click should dismiss it.
+                    const triviaOverlay = elements.puzzleContainer.querySelector('.overlay');
+                    if(triviaOverlay) {
+                        triviaOverlay.remove();
+                    }
+                    return;
+                };
 
                 const emptyPiece = state.pieces.find(p => p.isEmpty);
                 const clickedPiece = state.pieces.find(p => p.currentIndex === clickedIndex);
@@ -2852,35 +2872,22 @@
                 const overlay = document.createElement('div');
                 overlay.className = 'overlay';
                 overlay.style.cursor = 'pointer';
+                // When an overlay is present, clicking any piece will just dismiss it.
+                // This is handled in onPieceClick.
                 overlay.innerHTML = `<p style="font-size: 1.1rem; font-weight: 500;">${text}</p>`;
-                
-                overlay.addEventListener('click', () => {
-                    overlay.remove();
-                }, { once: true });
                 
                 elements.puzzleContainer.appendChild(overlay);
             }
 
             async function startNewGame() {
-                // clearGameState() is now called on button click, not here.
                 state.time = 0;
                 state.moves = 0;
                 state.isPaused = false;
-                state.isMuted = true;
                 state.gameInProgress = true;
                 
                 addAlbumToHistory(state.currentAlbum.collectionId);
 
-                // Fetch trivia in the background, but await it before showing board
-                try {
-                    const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
-                    if (triviaText) {
-                        displayTriviaOverlay(triviaText);
-                    }
-                } catch(e) {
-                    console.error("Trivia fetch failed, continuing without it.", e);
-                }
-
+                // Create and render the board FIRST.
                 let board = Array.from({ length: SIZE * SIZE }, (_, i) => i);
                 let emptyPosition = SIZE * SIZE - 1;
                 
@@ -2905,6 +2912,26 @@
                     boardState[p.currentIndex] = p.originalIndex;
                 });
                 renderBoard(imageUrl, boardState);
+
+                // Now, fetch and display trivia on top of the rendered board, if enabled.
+                if (getTriviaSetting()) {
+                    try {
+                        // Pause the game while the trivia is displayed
+                        state.isPaused = true;
+                        const triviaText = await window.fetchArtistTriviaForToday(state.currentAlbum.artistName);
+                        if (triviaText) {
+                            displayTriviaOverlay(triviaText);
+                        } else {
+                            // If no trivia, unpause immediately
+                            state.isPaused = false;
+                        }
+                    } catch(e) {
+                        console.error("Trivia fetch failed, continuing without it.", e);
+                        state.isPaused = false; // Ensure game is playable on error
+                    }
+                } else {
+                    state.isPaused = false;
+                }
                 
                 startTimer();
                 elements.puzzleContainer.classList.add('animated-gradient-border');
@@ -2915,7 +2942,11 @@
                 updateTrackLinks(state.currentAlbum);
                 elements.audioPlayer.src = state.currentAlbum.previewUrl;
                 elements.audioBtn.disabled = true;
+
+                // Mute state is handled by the user, but we set it to true initially for new games.
+                state.isMuted = true;
                 elements.audioPlayer.muted = true;
+
                 updateUI();
                 saveGameState();
             }
@@ -3305,6 +3336,20 @@
                 mobileSearch.addEventListener('input', () => desktopSearch.value = mobileSearch.value);
             }
             
+            // --- Trivia Feature Settings ---
+            function getTriviaSetting() {
+                const setting = localStorage.getItem('puzzletunesTriviaEnabled');
+                return setting === null ? true : setting === 'true'; // Default to true
+            }
+
+            function saveTriviaSetting(isEnabled) {
+                localStorage.setItem('puzzletunesTriviaEnabled', isEnabled);
+            }
+
+            elements.triviaToggle.addEventListener('change', (e) => {
+                saveTriviaSetting(e.target.checked);
+            });
+            // --- End Trivia Feature ---
 
             elements.menuModal.addEventListener('click', (e) => {
                 const tabBtn = e.target.closest('.tab-btn');
@@ -3349,6 +3394,10 @@
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
+                    // Don't unpause if trivia is showing
+                    const triviaOverlay = elements.puzzleContainer.querySelector('.overlay');
+                    if(triviaOverlay && !triviaOverlay.querySelector('.win-stats')) return;
+
                     hideOverlay();
                     startTimer();
                     elements.puzzleContainer.classList.add('animated-gradient-border');
@@ -3380,6 +3429,7 @@
                 renderHighScores();
                 renderGenreSelector();
                 updatePlayerNameDisplay(); // Ensure name is current in edit field
+                elements.triviaToggle.checked = getTriviaSetting();
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
