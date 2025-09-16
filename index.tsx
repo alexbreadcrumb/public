@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 declare global {
     interface Window {
@@ -27,8 +27,8 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         console.error("Error reading trivia from cache:", error);
     }
 
-    // 2. If no cache, fetch from Gemini
-    console.log(`Fetching trivia for '${artistName}' from Gemini API.`);
+    // 2. If no cache, fetch from Gemini using a structured JSON approach
+    console.log(`Fetching structured trivia for '${artistName}' from Gemini API.`);
     try {
         if (!process.env.API_KEY) {
             console.error("Gemini API key not found in environment variables.");
@@ -37,28 +37,43 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
-        // Get month name based on user's local timezone
         const monthName = today.toLocaleString(lang, { month: 'long' });
 
-        let prompt = `Search music history for a notable event for the artist "${artistName}" (like their birthday, the release of an iconic album or single, a memorable concert, or a milestone) that occurred on the exact date ${monthName} ${day} of any year. Respond with a single, concise sentence starting with "On this day...". If you find no specific event, reply only with "NO_EVENT".`;
-        let expectedPrefix = "On this day...";
-        let systemInstruction = `You are a musical encyclopedia assistant. Your answers must be a single, concise sentence. You must strictly follow the output format requested in the prompt.`;
-        
+        const responseSchema = {
+            type: Type.OBJECT,
+            properties: {
+                event_type: { type: Type.STRING, description: "Type of event (e.g., Birthday, Release, Anniversary) or 'NO_EVENT'." },
+                description: { type: Type.STRING, description: "A concise description of the event (e.g., 'the singer Marc Anthony was born')." },
+                year: { type: Type.INTEGER, description: "The year the event occurred." }
+            },
+            required: ['event_type', 'description', 'year']
+        };
+
+        let prompt = '';
+        let systemInstruction = '';
+        let sentenceConstructor: (data: { year: number; description: string }) => string;
+
         switch (lang) {
-            case 'es':
-                prompt = `Busca en la historia de la música un hecho notable para el artista "${artistName}" (como su cumpleaños, el lanzamiento de un álbum o sencillo icónico, un concierto memorable, o un hito) que ocurriera exactamente en la fecha ${day} de ${monthName} de cualquier año. Responde con una sola frase concisa que empiece con "Un día como hoy...". Si no encuentras un evento específico, responde solo con "NO_EVENT".`;
-                expectedPrefix = "Un día como hoy...";
-                systemInstruction = "Eres un asistente de enciclopedia musical. Tus respuestas deben ser una única frase concisa. Debes seguir estrictamente el formato de salida solicitado en el prompt.";
-                break;
             case 'pt':
-                prompt = `Pesquise na história da música por um evento notável para o artista "${artistName}" (como o aniversário dele, o lançamento de um álbum ou single icônico, um show memorável ou um marco) que ocorreu na data exata de ${day} de ${monthName} de qualquer ano. Responda com una única frase concisa começando com "Neste dia...". Se você não encontrar nenhum evento específico, responda apenas com "NO_EVENT".`;
-                expectedPrefix = "Neste dia...";
-                systemInstruction = "Você é um assistente de enciclopédia musical. Suas respostas devem ser uma única frase concisa. Você deve seguir estritamente o formato de saída solicitado no prompt.";
+                prompt = `Para o artista "${artistName}", encontre um evento notável (aniversário, lançamento de álbum, etc.) que ocorreu na data ${day} de ${monthName} de qualquer ano. Forneça o tipo de evento, ano e uma descrição.`;
+                systemInstruction = "Você é um assistente de enciclopédia musical que fornece dados estruturados.";
+                sentenceConstructor = (data) => `Neste dia, em ${data.year}, ${data.description}.`;
                 break;
             case 'fr':
-                prompt = `Recherchez dans l'histoire de la musique un événement notable pour l'artiste "${artistName}" (comme son anniversaire, la sortie d'un album ou single emblématique, un concert mémorable ou une étape importante) qui s'est produit à la date exacte du ${day} ${monthName} de n'importe quelle année. Répondez par une seule phrase concise commençant par "En ce jour...". Si vous ne trouvez aucun événement spécifique, répondez uniquement par "NO_EVENT".`;
-                expectedPrefix = "En ce jour...";
-                systemInstruction = "Vous êtes un assistant d'encyclopédie musicale. Vos réponses doivent être une seule phrase concise. Vous devez suivre strictement le format de sortie demandé dans le prompt.";
+                prompt = `Pour l'artiste "${artistName}", trouvez un événement notable (anniversaire, sortie d'album, etc.) qui s'est produit à la date du ${day} ${monthName} de n'importe quelle année. Fournissez le type d'événement, l'année et une description.`;
+                systemInstruction = "Vous êtes un assistant d'encyclopédie musicale qui fournit des données structurées.";
+                sentenceConstructor = (data) => `En ce jour, en ${data.year}, ${data.description}.`;
+                break;
+            case 'en':
+                prompt = `For the artist "${artistName}", find a notable event (birthday, album release, etc.) that occurred on the date ${monthName} ${day} of any year. Provide the event type, year, and a description.`;
+                systemInstruction = "You are a musical encyclopedia assistant providing structured data.";
+                sentenceConstructor = (data) => `On this day, in ${data.year}, ${data.description}.`;
+                break;
+            case 'es':
+            default:
+                prompt = `Para el artista "${artistName}", busca un evento notable (su cumpleaños, lanzamiento de álbum o canción, aniversario de fallecimiento, primer concierto, rol en una película, etc.) que ocurrió en la fecha ${day} de ${monthName} de cualquier año. Proporciona el tipo de evento, el año y una descripción concisa.`;
+                systemInstruction = "Eres un asistente de enciclopedia musical que proporciona datos estructurados.";
+                sentenceConstructor = (data) => `Un día como hoy, en ${data.year}, ${data.description}.`;
                 break;
         }
 
@@ -66,42 +81,44 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
                 systemInstruction: systemInstruction,
             }
         });
 
-        const triviaText = response.text.trim();
-        console.log(`Gemini response for '${artistName}':`, triviaText);
+        const jsonText = response.text.trim();
+        console.log(`Gemini JSON response for '${artistName}':`, jsonText);
 
-        // 3. Validate the response BEFORE caching.
-        // A valid response must NOT be the NO_EVENT_FLAG, must start with the expected prefix,
-        // and should contain at least the first name of the artist to be relevant.
-        const isValidResponse = triviaText !== NO_EVENT_FLAG &&
-                                triviaText.startsWith(expectedPrefix) &&
-                                triviaText.toLowerCase().includes(artistName.split(' ')[0].toLowerCase());
-
-        if (!isValidResponse) {
-            console.log("Response deemed invalid by validation rules.");
-            try {
-                localStorage.setItem(cacheKey, NO_EVENT_FLAG);
-            } catch (error) {
-                console.error("Error saving NO_EVENT flag to cache:", error);
-            }
+        let triviaData;
+        try {
+            triviaData = JSON.parse(jsonText);
+        } catch (e) {
+            console.error("Failed to parse JSON response from Gemini:", e, jsonText);
+            localStorage.setItem(cacheKey, NO_EVENT_FLAG);
             return null;
         }
 
-        // 4. If response is valid, cache it and return it
+        // 3. Validate the parsed data
+        if (!triviaData || triviaData.event_type === 'NO_EVENT' || !triviaData.description || !triviaData.year) {
+            console.log("Response deemed invalid (NO_EVENT or missing data).");
+            localStorage.setItem(cacheKey, NO_EVENT_FLAG);
+            return null;
+        }
+
+        // 4. If data is valid, construct the sentence, cache it, and return it
+        const finalTriviaText = sentenceConstructor(triviaData);
+        
         try {
-            localStorage.setItem(cacheKey, triviaText);
+            localStorage.setItem(cacheKey, finalTriviaText);
         } catch (error) {
             console.error("Error saving valid trivia to cache:", error);
         }
         
-        return triviaText;
+        return finalTriviaText;
 
     } catch (error) {
         console.error(`Error fetching trivia for '${artistName}' from Gemini:`, error);
-        // Cache a failure to avoid repeated failed calls
         try {
             localStorage.setItem(cacheKey, NO_EVENT_FLAG);
         } catch (cacheError) {
