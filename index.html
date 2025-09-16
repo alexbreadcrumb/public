@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1282,7 +1281,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.21</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.22</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1771,12 +1770,10 @@
                 restartBtnDesktop.hidden = !state.gameInProgress;
                 restartBtnMobile.hidden = !state.gameInProgress;
 
-                // Corrected logic for the "Next..." button
                 const hasNextAlbumInQueue = state.gameMode === 'artist' 
                                          && state.artistAlbumQueue.length > 0
                                          && state.currentAlbumIndex < state.artistAlbumQueue.length - 1;
 
-                // Show the button if we are in artist mode with more albums in the queue, AND a game is not currently in progress.
                 const showNextButton = hasNextAlbumInQueue && !state.gameInProgress;
 
                 nextBtnDesktop.hidden = !showNextButton;
@@ -2759,11 +2756,10 @@
 
                 state.gameMode = challengeId ? 'challenge' : onThisDay ? 'onThisDay' : isArtistSearch ? 'artist' : 'random';
 
-                // On new artist search, reset queue
-                if (state.gameMode === 'artist') {
-                    state.artistAlbumQueue = [];
-                    state.currentAlbumIndex = -1;
-                }
+                // On ANY new game search, reset the old artist queue.
+                state.artistAlbumQueue = [];
+                state.currentAlbumIndex = -1;
+                
                 updateButtonAndTextLogic();
 
                 const title = getTranslatedString('loadingNewGame');
@@ -2837,7 +2833,6 @@
                 if (state.gameMode === 'artist') {
                     state.artistAlbumQueue = finalAlbums;
                     state.currentAlbumIndex = 0;
-                    updateButtonAndTextLogic();
                     loadGameWithAlbum(state.artistAlbumQueue[0]);
                 } else {
                     // For random, 'on this day', or challenge modes, pick a random one from the results
@@ -2883,12 +2878,6 @@
                 state.isPaused = true;
                 state.time = 0;
                 state.moves = 0;
-                
-                if(state.gameMode !== 'artist') {
-                    state.artistAlbumQueue = [];
-                    state.currentAlbumIndex = -1;
-                }
-                state.gameMode = null;
                 
                 elements.idleCollage.classList.remove('visible');
                 elements.puzzleContainer.classList.remove('animated-gradient-border', 'idle-mode');
@@ -3398,16 +3387,14 @@
                     
                     state.currentAlbumIndex++;
                     
-                    // If queue is exhausted, trigger a fresh search for the same artist
                     if (state.currentAlbumIndex >= state.artistAlbumQueue.length) {
                         handleNewGameClick(false);
                         return;
                     }
 
-                    // Load the next album from the pre-fetched queue
                     const nextAlbum = state.artistAlbumQueue[state.currentAlbumIndex];
                     cleanupPreviousGameResources();
-                    state.gameMode = 'artist'; // Restore game mode after cleanup
+                    state.gameMode = 'artist'; // We must restore the game mode here after cleanup
                     loadGameWithAlbum(nextAlbum);
                 }
 
