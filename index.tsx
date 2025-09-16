@@ -36,7 +36,18 @@ async function fetchOnThisDayAlbumsFromGemini(): Promise<{ artistName: string; a
         const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
         const monthName = today.toLocaleString(lang, { month: 'long', timeZone: 'UTC' });
         
-        const prompt = `Give me a list of 5 notable and popular music albums released on ${monthName} ${day}.`;
+        let prompt = `Give me a list of 5 notable and popular music albums released on ${monthName} ${day}. Prioritize globally known artists.`; // Default English
+        switch (lang) {
+            case 'es':
+                prompt = `Dame una lista de 5 álbumes de música notables y populares lanzados un ${day} de ${monthName}. Prioriza artistas conocidos globalmente.`;
+                break;
+            case 'pt':
+                prompt = `Me dê uma lista de 5 álbuns de música notáveis e populares lançados em ${day} de ${monthName}. Priorize artistas conhecidos globalmente.`;
+                break;
+            case 'fr':
+                prompt = `Donnez-moi une liste de 5 albums de musique notables et populaires sortis le ${day} ${monthName}. Privilégiez les artistes de renommée mondiale.`;
+                break;
+        }
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
