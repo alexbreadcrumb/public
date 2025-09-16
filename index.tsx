@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 declare global {
@@ -21,7 +20,8 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             console.log(`Serving trivia for '${artistName}' from cache.`);
-            return cachedData === NO_EVENT_FLAG ? null : cachedData;
+            // A successful result is cached directly. "NO_EVENT" is no longer cached.
+            return cachedData;
         }
     } catch (error) {
         console.error("Error reading trivia from cache:", error);
@@ -95,14 +95,14 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
             triviaData = JSON.parse(jsonText);
         } catch (e) {
             console.error("Failed to parse JSON response from Gemini:", e, jsonText);
-            localStorage.setItem(cacheKey, NO_EVENT_FLAG);
+            // Do not cache failure
             return null;
         }
 
         // 3. Validate the parsed data
         if (!triviaData || triviaData.event_type === 'NO_EVENT' || !triviaData.description || !triviaData.year) {
             console.log("Response deemed invalid (NO_EVENT or missing data).");
-            localStorage.setItem(cacheKey, NO_EVENT_FLAG);
+            // Do not cache failure
             return null;
         }
 
@@ -110,6 +110,7 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
         const finalTriviaText = sentenceConstructor(triviaData);
         
         try {
+            // Only cache successful results
             localStorage.setItem(cacheKey, finalTriviaText);
         } catch (error) {
             console.error("Error saving valid trivia to cache:", error);
@@ -119,11 +120,7 @@ async function fetchArtistTriviaForToday(artistName: string): Promise<string | n
 
     } catch (error) {
         console.error(`Error fetching trivia for '${artistName}' from Gemini:`, error);
-        try {
-            localStorage.setItem(cacheKey, NO_EVENT_FLAG);
-        } catch (cacheError) {
-            console.error("Error saving NO_EVENT flag to cache after a fetch error:", cacheError);
-        }
+        // Do not cache failure
         return null;
     }
 }
