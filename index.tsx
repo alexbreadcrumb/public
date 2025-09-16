@@ -1,104 +1,79 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 declare global {
     interface Window {
-        fetchOnThisDayAlbumsFromGemini: () => Promise<{ artistName: string; albumName: string; }[]>;
+        fetchArtistTriviaForToday: (artistName: string) => Promise<string | null>;
     }
 }
 
-async function fetchOnThisDayAlbumsFromGemini(): Promise<{ artistName: string; albumName: string; }[]> {
+async function fetchArtistTriviaForToday(artistName: string): Promise<string | null> {
     const today = new Date();
     const year = today.getUTCFullYear();
     const month = today.getUTCMonth(); // 0-indexed
     const day = today.getUTCDate();
-    const cacheKey = `puzzletunesOnThisDay-${year}-${month + 1}-${day}`;
+    const cacheKey = `puzzletunesTrivia-${artistName.replace(/\s+/g, '-')}-${year}-${month + 1}-${day}`;
+    const NO_EVENT_FLAG = "NO_EVENT";
 
     // 1. Check for cached data first
     try {
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
-            console.log("Serving 'On This Day' from cache.");
-            return JSON.parse(cachedData);
+            console.log(`Serving trivia for '${artistName}' from cache.`);
+            return cachedData === NO_EVENT_FLAG ? null : cachedData;
         }
     } catch (error) {
-        console.error("Error reading from cache:", error);
+        console.error("Error reading trivia from cache:", error);
     }
 
     // 2. If no cache, fetch from Gemini
-    console.log("Fetching 'On This Day' from Gemini API.");
+    console.log(`Fetching trivia for '${artistName}' from Gemini API.`);
     try {
         if (!process.env.API_KEY) {
             console.error("Gemini API key not found in environment variables.");
-            return [];
+            return null;
         }
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
         const monthName = today.toLocaleString(lang, { month: 'long', timeZone: 'UTC' });
-        
-        let prompt = `Give me a list of 5 notable and popular music albums released on ${monthName} ${day}. Prioritize globally known artists.`; // Default English
+
+        let prompt = `Is there a notable musical event (album/single release, famous concert, significant news) for the artist "${artistName}" that happened on ${monthName} ${day}? Give a concise, single-sentence summary starting with "On this day...". If no notable event is found, reply with only the exact text: NO_EVENT`;
         switch (lang) {
             case 'es':
-                prompt = `Dame una lista de 5 álbumes de música notables y populares lanzados un ${day} de ${monthName}. Prioriza artistas conocidos globalmente.`;
+                prompt = `¿Hubo algún evento musical notable (lanzamiento de álbum/sencillo, concierto famoso, noticia significativa) para el artista "${artistName}" que haya ocurrido un ${day} de ${monthName}? Dame un resumen conciso en una sola frase que comience con "Un día como hoy...". Si no encuentras ningún evento notable, responde únicamente con el texto exacto: NO_EVENT`;
                 break;
             case 'pt':
-                prompt = `Me dê uma lista de 5 álbuns de música notáveis e populares lançados em ${day} de ${monthName}. Priorize artistas conhecidos globalmente.`;
+                prompt = `Houve algum evento musical notável (lançamento de álbum/single, show famoso, notícia significativa) para o artista "${artistName}" que aconteceu em ${day} de ${monthName}? Dê-me um resumo conciso de uma única frase começando com "Neste dia...". Se nenhum evento notável for encontrado, responda apenas com o texto exato: NO_EVENT`;
                 break;
             case 'fr':
-                prompt = `Donnez-moi une liste de 5 albums de musique notables et populaires sortis le ${day} ${monthName}. Privilégiez les artistes de renommée mondiale.`;
+                prompt = `Y a-t-il eu un événement musical notable (sortie d'album/single, concert célèbre, nouvelle importante) pour l'artiste "${artistName}" qui s'est produit le ${day} ${monthName} ? Donnez-moi un résumé concis en une seule phrase commençant par "En ce jour...". Si aucun événement notable n'est trouvé, répondez uniquement avec le texte exact : NO_EVENT`;
                 break;
         }
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        albums: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    artistName: {
-                                        type: Type.STRING,
-                                        description: "The name of the artist or band."
-                                    },
-                                    albumName: {
-                                        type: Type.STRING,
-                                        description: "The name of the album."
-                                    }
-                                },
-                                required: ["artistName", "albumName"]
-                            }
-                        }
-                    },
-                    required: ["albums"]
-                },
-            },
         });
 
-        const jsonString = response.text.trim();
-        const parsed = JSON.parse(jsonString);
+        const triviaText = response.text.trim();
 
-        if (parsed && Array.isArray(parsed.albums)) {
-            // 3. Save the new data to cache
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify(parsed.albums));
-            } catch (error) {
-                console.error("Error saving to cache:", error);
-            }
-            return parsed.albums;
+        // 3. Save the new data to cache
+        try {
+            localStorage.setItem(cacheKey, triviaText);
+        } catch (error) {
+            console.error("Error saving trivia to cache:", error);
+        }
+        
+        if (triviaText === NO_EVENT_FLAG || triviaText.length < 10) { // Also filter out very short/empty responses
+            return null;
         }
 
-        return [];
+        return triviaText;
 
     } catch (error) {
-        console.error("Error fetching 'On This Day' albums from Gemini:", error);
-        return [];
+        console.error(`Error fetching trivia for '${artistName}' from Gemini:`, error);
+        return null;
     }
 }
 
-window.fetchOnThisDayAlbumsFromGemini = fetchOnThisDayAlbumsFromGemini;
+window.fetchArtistTriviaForToday = fetchArtistTriviaForToday;
