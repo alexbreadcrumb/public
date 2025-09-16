@@ -1269,7 +1269,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.17</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.18</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -2656,7 +2656,41 @@
                      return { album: null, suggestions: finalSuggestions, retry: true };
                 }
 
-                uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                if (isArtistSearch) {
+                    const lowerSearchTerm = searchTerm.toLowerCase();
+                    const collabKeywords = [' & ', ' ft', ' feat', ' vs ', ' with '];
+                    const searchTermIsCollab = collabKeywords.some(kw => lowerSearchTerm.includes(kw));
+
+                    uniqueAlbumArray.sort((a, b) => {
+                        const lowerArtistA = a.artistName.toLowerCase();
+                        const lowerArtistB = b.artistName.toLowerCase();
+                        
+                        let scoreA = 0;
+                        let scoreB = 0;
+
+                        // Penalize if it's a collaboration and the user wasn't searching for one
+                        if (!searchTermIsCollab) {
+                            if (collabKeywords.some(kw => lowerArtistA.includes(kw))) scoreA += 10;
+                            if (collabKeywords.some(kw => lowerArtistB.includes(kw))) scoreB += 10;
+                        }
+                        
+                        // Prioritize albums where the artist name is a closer match
+                        if (lowerArtistA !== lowerSearchTerm) scoreA += 1;
+                        if (lowerArtistB !== lowerSearchTerm) scoreB += 1;
+                        if (!lowerArtistA.startsWith(lowerSearchTerm)) scoreA += 5;
+                        if (!lowerArtistB.startsWith(lowerSearchTerm)) scoreB += 5;
+
+                        if (scoreA !== scoreB) {
+                            return scoreA - scoreB;
+                        }
+
+                        // If scores are the same, sort by release date (newest first)
+                        return new Date(b.releaseDate) - new Date(a.releaseDate);
+                    });
+                } else {
+                    // For random or 'on this day' searches, just sort by date
+                    uniqueAlbumArray.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+                }
                 
                 const selectionSize = Math.min(50, Math.ceil(uniqueAlbumArray.length * 0.6));
                 const newestAlbums = uniqueAlbumArray.slice(0, selectionSize);
