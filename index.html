@@ -1317,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.38</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.39</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3197,24 +3197,27 @@
                     case 'en': triviaSentence = `On this day, in ${event.year}, ${description}`; break;
                     default: triviaSentence = `Un día como hoy, en ${event.year}, ${description}`; break;
                 }
-                
-                const artworks = await fetchArtworksForArtist(event.artist);
-                
-                if (!state.isIdle) return;
 
+                // Show the popup immediately with text.
                 elements.triviaPopupText.textContent = triviaSentence;
-                if (artworks.length > 0) {
-                    elements.triviaPopupImage.src = artworks[0];
-                    elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
-                } else {
-                    elements.triviaPopupImage.src = '';
-                }
+                elements.triviaPopupImage.src = ''; // Ensure no old image is visible
                 elements.triviaPopup.classList.add('visible');
                 document.body.addEventListener('click', () => {
                      elements.triviaPopup.classList.remove('visible');
                 }, { once: true });
+                
+                // Fetch artworks to progressively enhance the UI.
+                const artworks = await fetchArtworksForArtist(event.artist);
+                
+                // If the game is no longer idle (e.g., user started a game), stop.
+                if (!state.isIdle) return;
 
                 if (artworks.length > 0) {
+                    // We have artworks, so add the artist image to the popup
+                    // and set up the themed background/animation.
+                    elements.triviaPopupImage.src = artworks[0];
+                    elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
+
                     elements.puzzleContainer.classList.add('idle-mode');
                     const callToAction = document.createElement('div');
                     callToAction.className = 'idle-call-to-action';
@@ -3231,10 +3234,8 @@
                     animateTitle();
                     ghostSolverLoop(artworks);
                 } else {
-                    // If we can't find artworks for the themed welcome,
-                    // don't fall back to the full random idle animation,
-                    // as it might fail and cover our trivia popup.
-                    // Just show a simple start message on the puzzle board.
+                    // No artworks found. The text popup is already visible.
+                    // Just show a generic start message on the puzzle board.
                     showOverlay(getTranslatedString('startMessage'));
                     animateTitle();
                 }
@@ -3244,7 +3245,7 @@
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
-                if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
+                if (!state.isIdle || !allArtworks || allArtworks.length < 1) {
                     showOverlay(getTranslatedString('startMessage'));
                     renderStaticTitle();
                     return;
@@ -3314,7 +3315,7 @@
                     return;
                 }
                 
-                if (loadGameState() && state.gameInProgress) {
+                if (loadGameState()) { // Simplified condition
                     const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -3326,28 +3327,24 @@
                             const palette = colorThief.getPalette(img, 5);
                             palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         } catch(e) { console.error("ColorThief failed on load:", e); }
+                        
                         updateBackground(proxiedImageUrl);
                         const boardState = Array(SIZE*SIZE).fill(0);
                         state.pieces.forEach(p => {
                            boardState[p.currentIndex] = p.originalIndex;
                         });
                         renderBoard(proxiedImageUrl, boardState);
-
-                        // Don't start the timer automatically, respect the saved 'isPaused' state which is true on load.
-                        if (!state.isPaused) {
-                           startTimer();
-                        } else {
-                           elements.timer.textContent = formatTime(state.time);
+                        
+                        if (state.gameInProgress) {
+                            elements.puzzleContainer.classList.add('animated-gradient-border');
+                            showOverlay(getTranslatedString('paused'));
                         }
-                        
-                        elements.puzzleContainer.classList.add('animated-gradient-border');
-                        
-                        updateButtonAndTextLogic();
 
+                        updateButtonAndTextLogic();
                         updateUI();
-                        showOverlay(getTranslatedString('paused'));
                         updateTrackText();
                         updateTrackLinks(state.currentAlbum);
+
                         if (state.currentAlbum.previewUrl) {
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
                         }
