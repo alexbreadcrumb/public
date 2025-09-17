@@ -592,7 +592,7 @@
             }
         }
         
-        /* --- MODERN RESPONSIVE MODAL STYLES --- */
+        /* --- RESPONSIVE MODAL: MOBILE-FIRST TABS, DESKTOP SIDE-NAV --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -617,119 +617,102 @@
             position: relative;
         }
         
-        /* Mobile-first: Fullscreen modal */
+        /* Mobile-first: Fullscreen with tabs */
         .modal-content {
             width: 100%;
             height: 100%;
-            max-width: 100vw;
-            max-height: 100vh;
             border-radius: 0;
-            transform: translateX(100%);
-            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
         .modal-overlay.visible .modal-content {
-            transform: translateX(0);
+             opacity: 1;
+             transform: scale(1);
         }
 
-        .modal-view-container {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .modal-view {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--surface);
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-            visibility: hidden;
-        }
-        .modal-view.active {
-            transform: translateX(0);
-            visibility: visible;
-        }
-        .modal-view.parent-view {
-            transform: translateX(-30%);
-        }
-
-        .modal-header, .modal-subheader {
+        .modal-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 1rem 1.5rem;
             flex-shrink: 0;
             border-bottom: 1px solid var(--surface-light);
         }
-        .modal-header h2, .modal-subheader h2 {
+        .modal-header h2 {
             margin: 0;
             font-size: 1.25rem;
             color: var(--on-surface);
-            flex-grow: 1;
         }
-        .modal-header .close-btn, .modal-subheader .back-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.5rem;
-            margin-right: 1rem;
+        .modal-header .close-btn {
+            background: none; border: none; cursor: pointer; padding: 0.5rem;
         }
-        .modal-header .close-btn svg, .modal-subheader .back-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--on-surface-secondary);
+        .modal-header .close-btn svg {
+            width: 24px; height: 24px; fill: var(--on-surface-secondary);
         }
 
-        .modal-main-view .nav-list {
-            padding: 0.5rem;
-            margin: 0;
-            list-style: none;
-        }
-
-        .modal-main-view .nav-btn {
+        .modal-tabs {
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--surface-light);
+            background-color: var(--surface-light);
+        }
+        .modal-tabs::-webkit-scrollbar { height: 0; }
+
+        .tab-btn {
+            flex: 1 0 auto;
             background: none;
             border: none;
-            padding: 1rem;
-            border-radius: 8px;
+            padding: 0.75rem 0.5rem;
             cursor: pointer;
-            font-size: 1rem;
-            text-align: left;
             color: var(--on-surface-secondary);
+            font-size: 0.8rem;
+            border-bottom: 3px solid transparent;
             transition: all 0.2s ease;
-            font-weight: 500;
-            position: relative;
-        }
-        .modal-main-view .nav-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--on-surface);
-        }
-        .modal-main-view .nav-btn::after {
-            content: '›';
-            position: absolute;
-            right: 1rem;
-            font-size: 1.5rem;
-            color: var(--on-surface-secondary);
-        }
-        .modal-main-view .nav-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--on-surface-secondary);
-            transition: fill 0.2s ease;
-        }
-
-        .modal-panel {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .tab-btn svg {
+            width: 24px; height: 24px; fill: var(--on-surface-secondary); transition: fill 0.2s ease;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-btn.active svg {
+            fill: var(--primary);
+        }
+
+        .modal-panels-container {
+            flex-grow: 1;
+            position: relative;
+            overflow-y: hidden;
+        }
+
+        .modal-panel-content {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .modal-panel-content.active {
+            display: flex;
+        }
+        
+        #records-panel {
+            padding: 0; /* Let the content inside have padding */
+        }
+        
+        #records-panel > #total-playtime { margin: 1.5rem 1.5rem 0; }
+        #records-panel > #high-scores-list { padding: 1.5rem; }
+
+
+        .modal-panel {
+            padding: 1.5rem;
+            flex-grow: 1;
         }
 
         /* Desktop Layout Override */
@@ -737,61 +720,62 @@
             .modal-content {
                 flex-direction: row;
                 width: 90%;
-                max-width: 700px;
+                max-width: 800px;
                 height: 70vh;
                 max-height: 600px;
                 border-radius: 16px;
-                transform: none !important; /* Disable mobile transition */
             }
-            .modal-header {
-                display: none; /* Hide main header on desktop */
+            .modal-header, .modal-tabs {
+                display: none; /* Hide mobile elements */
             }
-            .modal-view-container {
-                display: contents; /* Let children be direct flex items */
-            }
-            .modal-view {
-                 position: relative; /* Override absolute positioning */
-                 transform: none !important; /* Disable mobile transition */
-                 visibility: visible !important;
-                 display: none; /* Hide all by default */
-            }
-            .modal-view.active {
-                display: flex; /* Show active tab */
-            }
-            .modal-main-view {
-                display: block; /* The nav container */
-                width: 200px;
+            
+            .desktop-nav-view {
+                display: flex;
+                flex-direction: column;
+                width: 220px;
                 flex-shrink: 0;
                 background-color: var(--surface-light);
                 border-right: 1px solid var(--surface);
                 padding: 1rem 0.5rem;
             }
-            .modal-main-view .nav-btn::after {
-                 display: none; /* Hide chevron on desktop */
+            
+            .desktop-nav-view .nav-list {
+                 list-style: none; padding: 0; margin: 0;
             }
-            .modal-main-view .nav-btn.active {
-                background-color: rgba(29, 185, 84, 0.1);
-                color: var(--primary);
-                font-weight: 600;
+            .desktop-nav-view .nav-btn {
+                display: flex; align-items: center; gap: 1rem; width: 100%; background: none; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem; text-align: left; color: var(--on-surface-secondary); transition: all 0.2s ease; font-weight: 500;
             }
-            .modal-main-view .nav-btn.active svg {
-                fill: var(--primary);
+            .desktop-nav-view .nav-btn:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--on-surface); }
+            .desktop-nav-view .nav-btn.active { background-color: rgba(29, 185, 84, 0.1); color: var(--primary); font-weight: 600; }
+            .desktop-nav-view .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+
+            .modal-panels-container {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
             }
-             .modal-subheader {
+            .modal-panel-content {
+                display: none; /* Keep base behavior */
+            }
+            .modal-panel-content.active {
+                display: flex; /* Keep base behavior */
+            }
+            .modal-panel-content-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-             }
-             .modal-subheader h2 {
-                flex-grow: 0;
-             }
-             .modal-subheader .back-btn {
-                display: none; /* Hide back button */
-             }
-             .modal-subheader .close-btn { /* Re-add close button to subheader */
-                background: none; border: none; cursor: pointer; padding: 0.5rem;
-             }
-             .modal-subheader .close-btn svg { width: 24px; height: 24px; fill: var(--on-surface-secondary); }
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--surface-light);
+                flex-shrink: 0;
+            }
+            .modal-panel-content-header h2 {
+                 margin: 0; font-size: 1.25rem; color: var(--on-surface);
+            }
+            .modal-panel-content-header .close-btn {
+                 background: none; border: none; cursor: pointer; padding: 0.5rem;
+            }
+            .modal-panel-content-header .close-btn svg { width: 24px; height: 24px; fill: var(--on-surface-secondary); }
         }
         
         .modal-panel h3 {
@@ -982,7 +966,6 @@
 
         #total-playtime {
             text-align: center;
-            margin-bottom: 1.5rem;
             font-size: 1.1rem;
             color: var(--on-surface);
             background-color: var(--surface-light);
@@ -995,8 +978,6 @@
             list-style-type: none;
             padding: 0;
             margin: 0;
-            flex-grow: 1;
-            overflow-y: auto;
         }
         #high-scores-list::-webkit-scrollbar { width: 5px; }
         #high-scores-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -1345,57 +1326,80 @@
     
     <div id="menu-modal" class="modal-overlay">
         <div class="modal-content">
+            <!-- Mobile Header -->
             <div class="modal-header">
-                <h2 id="modal-title"></h2>
-                <button class="close-btn" id="close-menu-btn">
+                <h2 id="modal-title">Menu</h2>
+                <button class="close-btn" id="close-menu-btn-mobile">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
             </div>
-            <div class="modal-view-container">
-                <div id="main-menu-view" class="modal-view modal-main-view active">
-                    <ul class="nav-list">
-                        <li><button class="nav-btn" data-view="records-view">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM11 7h2v5h-2zm0 6h2v2h-2z"></path></svg>
-                            <span data-translate-key="highScoresTitle"></span>
-                        </button></li>
-                        <li><button class="nav-btn" data-view="preferences-view">
-                            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
-                            <span data-translate-key="preferencesTitle"></span>
-                        </button></li>
-                        <li><button class="nav-btn" data-view="language-view">
-                             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
-                            <span data-translate-key="languageTitle"></span>
-                        </button></li>
-                        <li><button class="nav-btn" data-view="info-view">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
-                            <span data-translate-key="aboutTitle"></span>
-                        </button></li>
-                        <li><button class="nav-btn" data-view="reset-view">
-                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
-                            <span data-translate-key="resetGameTitle"></span>
-                        </button></li>
-                    </ul>
-                </div>
-                
-                <div id="records-view" class="modal-view">
-                    <div class="modal-subheader">
-                        <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button>
+            
+            <!-- Mobile Tabs -->
+            <div class="modal-tabs">
+                <button class="tab-btn" data-view="records-panel">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM11 7h2v5h-2zm0 6h2v2h-2z"></path></svg>
+                    <span data-translate-key="highScoresTitle"></span>
+                </button>
+                <button class="tab-btn" data-view="preferences-panel">
+                    <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+                    <span data-translate-key="preferencesTitle"></span>
+                </button>
+                <button class="tab-btn" data-view="language-panel">
+                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
+                    <span data-translate-key="languageTitle"></span>
+                </button>
+                <button class="tab-btn" data-view="info-panel">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                    <span data-translate-key="aboutTitle"></span>
+                </button>
+                <button class="tab-btn" data-view="reset-panel">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                    <span data-translate-key="resetGameTitle"></span>
+                </button>
+            </div>
+            
+            <!-- Desktop Side-Nav -->
+            <div class="desktop-nav-view">
+                <ul class="nav-list">
+                    <li><button class="nav-btn" data-view="records-panel">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM11 7h2v5h-2zm0 6h2v2h-2z"></path></svg>
+                        <span data-translate-key="highScoresTitle"></span>
+                    </button></li>
+                    <li><button class="nav-btn" data-view="preferences-panel">
+                        <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12-.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+                        <span data-translate-key="preferencesTitle"></span>
+                    </button></li>
+                    <li><button class="nav-btn" data-view="language-panel">
+                         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
+                        <span data-translate-key="languageTitle"></span>
+                    </button></li>
+                    <li><button class="nav-btn" data-view="info-panel">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                        <span data-translate-key="aboutTitle"></span>
+                    </button></li>
+                    <li><button class="nav-btn" data-view="reset-panel">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                        <span data-translate-key="resetGameTitle"></span>
+                    </button></li>
+                </ul>
+            </div>
+
+            <div class="modal-panels-container">
+                <div id="records-panel" class="modal-panel-content">
+                    <div class="modal-panel-content-header">
                         <h2 data-translate-key="highScoresTitle"></h2>
                         <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
                     </div>
-                    <div id="records-panel" class="modal-panel">
-                        <p id="total-playtime"></p>
-                        <ol id="high-scores-list"></ol>
-                    </div>
+                    <p id="total-playtime"></p>
+                    <ol id="high-scores-list"></ol>
                 </div>
 
-                <div id="preferences-view" class="modal-view">
-                     <div class="modal-subheader">
-                        <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button>
+                <div id="preferences-panel" class="modal-panel-content">
+                     <div class="modal-panel-content-header">
                         <h2 data-translate-key="preferencesTitle"></h2>
-                         <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
+                        <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
                     </div>
-                    <div id="preferences-panel" class="modal-panel">
+                    <div class="modal-panel">
                         <h3 data-translate-key="editPlayerNameTitle"></h3>
                         <div class="form-group">
                             <input type="text" id="edit-player-name-input">
@@ -1414,13 +1418,12 @@
                     </div>
                 </div>
 
-                <div id="language-view" class="modal-view">
-                     <div class="modal-subheader">
-                        <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button>
+                <div id="language-panel" class="modal-panel-content">
+                     <div class="modal-panel-content-header">
                         <h2 data-translate-key="languageTitle"></h2>
-                         <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
+                        <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
                     </div>
-                    <div id="language-panel" class="modal-panel">
+                    <div class="modal-panel">
                         <div class="language-options">
                             <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish"></span></button>
                             <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish"></span></button>
@@ -1430,24 +1433,22 @@
                     </div>
                 </div>
 
-                <div id="info-view" class="modal-view">
-                    <div class="modal-subheader">
-                        <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button>
+                <div id="info-panel" class="modal-panel-content">
+                    <div class="modal-panel-content-header">
                         <h2 data-translate-key="aboutTitle"></h2>
                         <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
                     </div>
-                    <div id="info-panel" class="modal-panel">
+                    <div class="modal-panel">
                         <p data-translate-key="aboutGameText"></p>
                     </div>
                 </div>
 
-                 <div id="reset-view" class="modal-view">
-                    <div class="modal-subheader">
-                        <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg></button>
+                 <div id="reset-panel" class="modal-panel-content">
+                    <div class="modal-panel-content-header">
                         <h2 data-translate-key="resetGameTitle"></h2>
                         <button class="close-btn"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></button>
                     </div>
-                     <div id="reset-panel" class="modal-panel">
+                     <div class="modal-panel">
                          <div class="danger-zone">
                              <h3 data-translate-key="resetGameTitle"></h3>
                             <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
@@ -1461,7 +1462,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.37</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.38</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1489,7 +1490,6 @@
                 unmuteIcon: document.getElementById('unmute-icon'),
                 menuModal: document.getElementById('menu-modal'),
                 modalContent: document.querySelector('#menu-modal .modal-content'),
-                closeMenuBtn: document.getElementById('close-menu-btn'),
                 modalTitle: document.getElementById('modal-title'),
                 highScoresList: document.getElementById('high-scores-list'),
                 idleCollage: document.getElementById('idle-background-collage'),
@@ -1911,6 +1911,7 @@
                 
                 elements.playerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
                 elements.editPlayerNameInput.placeholder = getTranslatedString('playerNamePlaceholder');
+                elements.modalTitle.textContent = getTranslatedString('menuTitle');
                 updatePlayerNameDisplay();
             }
 
@@ -3516,44 +3517,32 @@
 
             function setupModalNavigation() {
                 const modal = elements.menuModal;
-                const mainView = document.getElementById('main-menu-view');
-
-                function navigateToView(viewId) {
-                    const targetView = document.getElementById(viewId);
-                    if (!targetView) return;
-
-                    mainView.classList.add('parent-view');
-                    targetView.classList.add('active');
-                    elements.modalContent.dataset.activeView = viewId;
-                }
-
-                function navigateBack() {
-                    const activeViewId = elements.modalContent.dataset.activeView;
-                    if (!activeViewId) return;
-                    
-                    const activeView = document.getElementById(activeViewId);
-                    mainView.classList.remove('parent-view');
-                    if(activeView) activeView.classList.remove('active');
-                    delete elements.modalContent.dataset.activeView;
-                }
-
-                modal.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+                const contentPanels = modal.querySelectorAll('.modal-panel-content');
+                
+                // Desktop Side-Nav Logic
+                const desktopNavButtons = modal.querySelectorAll('.desktop-nav-view .nav-btn');
+                desktopNavButtons.forEach(btn => {
                     btn.addEventListener('click', () => {
-                        if (isMobileDevice()) {
-                            navigateToView(btn.dataset.view);
-                        } else {
-                            // Desktop logic
-                            modal.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                            btn.classList.add('active');
-                            modal.querySelectorAll('.modal-view').forEach(v => v.classList.remove('active'));
-                            const view = document.getElementById(btn.dataset.view);
-                            if (view) view.classList.add('active');
-                        }
+                        if (isMobileDevice()) return;
+                        const viewId = btn.dataset.view;
+                        desktopNavButtons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        contentPanels.forEach(p => p.classList.remove('active'));
+                        document.getElementById(viewId)?.classList.add('active');
                     });
                 });
 
-                modal.querySelectorAll('.back-btn').forEach(btn => {
-                    btn.addEventListener('click', navigateBack);
+                // Mobile Tabs Logic
+                const mobileTabButtons = modal.querySelectorAll('.modal-tabs .tab-btn');
+                mobileTabButtons.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        if (!isMobileDevice()) return;
+                        const viewId = tab.dataset.view;
+                        mobileTabButtons.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        contentPanels.forEach(p => p.classList.remove('active'));
+                        document.getElementById(viewId)?.classList.add('active');
+                    });
                 });
             }
 
@@ -3723,19 +3712,15 @@
                 updatePlayerNameDisplay();
                 elements.triviaToggleCheckbox.checked = getShowTriviaSetting();
                 
-                // Reset to main view
-                 elements.modalContent.querySelectorAll('.modal-view').forEach(v => v.classList.remove('active', 'parent-view'));
-                 document.getElementById('main-menu-view').classList.add('active');
-                 delete elements.modalContent.dataset.activeView;
+                const initialViewId = 'records-panel';
 
-                // Set initial desktop tab
-                const initialDesktopTab = 'records-view';
-                elements.menuModal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === initialDesktopTab));
-                elements.menuModal.querySelectorAll('.modal-view').forEach(panel => {
-                    panel.classList.toggle('active', panel.id === initialDesktopTab);
-                });
-                document.getElementById('main-menu-view').classList.add('active'); // Nav is always "active" in desktop view
+                // Set initial state for both mobile and desktop
+                const allNavButtons = elements.menuModal.querySelectorAll('.nav-btn, .tab-btn');
+                const allPanels = elements.menuModal.querySelectorAll('.modal-panel-content');
 
+                allNavButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === initialViewId));
+                allPanels.forEach(panel => panel.classList.toggle('active', panel.id === initialViewId));
+                
                 elements.menuModal.classList.add('visible');
             });
 
