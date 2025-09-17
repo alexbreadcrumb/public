@@ -1317,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.37</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.38</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3231,7 +3231,12 @@
                     animateTitle();
                     ghostSolverLoop(artworks);
                 } else {
-                    await setupIdleAnimation();
+                    // If we can't find artworks for the themed welcome,
+                    // don't fall back to the full random idle animation,
+                    // as it might fail and cover our trivia popup.
+                    // Just show a simple start message on the puzzle board.
+                    showOverlay(getTranslatedString('startMessage'));
+                    animateTitle();
                 }
             }
 
@@ -3328,7 +3333,13 @@
                         });
                         renderBoard(proxiedImageUrl, boardState);
 
-                        startTimer();
+                        // Don't start the timer automatically, respect the saved 'isPaused' state which is true on load.
+                        if (!state.isPaused) {
+                           startTimer();
+                        } else {
+                           elements.timer.textContent = formatTime(state.time);
+                        }
+                        
                         elements.puzzleContainer.classList.add('animated-gradient-border');
                         
                         updateButtonAndTextLogic();
@@ -3357,6 +3368,14 @@
                     if (!state.isPaused) {
                         state.time++;
                         elements.timer.textContent = formatTime(state.time);
+                        // Also save time while playing
+                        if(state.gameInProgress) {
+                            const gameState = JSON.parse(localStorage.getItem('puzzletunesGameState') || '{}');
+                            if(gameState.album) {
+                                gameState.time = state.time;
+                                localStorage.setItem('puzzletunesGameState', JSON.stringify(gameState));
+                            }
+                        }
                     }
                 }, 1000);
             }
