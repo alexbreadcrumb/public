@@ -350,7 +350,7 @@ window.triviaData = {
         { artist: "Sex Pistols", year: 1977, type: "Release", description_es: "Sex Pistols lanzó su único álbum de estudio, 'Never Mind the Bollocks'.", description_en: "Sex Pistols released their only studio album, 'Never Mind the Bollocks'.", description_pt: "Sex Pistols lançou seu único álbum de estúdio, 'Never Mind the Bollocks'.", description_fr: "Sex Pistols a sorti son unique album studio, 'Never Mind the Bollocks'." }
     ],
     "10-29": [
-        { artist: "Queen", year: 1977, type: "Release", description_es: "Queen lanzó su exitoso álbum 'News of the World'.", description_en: "Queen released their hit album 'News of the world'.", description_pt: "Queen lançou seu álbum de sucesso 'News of the World'.", description_fr: "Queen a sorti son album à succès 'News of the World'." }
+        { artist: "Queen", year: 1977, type: "Release", description_es: "Queen lanzó su exitoso álbum 'News of the World'.", description_en: "Queen released their hit album 'News of the World'.", description_pt: "Queen lançou seu álbum de sucesso 'News of the World'.", description_fr: "Queen a sorti son album à succès 'News of the World'." }
     ],
     "10-30": [
         { artist: "The Mamas & the Papas", year: 1935, type: "Birthday", description_es: "nació Grace Slick, vocalista de Jefferson Airplane.", description_en: "Grace Slick, lead singer of Jefferson Airplane, was born.", description_pt: "nasceu Grace Slick, vocalista do Jefferson Airplane.", description_fr: "Grace Slick, la chanteuse de Jefferson Airplane, est née." }
@@ -399,7 +399,7 @@ window.triviaData = {
         { artist: "The Beatles", year: 1968, type: "Release", description_es: "se estrenó la película animada de The Beatles 'Yellow Submarine'.", description_en: "The Beatles' animated film 'Yellow Submarine' premiered.", description_pt: "estreou o filme de animação dos The Beatles 'Yellow Submarine'.", description_fr: "le film d'animation des Beatles 'Yellow Submarine' a été présenté en première." }
     ],
     "11-14": [
-        { artist: "AC/DC", year: 1975, "Release", description_es: "AC/DC lanzó su álbum 'T.N.T.' en Australia.", description_en: "AC/DC released their album 'T.N.T.' in Australia.", description_pt: "AC/DC lançou seu álbum 'T.N.T.' na Austrália.", description_fr: "AC/DC a sorti son album 'T.N.T.' en Australie." }
+        { artist: "AC/DC", year: 1975, type: "Release", description_es: "AC/DC lanzó su álbum 'T.N.T.' en Australia.", description_en: "AC/DC released their album 'T.N.T.' in Australia.", description_pt: "AC/DC lançou seu álbum 'T.N.T.' na Austrália.", description_fr: "AC/DC a sorti son album 'T.N.T.' en Australie." }
     ],
     "11-15": [
         { artist: "Eminem", year: 2002, type: "Event", description_es: "se estrenó la película '8 Mile', protagonizada por Eminem.", description_en: "the movie '8 Mile', starring Eminem, premiered.", description_pt: "estreou o filme '8 Mile', estrelado por Eminem.", description_fr: "le film '8 Mile', avec Eminem, a été présenté en première." }
@@ -463,7 +463,7 @@ window.triviaData = {
         { artist: "Jay-Z", year: 1969, type: "Birthday", description_es: "nació el rapero y empresario Jay-Z.", description_en: "rapper and entrepreneur Jay-Z was born.", description_pt: "nasceu o rapper e empresário Jay-Z.", description_fr: "le rappeur et entrepreneur Jay-Z est né." }
     ],
     "12-05": [
-        { artist: "Little Richard", year: 1932, type: "Birthday", description_es: "nació Little Richard, uno de los arquitectos del rock and roll.", description_en: "Little Richard, one of the architects of rock and roll, was born.", description_pt: "nasceu Little Richard, um dos arquitetos do rock and roll.", description_fr: "le pionnier du rock and roll, Little Richard, est né." }
+        { artist: "Little Richard", year: 1932, type: "Birthday", description_es: "nació Little Richard, uno de los arquitectos del rock and roll.", description_en: "Little Richard, one of the architects of rock and roll, was born.", description_pt: "nasceu Little Richard, um dos arquitetos do rock and roll.", description_fr: "Little Richard, l'un des architectes du rock and roll, est né." }
     ],
     "12-06": [
         { artist: "The Rolling Stones", year: 1969, type: "Event", description_es: "The Rolling Stones organizaron el trágico festival gratuito de Altamont.", description_en: "The Rolling Stones hosted the tragic Altamont Free Concert.", description_pt: "The Rolling Stones organizaram o trágico festival gratuito de Altamont.", description_fr: "The Rolling Stones ont organisé le tragique festival gratuit d'Altamont." }
