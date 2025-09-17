@@ -1,4 +1,5 @@
 
+
 window.triviaData = {
     // Formato MM-DD
     // ENERO
@@ -400,7 +401,7 @@ window.triviaData = {
         { artist: "The Beatles", year: 1968, type: "Release", description_es: "se estrenó la película animada de The Beatles 'Yellow Submarine'.", description_en: "The Beatles' animated film 'Yellow Submarine' premiered.", description_pt: "estreou o filme de animação dos The Beatles 'Yellow Submarine'.", description_fr: "le film d'animation des Beatles 'Yellow Submarine' a été présenté en première." }
     ],
     "11-14": [
-        { artist: "AC/DC", year: 1975, type: "Release", description_es: "AC/DC lanzó su álbum 'T.N.T.' en Australia.", description_en: "AC/DC released their album 'T.N.T.' in Australia.", description_pt: "AC/DC lançou seu álbum 'T.N.T.' na Austrália.", description_fr: "AC/DC a sorti son album 'T.N.T.' en Australie." }
+        { artist: "AC/DC", year: 1975, "Release", description_es: "AC/DC lanzó su álbum 'T.N.T.' en Australia.", description_en: "AC/DC released their album 'T.N.T.' in Australia.", description_pt: "AC/DC lançou seu álbum 'T.N.T.' na Austrália.", description_fr: "AC/DC a sorti son album 'T.N.T.' en Australie." }
     ],
     "11-15": [
         { artist: "Eminem", year: 2002, type: "Event", description_es: "se estrenó la película '8 Mile', protagonizada por Eminem.", description_en: "the movie '8 Mile', starring Eminem, premiered.", description_pt: "estreou o filme '8 Mile', estrelado por Eminem.", description_fr: "le film '8 Mile', avec Eminem, a été présenté en première." }
