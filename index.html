@@ -769,6 +769,66 @@
             background-color: var(--primary-hover);
         }
         
+        /* --- Trivia Toggle Switch --- */
+        .form-group-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .form-group-toggle label {
+            font-size: 1.1rem;
+            color: var(--on-surface);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        /* --- End Toggle Styles --- */
+
+
         .danger-zone {
             padding: 1rem;
             border: 2px dashed var(--danger-color);
@@ -1214,6 +1274,7 @@
                     <div class="options-sub-tabs">
                          <button class="options-sub-tab-btn active" data-sub-tab="player">🦸‍♂️</button>
                          <button class="options-sub-tab-btn" data-sub-tab="genres">🎵</button>
+                         <button class="options-sub-tab-btn" data-sub-tab="display">💡</button>
                          <button class="options-sub-tab-btn" data-sub-tab="reset">🧩</button>
                     </div>
                     <div class="options-sub-panels">
@@ -1227,6 +1288,16 @@
                         <div id="genres-sub-panel" class="options-sub-panel">
                             <h3 data-translate-key="favoriteGenresTitle"></h3>
                             <div id="genre-selector" class="genre-selector"></div>
+                        </div>
+                        <div id="display-sub-panel" class="options-sub-panel">
+                             <h3 data-translate-key="displayOptionsTitle"></h3>
+                             <div class="form-group form-group-toggle">
+                                <label for="trivia-toggle" data-translate-key="showTriviaOnStart"></label>
+                                <label class="switch">
+                                    <input type="checkbox" id="trivia-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
                         <div id="reset-sub-panel" class="options-sub-panel">
                              <div class="danger-zone">
@@ -1246,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.36</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.37</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1291,6 +1362,7 @@
                 triviaPopup: document.getElementById('trivia-popup'),
                 triviaPopupText: document.getElementById('trivia-popup-text'),
                 triviaPopupImage: document.getElementById('trivia-popup-image'),
+                triviaToggle: document.getElementById('trivia-toggle'),
 
                 // Responsive Controls
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
@@ -1402,6 +1474,8 @@
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Siguiente...",
+                    displayOptionsTitle: "Opciones de Visualización",
+                    showTriviaOnStart: "Mostrar efemérides al iniciar",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1472,6 +1546,8 @@
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
                     nextAlbumButton: "Next...",
+                    displayOptionsTitle: "Display Options",
+                    showTriviaOnStart: "Show trivia on startup",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1542,6 +1618,8 @@
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Próximo...",
+                    displayOptionsTitle: "Opções de Exibição",
+                    showTriviaOnStart: "Mostrar efemérides ao iniciar",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1612,6 +1690,8 @@
                     randomModeButton: "Mode Aléatoire",
                     artistModeButton: "Mode Artiste",
                     nextAlbumButton: "Suivant...",
+                    displayOptionsTitle: "Options d'affichage",
+                    showTriviaOnStart: "Afficher les éphémérides au démarrage",
                 }
             };
 
@@ -1628,6 +1708,20 @@
                     return true;
                 }
                 return false;
+            }
+
+            function getSettings() {
+                try {
+                    const settings = localStorage.getItem('puzzletunesSettings');
+                    const defaults = { showTrivia: true };
+                    return settings ? { ...defaults, ...JSON.parse(settings) } : defaults;
+                } catch (e) {
+                    return { showTrivia: true };
+                }
+            }
+
+            function saveSettings(settings) {
+                localStorage.setItem('puzzletunesSettings', JSON.stringify(settings));
             }
 
             function updatePlayerNameDisplay() {
@@ -1877,8 +1971,6 @@
                     pieces: state.pieces.map(p => ({ originalIndex: p.originalIndex, currentIndex: p.currentIndex })),
                     moves: state.moves,
                     time: state.time,
-                    isPaused: state.isPaused,
-                    isMuted: state.isMuted,
                     album: state.currentAlbum,
                     gameInProgress: state.gameInProgress,
                     gameMode: state.gameMode,
@@ -1898,8 +1990,8 @@
                         }
                         state.moves = savedState.moves;
                         state.time = savedState.time;
-                        state.isPaused = savedState.isPaused !== undefined ? savedState.isPaused : true;
-                        state.isMuted = savedState.isMuted;
+                        state.isPaused = true; // Always start loaded game paused.
+                        state.isMuted = true; // Always start loaded game muted.
                         state.currentAlbum = savedState.album;
                         state.gameInProgress = savedState.gameInProgress;
                         state.gameMode = savedState.gameMode || 'random';
@@ -3076,34 +3168,29 @@
             
             async function setupThemedWelcome(eventsForToday) {
                 state.isIdle = true;
-
-                // Cycling logic for trivia
                 const today = new Date().toISOString().slice(0, 10);
                 let lastTriviaState = { date: '', index: -1 };
                 try {
                     const stored = localStorage.getItem('puzzletunesLastTrivia');
                     if (stored) lastTriviaState = JSON.parse(stored);
-                } catch (e) { /* ignore parsing errors */ }
+                } catch (e) {}
                 
                 const nextIndex = (lastTriviaState.date === today) 
                     ? (lastTriviaState.index + 1) % eventsForToday.length 
                     : 0;
-                
                 localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
                 
                 const event = eventsForToday[nextIndex];
-                
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 const descriptionKey = `description_${lang}`;
                 let description = event[descriptionKey] || event.description_es;
                 const artistName = event.artist;
 
-                // Ensure artist name is always in the description
                 if (!description.toLowerCase().includes(artistName.toLowerCase())) {
                     description = `${artistName} ${description}`;
                 }
 
-                let triviaSentence = '';
+                let triviaSentence;
                 switch (lang) {
                     case 'pt': triviaSentence = `Neste dia, em ${event.year}, ${description}`; break;
                     case 'fr': triviaSentence = `En ce jour, en ${event.year}, ${description}`; break;
@@ -3113,32 +3200,8 @@
                 
                 const artworks = await fetchArtworksForArtist(event.artist);
                 
-                if (!state.isIdle || !artworks || artworks.length === 0) {
-                    await setupIdleAnimation(); // Fallback to random if fetch fails
-                    return;
-                }
+                if (!state.isIdle) return;
 
-                // Setup themed UI
-                elements.puzzleContainer.classList.add('idle-mode');
-                const callToAction = document.createElement('div');
-                callToAction.className = 'idle-call-to-action';
-                callToAction.id = 'idle-cta';
-                elements.puzzleContainer.appendChild(callToAction);
-                
-                updateButtonAndTextLogic();
-
-                const backgroundLayers = elements.idleCollage.children;
-                artworks.forEach((url, i) => {
-                    if (backgroundLayers[i]) {
-                        backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
-                    }
-                });
-                elements.idleCollage.classList.add('visible');
-
-                animateTitle();
-                ghostSolverLoop(artworks);
-                
-                // Show trivia popup
                 elements.triviaPopupText.textContent = triviaSentence;
                 if (artworks.length > 0) {
                     elements.triviaPopupImage.src = artworks[0];
@@ -3146,11 +3209,30 @@
                 } else {
                     elements.triviaPopupImage.src = '';
                 }
-
                 elements.triviaPopup.classList.add('visible');
                 document.body.addEventListener('click', () => {
                      elements.triviaPopup.classList.remove('visible');
                 }, { once: true });
+
+                if (artworks.length > 0) {
+                    elements.puzzleContainer.classList.add('idle-mode');
+                    const callToAction = document.createElement('div');
+                    callToAction.className = 'idle-call-to-action';
+                    callToAction.id = 'idle-cta';
+                    elements.puzzleContainer.appendChild(callToAction);
+                    updateButtonAndTextLogic();
+                    const backgroundLayers = elements.idleCollage.children;
+                    artworks.forEach((url, i) => {
+                        if (backgroundLayers[i]) {
+                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                        }
+                    });
+                    elements.idleCollage.classList.add('visible');
+                    animateTitle();
+                    ghostSolverLoop(artworks);
+                } else {
+                    await setupIdleAnimation();
+                }
             }
 
 
@@ -3184,6 +3266,12 @@
             }
             
             async function initializeWelcomeScreen() {
+                const settings = getSettings();
+                if (!settings.showTrivia) {
+                    await setupIdleAnimation();
+                    return;
+                }
+
                 const today = new Date();
                 const month = (today.getMonth() + 1).toString().padStart(2, '0');
                 const day = today.getDate().toString().padStart(2, '0');
@@ -3222,7 +3310,6 @@
                 }
                 
                 if (loadGameState() && state.gameInProgress) {
-                    state.isPaused = true; // Always start a loaded game in a paused state for better UX.
                     const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -3465,7 +3552,13 @@
                     });
                 }
                 updateUI();
-                if (state.gameInProgress) saveGameState();
+                if (state.gameInProgress) {
+                     const currentGameState = JSON.parse(localStorage.getItem('puzzletunesGameState'));
+                     if(currentGameState){
+                        currentGameState.isMuted = state.isMuted;
+                        localStorage.setItem('puzzletunesGameState', JSON.stringify(currentGameState));
+                     }
+                }
             });
 
             elements.audioPlayer.addEventListener('canplaythrough', () => elements.audioBtn.disabled = false);
@@ -3474,6 +3567,8 @@
                 renderHighScores();
                 renderGenreSelector();
                 updatePlayerNameDisplay();
+                const settings = getSettings();
+                elements.triviaToggle.checked = settings.showTrivia;
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
@@ -3489,6 +3584,13 @@
                     renderHighScores();
                 }
             });
+
+            elements.triviaToggle.addEventListener('change', () => {
+                const settings = getSettings();
+                settings.showTrivia = elements.triviaToggle.checked;
+                saveSettings(settings);
+            });
+
             window.addEventListener('beforeunload', () => saveGameState());
             
              // Levenshtein distance function for suggestions
