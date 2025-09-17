@@ -1246,7 +1246,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.35</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.36</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1898,13 +1898,13 @@
                         }
                         state.moves = savedState.moves;
                         state.time = savedState.time;
+                        state.isPaused = savedState.isPaused !== undefined ? savedState.isPaused : true;
                         state.isMuted = savedState.isMuted;
                         state.currentAlbum = savedState.album;
                         state.gameInProgress = savedState.gameInProgress;
                         state.gameMode = savedState.gameMode || 'random';
                         state.artistAlbumQueue = savedState.artistAlbumQueue || [];
                         state.currentAlbumIndex = savedState.currentAlbumIndex || -1;
-                        state.isPaused = true;
                         
                         const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
                         state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
@@ -3113,7 +3113,7 @@
                 
                 const artworks = await fetchArtworksForArtist(event.artist);
                 
-                if (!state.isIdle || !artworks || artworks.length < 10) {
+                if (!state.isIdle || !artworks || artworks.length === 0) {
                     await setupIdleAnimation(); // Fallback to random if fetch fails
                     return;
                 }
@@ -3222,6 +3222,7 @@
                 }
                 
                 if (loadGameState() && state.gameInProgress) {
+                    state.isPaused = true; // Always start a loaded game in a paused state for better UX.
                     const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -3442,10 +3443,6 @@
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
-                    // Don't unpause if trivia is showing
-                    const triviaOverlay = elements.puzzleContainer.querySelector('.overlay');
-                    if(triviaOverlay && !triviaOverlay.querySelector('.win-stats')) return;
-
                     hideOverlay();
                     startTimer();
                     elements.puzzleContainer.classList.add('animated-gradient-border');
