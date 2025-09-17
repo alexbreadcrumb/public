@@ -1317,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.39</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.40</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3181,6 +3181,18 @@
                 localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
                 
                 const event = eventsForToday[nextIndex];
+                
+                // First, fetch artworks. This is the critical step.
+                const artworks = await fetchArtworksForArtist(event.artist);
+                
+                // If the game is no longer idle (e.g., user clicked New Game) or no artworks were found,
+                // fall back to the generic idle animation.
+                if (!state.isIdle || artworks.length === 0) {
+                    await setupIdleAnimation();
+                    return;
+                }
+
+                // If we get here, we have artworks and can create the full themed experience.
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 const descriptionKey = `description_${lang}`;
                 let description = event[descriptionKey] || event.description_es;
@@ -3198,47 +3210,31 @@
                     default: triviaSentence = `Un día como hoy, en ${event.year}, ${description}`; break;
                 }
 
-                // Show the popup immediately with text.
+                // Now, show the popup with the image included.
                 elements.triviaPopupText.textContent = triviaSentence;
-                elements.triviaPopupImage.src = ''; // Ensure no old image is visible
+                elements.triviaPopupImage.src = artworks[0];
+                elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
                 elements.triviaPopup.classList.add('visible');
                 document.body.addEventListener('click', () => {
                      elements.triviaPopup.classList.remove('visible');
                 }, { once: true });
                 
-                // Fetch artworks to progressively enhance the UI.
-                const artworks = await fetchArtworksForArtist(event.artist);
-                
-                // If the game is no longer idle (e.g., user started a game), stop.
-                if (!state.isIdle) return;
-
-                if (artworks.length > 0) {
-                    // We have artworks, so add the artist image to the popup
-                    // and set up the themed background/animation.
-                    elements.triviaPopupImage.src = artworks[0];
-                    elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
-
-                    elements.puzzleContainer.classList.add('idle-mode');
-                    const callToAction = document.createElement('div');
-                    callToAction.className = 'idle-call-to-action';
-                    callToAction.id = 'idle-cta';
-                    elements.puzzleContainer.appendChild(callToAction);
-                    updateButtonAndTextLogic();
-                    const backgroundLayers = elements.idleCollage.children;
-                    artworks.forEach((url, i) => {
-                        if (backgroundLayers[i]) {
-                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
-                        }
-                    });
-                    elements.idleCollage.classList.add('visible');
-                    animateTitle();
-                    ghostSolverLoop(artworks);
-                } else {
-                    // No artworks found. The text popup is already visible.
-                    // Just show a generic start message on the puzzle board.
-                    showOverlay(getTranslatedString('startMessage'));
-                    animateTitle();
-                }
+                // Set up the themed background and idle puzzle animation.
+                elements.puzzleContainer.classList.add('idle-mode');
+                const callToAction = document.createElement('div');
+                callToAction.className = 'idle-call-to-action';
+                callToAction.id = 'idle-cta';
+                elements.puzzleContainer.appendChild(callToAction);
+                updateButtonAndTextLogic();
+                const backgroundLayers = elements.idleCollage.children;
+                artworks.forEach((url, i) => {
+                    if (backgroundLayers[i]) {
+                        backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                    }
+                });
+                elements.idleCollage.classList.add('visible');
+                animateTitle();
+                ghostSolverLoop(artworks);
             }
 
 
@@ -3315,7 +3311,7 @@
                     return;
                 }
                 
-                if (loadGameState()) { // Simplified condition
+                if (loadGameState()) {
                     const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
