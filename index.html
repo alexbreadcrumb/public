@@ -769,66 +769,6 @@
             background-color: var(--primary-hover);
         }
         
-        /* --- Trivia Toggle Switch --- */
-        .form-group-toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 8px;
-        }
-        .form-group-toggle label {
-            font-size: 1.1rem;
-            color: var(--on-surface);
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            flex-shrink: 0;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #555;
-            transition: .4s;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-        input:checked + .slider {
-            background-color: var(--primary);
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        .slider.round {
-            border-radius: 34px;
-        }
-        .slider.round:before {
-            border-radius: 50%;
-        }
-        /* --- End Toggle Styles --- */
-
-
         .danger-zone {
             padding: 1rem;
             border: 2px dashed var(--danger-color);
@@ -1274,7 +1214,6 @@
                     <div class="options-sub-tabs">
                          <button class="options-sub-tab-btn active" data-sub-tab="player">🦸‍♂️</button>
                          <button class="options-sub-tab-btn" data-sub-tab="genres">🎵</button>
-                         <button class="options-sub-tab-btn" data-sub-tab="display">💡</button>
                          <button class="options-sub-tab-btn" data-sub-tab="reset">🧩</button>
                     </div>
                     <div class="options-sub-panels">
@@ -1288,16 +1227,6 @@
                         <div id="genres-sub-panel" class="options-sub-panel">
                             <h3 data-translate-key="favoriteGenresTitle"></h3>
                             <div id="genre-selector" class="genre-selector"></div>
-                        </div>
-                        <div id="display-sub-panel" class="options-sub-panel">
-                             <h3 data-translate-key="displayOptionsTitle"></h3>
-                             <div class="form-group form-group-toggle">
-                                <label for="trivia-toggle" data-translate-key="showTriviaOnStart"></label>
-                                <label class="switch">
-                                    <input type="checkbox" id="trivia-toggle">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
                         </div>
                         <div id="reset-sub-panel" class="options-sub-panel">
                              <div class="danger-zone">
@@ -1317,7 +1246,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.44</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.33</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1362,7 +1291,6 @@
                 triviaPopup: document.getElementById('trivia-popup'),
                 triviaPopupText: document.getElementById('trivia-popup-text'),
                 triviaPopupImage: document.getElementById('trivia-popup-image'),
-                triviaToggle: document.getElementById('trivia-toggle'),
 
                 // Responsive Controls
                 artistSearchDesktop: document.getElementById('artist-search-desktop'),
@@ -1474,8 +1402,6 @@
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Siguiente...",
-                    displayOptionsTitle: "Opciones de Visualización",
-                    showTriviaOnStart: "Mostrar efemérides al iniciar",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1546,8 +1472,6 @@
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
                     nextAlbumButton: "Next...",
-                    displayOptionsTitle: "Display Options",
-                    showTriviaOnStart: "Show trivia on startup",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1618,8 +1542,6 @@
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Próximo...",
-                    displayOptionsTitle: "Opções de Exibição",
-                    showTriviaOnStart: "Mostrar efemérides ao iniciar",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1690,8 +1612,6 @@
                     randomModeButton: "Mode Aléatoire",
                     artistModeButton: "Mode Artiste",
                     nextAlbumButton: "Suivant...",
-                    displayOptionsTitle: "Options d'affichage",
-                    showTriviaOnStart: "Afficher les éphémérides au démarrage",
                 }
             };
 
@@ -1708,20 +1628,6 @@
                     return true;
                 }
                 return false;
-            }
-
-            function getSettings() {
-                try {
-                    const settings = localStorage.getItem('puzzletunesSettings');
-                    const defaults = { showTrivia: true };
-                    return settings ? { ...defaults, ...JSON.parse(settings) } : defaults;
-                } catch (e) {
-                    return { showTrivia: true };
-                }
-            }
-
-            function saveSettings(settings) {
-                localStorage.setItem('puzzletunesSettings', JSON.stringify(settings));
             }
 
             function updatePlayerNameDisplay() {
@@ -1971,6 +1877,8 @@
                     pieces: state.pieces.map(p => ({ originalIndex: p.originalIndex, currentIndex: p.currentIndex })),
                     moves: state.moves,
                     time: state.time,
+                    isPaused: state.isPaused,
+                    isMuted: state.isMuted,
                     album: state.currentAlbum,
                     gameInProgress: state.gameInProgress,
                     gameMode: state.gameMode,
@@ -1990,13 +1898,13 @@
                         }
                         state.moves = savedState.moves;
                         state.time = savedState.time;
-                        state.isPaused = true; // Always start loaded game paused.
-                        state.isMuted = true; // Always start loaded game muted.
+                        state.isMuted = savedState.isMuted;
                         state.currentAlbum = savedState.album;
                         state.gameInProgress = savedState.gameInProgress;
                         state.gameMode = savedState.gameMode || 'random';
                         state.artistAlbumQueue = savedState.artistAlbumQueue || [];
                         state.currentAlbumIndex = savedState.currentAlbumIndex || -1;
+                        state.isPaused = true;
                         
                         const pieceMap = new Map(savedState.pieces.map(p => [p.currentIndex, p.originalIndex]));
                         state.pieces = Array.from({ length: SIZE * SIZE }, (_, i) => {
@@ -3166,68 +3074,51 @@
                 }
             }
             
-            // --- NEW, ROBUST WELCOME SCREEN LOGIC ---
+            async function setupThemedWelcome(eventsForToday) {
+                state.isIdle = true;
 
-            function getTodaysTriviaEvent(events) {
+                // Cycling logic for trivia
                 const today = new Date().toISOString().slice(0, 10);
                 let lastTriviaState = { date: '', index: -1 };
                 try {
                     const stored = localStorage.getItem('puzzletunesLastTrivia');
                     if (stored) lastTriviaState = JSON.parse(stored);
-                } catch (e) {}
-
-                const nextIndex = (lastTriviaState.date === today)
-                    ? (lastTriviaState.index + 1) % events.length
+                } catch (e) { /* ignore parsing errors */ }
+                
+                const nextIndex = (lastTriviaState.date === today) 
+                    ? (lastTriviaState.index + 1) % eventsForToday.length 
                     : 0;
+                
                 localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
-                return events[nextIndex];
-            }
-
-            function showTriviaPopup(event, imageUrl) {
+                
+                const event = eventsForToday[nextIndex];
+                
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 const descriptionKey = `description_${lang}`;
-                let description = event[descriptionKey] || event.description_es;
-                const artistName = event.artist;
+                const description = event[descriptionKey] || event.description_es;
+                let triviaSentence = '';
 
-                if (!description.toLowerCase().includes(artistName.toLowerCase())) {
-                    description = `${artistName} ${description}`;
-                }
-
-                let triviaSentence;
                 switch (lang) {
                     case 'pt': triviaSentence = `Neste dia, em ${event.year}, ${description}`; break;
                     case 'fr': triviaSentence = `En ce jour, en ${event.year}, ${description}`; break;
                     case 'en': triviaSentence = `On this day, in ${event.year}, ${description}`; break;
                     default: triviaSentence = `Un día como hoy, en ${event.year}, ${description}`; break;
                 }
-
-                elements.triviaPopupText.textContent = triviaSentence;
-                elements.triviaPopupImage.src = imageUrl || "";
-                elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
                 
-                elements.triviaPopup.classList.add('visible');
-
-                const hidePopup = () => {
-                    elements.triviaPopup.classList.remove('visible');
-                    document.body.removeEventListener('click', hidePopup);
-                    document.body.removeEventListener('touchend', hidePopup);
-                };
+                const artworks = await fetchArtworksForArtist(event.artist);
                 
-                setTimeout(() => {
-                    document.body.addEventListener('click', hidePopup, { once: true });
-                    document.body.addEventListener('touchend', hidePopup, { once: true });
-                }, 100);
-            }
+                if (!state.isIdle || !artworks || artworks.length < 10) {
+                    await setupIdleAnimation(); // Fallback to random if fetch fails
+                    return;
+                }
 
-            async function setupFullThemedExperience(event, artworks) {
-                state.isIdle = true;
-                showTriviaPopup(event, artworks[0]);
-
+                // Setup themed UI
                 elements.puzzleContainer.classList.add('idle-mode');
                 const callToAction = document.createElement('div');
                 callToAction.className = 'idle-call-to-action';
                 callToAction.id = 'idle-cta';
                 elements.puzzleContainer.appendChild(callToAction);
+                
                 updateButtonAndTextLogic();
 
                 const backgroundLayers = elements.idleCollage.children;
@@ -3240,12 +3131,27 @@
 
                 animateTitle();
                 ghostSolverLoop(artworks);
+                
+                // Show trivia popup
+                elements.triviaPopupText.textContent = triviaSentence;
+                if (artworks.length > 0) {
+                    elements.triviaPopupImage.src = artworks[0];
+                    elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
+                } else {
+                    elements.triviaPopupImage.src = '';
+                }
+
+                elements.triviaPopup.classList.add('visible');
+                document.body.addEventListener('click', () => {
+                     elements.triviaPopup.classList.remove('visible');
+                }, { once: true });
             }
+
 
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
-                if (!state.isIdle || !allArtworks || allArtworks.length < 1) {
+                if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
                     showOverlay(getTranslatedString('startMessage'));
                     renderStaticTitle();
                     return;
@@ -3272,30 +3178,17 @@
             }
             
             async function initializeWelcomeScreen() {
-                const settings = getSettings();
-                if (!settings.showTrivia) {
-                    await setupIdleAnimation();
-                    return;
-                }
-
                 const today = new Date();
                 const month = (today.getMonth() + 1).toString().padStart(2, '0');
                 const day = today.getDate().toString().padStart(2, '0');
                 const todayKey = `${month}-${day}`;
                 
-                const eventsForToday = window.triviaData?.[todayKey];
+                const eventsForToday = window.triviaData && window.triviaData[todayKey] && window.triviaData[todayKey].length > 0
+                    ? window.triviaData[todayKey]
+                    : null;
 
-                if (eventsForToday && eventsForToday.length > 0) {
-                    const event = getTodaysTriviaEvent(eventsForToday);
-                    const themedArtworks = await fetchArtworksForArtist(event.artist);
-
-                    if (themedArtworks && themedArtworks.length > 0) {
-                        await setupFullThemedExperience(event, themedArtworks);
-                    } else {
-                        console.warn(`No artworks found for '${event.artist}'. Falling back to random, but showing trivia text.`);
-                        showTriviaPopup(event, null);
-                        await setupIdleAnimation();
-                    }
+                if (eventsForToday) {
+                    await setupThemedWelcome(eventsForToday);
                 } else {
                     await setupIdleAnimation();
                 }
@@ -3322,7 +3215,7 @@
                     return;
                 }
                 
-                if (loadGameState()) {
+                if (loadGameState() && state.gameInProgress) {
                     const proxiedImageUrl = `${PROXIES[0]}${state.currentAlbum.artworkUrl.replace('100x100', '600x600')}`;
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
@@ -3334,24 +3227,22 @@
                             const palette = colorThief.getPalette(img, 5);
                             palette.forEach((c, i) => document.documentElement.style.setProperty(`--gradient-color-${i + 1}`, `rgb(${c[0]}, ${c[1]}, ${c[2]})`));
                         } catch(e) { console.error("ColorThief failed on load:", e); }
-                        
                         updateBackground(proxiedImageUrl);
                         const boardState = Array(SIZE*SIZE).fill(0);
                         state.pieces.forEach(p => {
                            boardState[p.currentIndex] = p.originalIndex;
                         });
                         renderBoard(proxiedImageUrl, boardState);
-                        
-                        if (state.gameInProgress) {
-                            elements.puzzleContainer.classList.add('animated-gradient-border');
-                            showOverlay(getTranslatedString('paused'));
-                        }
 
+                        startTimer();
+                        elements.puzzleContainer.classList.add('animated-gradient-border');
+                        
                         updateButtonAndTextLogic();
+
                         updateUI();
+                        showOverlay(getTranslatedString('paused'));
                         updateTrackText();
                         updateTrackLinks(state.currentAlbum);
-
                         if (state.currentAlbum.previewUrl) {
                             elements.audioPlayer.src = state.currentAlbum.previewUrl;
                         }
@@ -3372,14 +3263,6 @@
                     if (!state.isPaused) {
                         state.time++;
                         elements.timer.textContent = formatTime(state.time);
-                        // Also save time while playing
-                        if(state.gameInProgress) {
-                            const gameState = JSON.parse(localStorage.getItem('puzzletunesGameState') || '{}');
-                            if(gameState.album) {
-                                gameState.time = state.time;
-                                localStorage.setItem('puzzletunesGameState', JSON.stringify(gameState));
-                            }
-                        }
                     }
                 }, 1000);
             }
@@ -3548,13 +3431,17 @@
                 if (!state.gameInProgress) return;
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
-                    // stopTimer(); // This is handled inside startTimer
+                    stopTimer();
                     elements.audioPlayer.pause();
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
+                    // Don't unpause if trivia is showing
+                    const triviaOverlay = elements.puzzleContainer.querySelector('.overlay');
+                    if(triviaOverlay && !triviaOverlay.querySelector('.win-stats')) return;
+
                     hideOverlay();
-                    // startTimer(); // Timer continues based on !state.isPaused
+                    startTimer();
                     elements.puzzleContainer.classList.add('animated-gradient-border');
                     if (!state.isMuted && elements.audioPlayer.src) {
                         elements.audioPlayer.play().catch(e => console.error("Error on resume:", e));
@@ -3575,13 +3462,7 @@
                     });
                 }
                 updateUI();
-                if (state.gameInProgress) {
-                     const currentGameState = JSON.parse(localStorage.getItem('puzzletunesGameState'));
-                     if(currentGameState){
-                        currentGameState.isMuted = state.isMuted;
-                        localStorage.setItem('puzzletunesGameState', JSON.stringify(currentGameState));
-                     }
-                }
+                if (state.gameInProgress) saveGameState();
             });
 
             elements.audioPlayer.addEventListener('canplaythrough', () => elements.audioBtn.disabled = false);
@@ -3590,8 +3471,6 @@
                 renderHighScores();
                 renderGenreSelector();
                 updatePlayerNameDisplay();
-                const settings = getSettings();
-                elements.triviaToggle.checked = settings.showTrivia;
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
@@ -3607,18 +3486,7 @@
                     renderHighScores();
                 }
             });
-
-            elements.triviaToggle.addEventListener('change', () => {
-                const settings = getSettings();
-                settings.showTrivia = elements.triviaToggle.checked;
-                saveSettings(settings);
-            });
-
-            window.addEventListener('beforeunload', () => {
-                if(state.gameInProgress){
-                    saveGameState();
-                }
-            });
+            window.addEventListener('beforeunload', () => saveGameState());
             
              // Levenshtein distance function for suggestions
             function calculateLevenshteinDistance(a, b) {
