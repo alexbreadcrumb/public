@@ -1317,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.43</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.44</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3166,10 +3166,9 @@
                 }
             }
             
-            async function setupThemedWelcome(eventsForToday) {
-                state.isIdle = true;
+            // --- NEW, ROBUST WELCOME SCREEN LOGIC ---
 
-                // --- Parte 1: Mostrar el texto de la efeméride inmediatamente ---
+            function getTodaysTriviaEvent(events) {
                 const today = new Date().toISOString().slice(0, 10);
                 let lastTriviaState = { date: '', index: -1 };
                 try {
@@ -3178,11 +3177,13 @@
                 } catch (e) {}
 
                 const nextIndex = (lastTriviaState.date === today)
-                    ? (lastTriviaState.index + 1) % eventsForToday.length
+                    ? (lastTriviaState.index + 1) % events.length
                     : 0;
                 localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
+                return events[nextIndex];
+            }
 
-                const event = eventsForToday[nextIndex];
+            function showTriviaPopup(event, imageUrl) {
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 const descriptionKey = `description_${lang}`;
                 let description = event[descriptionKey] || event.description_es;
@@ -3201,57 +3202,45 @@
                 }
 
                 elements.triviaPopupText.textContent = triviaSentence;
-                elements.triviaPopupImage.src = ""; // Asegurarse de que esté oculta inicialmente
+                elements.triviaPopupImage.src = imageUrl || "";
                 elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
+                
                 elements.triviaPopup.classList.add('visible');
-                document.body.addEventListener('click', () => {
-                    elements.triviaPopup.classList.remove('visible');
-                }, { once: true });
 
-                // --- Parte 2: Preparar la animación de inactividad ---
+                const hidePopup = () => {
+                    elements.triviaPopup.classList.remove('visible');
+                    document.body.removeEventListener('click', hidePopup);
+                    document.body.removeEventListener('touchend', hidePopup);
+                };
+                
+                setTimeout(() => {
+                    document.body.addEventListener('click', hidePopup, { once: true });
+                    document.body.addEventListener('touchend', hidePopup, { once: true });
+                }, 100);
+            }
+
+            async function setupFullThemedExperience(event, artworks) {
+                state.isIdle = true;
+                showTriviaPopup(event, artworks[0]);
+
                 elements.puzzleContainer.classList.add('idle-mode');
                 const callToAction = document.createElement('div');
                 callToAction.className = 'idle-call-to-action';
                 callToAction.id = 'idle-cta';
                 elements.puzzleContainer.appendChild(callToAction);
                 updateButtonAndTextLogic();
-                animateTitle();
 
-                // --- Parte 3: Buscar las portadas como una mejora ---
-                const artworks = await fetchArtworksForArtist(event.artist);
-
-                if (!state.isIdle) return; // El usuario puede haber iniciado un juego mientras buscábamos
-
-                if (artworks && artworks.length > 0) {
-                    // --- Mejora temática ---
-                    elements.triviaPopupImage.src = artworks[0]; // Ahora mostrar la imagen
-                    const backgroundLayers = elements.idleCollage.children;
-                    artworks.forEach((url, i) => {
-                        if (backgroundLayers[i]) {
-                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
-                        }
-                    });
-                    elements.idleCollage.classList.add('visible');
-                    ghostSolverLoop(artworks);
-                } else {
-                    // --- Fallback a aleatorio ---
-                    console.warn(`No se encontraron portadas para '${event.artist}', usando animación de inactividad aleatoria.`);
-                    const randomArtworks = await fetchRandomArtworks(10);
-                    if (!state.isIdle || !randomArtworks || randomArtworks.length < 1) {
-                        showOverlay(getTranslatedString('startMessage'));
-                        return;
+                const backgroundLayers = elements.idleCollage.children;
+                artworks.forEach((url, i) => {
+                    if (backgroundLayers[i]) {
+                        backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
                     }
-                    const backgroundLayers = elements.idleCollage.children;
-                    randomArtworks.forEach((url, i) => {
-                        if (backgroundLayers[i]) {
-                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
-                        }
-                    });
-                    elements.idleCollage.classList.add('visible');
-                    ghostSolverLoop(randomArtworks);
-                }
-            }
+                });
+                elements.idleCollage.classList.add('visible');
 
+                animateTitle();
+                ghostSolverLoop(artworks);
+            }
 
             async function setupIdleAnimation() {
                 state.isIdle = true;
@@ -3294,12 +3283,19 @@
                 const day = today.getDate().toString().padStart(2, '0');
                 const todayKey = `${month}-${day}`;
                 
-                const eventsForToday = window.triviaData && window.triviaData[todayKey] && window.triviaData[todayKey].length > 0
-                    ? window.triviaData[todayKey]
-                    : null;
+                const eventsForToday = window.triviaData?.[todayKey];
 
-                if (eventsForToday) {
-                    await setupThemedWelcome(eventsForToday);
+                if (eventsForToday && eventsForToday.length > 0) {
+                    const event = getTodaysTriviaEvent(eventsForToday);
+                    const themedArtworks = await fetchArtworksForArtist(event.artist);
+
+                    if (themedArtworks && themedArtworks.length > 0) {
+                        await setupFullThemedExperience(event, themedArtworks);
+                    } else {
+                        console.warn(`No artworks found for '${event.artist}'. Falling back to random, but showing trivia text.`);
+                        showTriviaPopup(event, null);
+                        await setupIdleAnimation();
+                    }
                 } else {
                     await setupIdleAnimation();
                 }
@@ -3552,13 +3548,13 @@
                 if (!state.gameInProgress) return;
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
-                    stopTimer();
+                    // stopTimer(); // This is handled inside startTimer
                     elements.audioPlayer.pause();
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
                 } else {
                     hideOverlay();
-                    startTimer();
+                    // startTimer(); // Timer continues based on !state.isPaused
                     elements.puzzleContainer.classList.add('animated-gradient-border');
                     if (!state.isMuted && elements.audioPlayer.src) {
                         elements.audioPlayer.play().catch(e => console.error("Error on resume:", e));
@@ -3618,7 +3614,11 @@
                 saveSettings(settings);
             });
 
-            window.addEventListener('beforeunload', () => saveGameState());
+            window.addEventListener('beforeunload', () => {
+                if(state.gameInProgress){
+                    saveGameState();
+                }
+            });
             
              // Levenshtein distance function for suggestions
             function calculateLevenshteinDistance(a, b) {
