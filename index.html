@@ -16,6 +16,7 @@
         :root {
             --background: #121212;
             --surface: #1e1e1e;
+            --surface-light: #282828;
             --primary: #1DB954;
             --primary-hover: #1ED760;
             --secondary: #8a2be2; /* Purple for "On this day" */
@@ -590,7 +591,8 @@
                 font-size: 0.9rem;
             }
         }
-
+        
+        /* --- NEW MODERN MODAL STYLES --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -609,21 +611,27 @@
         }
         .modal-content {
             background-color: var(--surface);
-            padding: 1.5rem;
-            border-radius: 12px;
+            padding: 0;
+            border-radius: 16px;
             width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
+            max-width: 700px;
+            height: 70vh;
+            max-height: 600px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 1rem 1.5rem;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--surface-light);
         }
         .modal-header h2 {
             margin: 0;
+            font-size: 1.25rem;
             color: var(--on-surface);
         }
         .modal-header .close-btn {
@@ -638,34 +646,59 @@
             fill: var(--on-surface-secondary);
         }
 
-        .modal-tabs {
+        .modal-body {
             display: flex;
-            border-bottom: 1px solid var(--on-surface-secondary);
-            margin-bottom: 1rem;
+            flex-grow: 1;
+            overflow: hidden;
         }
-        .tab-btn {
+        
+        .modal-nav {
+            width: 200px;
+            flex-shrink: 0;
+            background-color: var(--surface-light);
+            padding: 1rem 0.5rem;
+            border-right: 1px solid var(--surface);
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
             background: none;
             border: none;
             padding: 0.75rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -1px;
-            transition: border-color 0.2s ease, color 0.2s ease;
-            font-size: 1.5rem;
-            line-height: 1;
+            font-size: 1rem;
+            text-align: left;
             color: var(--on-surface-secondary);
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
-        .tab-btn:hover {
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--on-surface-secondary);
+            transition: fill 0.2s ease;
+        }
+        .nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
             color: var(--on-surface);
         }
-        .tab-btn.active {
-            border-bottom-color: var(--primary);
+        .nav-btn.active {
+            background-color: rgba(29, 185, 84, 0.1);
             color: var(--primary);
+            font-weight: 600;
+        }
+        .nav-btn.active svg {
+            fill: var(--primary);
         }
         
         .modal-panels {
             flex-grow: 1;
             overflow-y: auto;
+            padding: 1.5rem;
         }
         .modal-panel {
             display: none;
@@ -674,6 +707,15 @@
             display: block;
         }
         
+        .modal-panel h3 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: var(--on-surface);
+            border-bottom: 1px solid var(--surface-light);
+            padding-bottom: 0.75rem;
+        }
+
         .language-options {
             display: flex;
             flex-direction: column;
@@ -706,45 +748,20 @@
             color: var(--on-surface);
         }
 
-        /* --- Options Panel Sub-tabs --- */
-        .options-sub-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #444;
-        }
-        .options-sub-tab-btn {
-            background: none;
-            border: none;
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1px;
-            font-size: 1.2rem;
-            color: var(--on-surface-secondary);
-        }
-        .options-sub-tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .options-sub-panel {
-            display: none;
-        }
-        .options-sub-panel.active {
-            display: block;
-        }
-        #options-panel h3 {
-            margin-top: 0;
-            margin-bottom: 0.75rem;
-            color: var(--on-surface);
-        }
-        
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: var(--on-surface);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
         }
         .form-group input {
             background-color: #333;
@@ -755,7 +772,7 @@
             color: var(--on-background);
         }
         .form-group button {
-             background-color: var(--primary);
+            background-color: var(--primary);
             color: var(--background);
             font-weight: 600;
             border-radius: 8px;
@@ -775,10 +792,6 @@
             border-radius: 8px;
             background-color: rgba(255, 77, 77, 0.05);
         }
-        .danger-zone h3 {
-            margin-top: 0;
-            color: var(--danger-color);
-        }
         #reset-game-btn {
             background-color: var(--danger-color);
             width: 100%;
@@ -790,7 +803,6 @@
             font-size: 0.8rem;
             color: var(--on-surface-secondary);
             margin-top: 0.5rem;
-            text-align: center;
         }
 
         .genre-selector {
@@ -826,11 +838,69 @@
              background-color: var(--primary-hover);
         }
         
+        .toggle-switch-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--surface-light);
+            border-radius: 8px;
+        }
+        .toggle-switch-group label {
+            font-weight: 500;
+            color: var(--on-surface);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
         #total-playtime {
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             font-size: 1.1rem;
             color: var(--on-surface);
+            background-color: var(--surface-light);
+            padding: 0.75rem;
+            border-radius: 8px;
         }
 
         #high-scores-list {
@@ -848,13 +918,13 @@
             gap: 0.75rem;
             padding: 0.75rem;
             border-radius: 8px;
-            background-color: rgba(0,0,0,0.2);
+            background-color: var(--surface-light);
             margin-bottom: 0.5rem;
             transition: background-color 0.3s ease;
         }
-        .score-item.gold { background-color: var(--gold-bg); }
-        .score-item.silver { background-color: var(--silver-bg); }
-        .score-item.bronze { background-color: var(--bronze-bg); }
+        .score-item.gold { background-color: var(--gold-bg); border-left: 4px solid #FFD700; }
+        .score-item.silver { background-color: var(--silver-bg); border-left: 4px solid #C0C0C0;}
+        .score-item.bronze { background-color: var(--bronze-bg); border-left: 4px solid #CD7F32;}
 
         .score-rank {
             font-size: 1.1rem;
@@ -1186,59 +1256,74 @@
     <div id="menu-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title" data-translate-key="highScoresTitle"></h2>
+                <h2 id="modal-title"></h2>
                 <button class="close-btn" id="close-menu-btn">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                 </button>
             </div>
-            <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="records">🏆</button>
-                <button class="tab-btn" data-tab="language">🏳️</button>
-                <button class="tab-btn" data-tab="options">⚙️</button>
-                <button class="tab-btn" data-tab="info">ℹ️</button>
-            </div>
-            <div class="modal-panels">
-                <div id="records-panel" class="modal-panel active">
-                    <p id="total-playtime"></p>
-                    <ol id="high-scores-list"></ol>
-                </div>
-                <div id="language-panel" class="modal-panel">
-                    <div class="language-options">
-                        <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish"></span></button>
-                        <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish"></span></button>
-                        <button class="lang-btn" data-lang="pt"><span>🇧🇷</span> <span data-translate-key="langPortuguese"></span></button>
-                        <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench"></span></button>
+            <div class="modal-body">
+                <nav class="modal-nav">
+                    <button class="nav-btn active" data-tab="records">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM11 7h2v5h-2zm0 6h2v2h-2z"></path></svg>
+                        <span data-translate-key="highScoresTitle"></span>
+                    </button>
+                    <button class="nav-btn" data-tab="preferences">
+                        <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+                        <span data-translate-key="preferencesTitle"></span>
+                    </button>
+                    <button class="nav-btn" data-tab="language">
+                         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
+                        <span data-translate-key="languageTitle"></span>
+                    </button>
+                    <button class="nav-btn" data-tab="info">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                        <span data-translate-key="aboutTitle"></span>
+                    </button>
+                    <button class="nav-btn" data-tab="reset">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                        <span data-translate-key="resetGameTitle"></span>
+                    </button>
+                </nav>
+                <div class="modal-panels">
+                    <div id="records-panel" class="modal-panel active">
+                        <p id="total-playtime"></p>
+                        <ol id="high-scores-list"></ol>
                     </div>
-                </div>
-                <div id="options-panel" class="modal-panel">
-                    <div class="options-sub-tabs">
-                         <button class="options-sub-tab-btn active" data-sub-tab="player">🦸‍♂️</button>
-                         <button class="options-sub-tab-btn" data-sub-tab="genres">🎵</button>
-                         <button class="options-sub-tab-btn" data-sub-tab="reset">🧩</button>
-                    </div>
-                    <div class="options-sub-panels">
-                        <div id="player-sub-panel" class="options-sub-panel active">
-                            <h3 data-translate-key="editPlayerNameTitle"></h3>
-                            <div class="form-group">
-                                <input type="text" id="edit-player-name-input">
-                                <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
-                            </div>
+                     <div id="preferences-panel" class="modal-panel">
+                        <h3 data-translate-key="editPlayerNameTitle"></h3>
+                        <div class="form-group">
+                            <input type="text" id="edit-player-name-input">
+                            <button id="save-edited-player-name-btn" data-translate-key="saveNameButton"></button>
                         </div>
-                        <div id="genres-sub-panel" class="options-sub-panel">
-                            <h3 data-translate-key="favoriteGenresTitle"></h3>
-                            <div id="genre-selector" class="genre-selector"></div>
-                        </div>
-                        <div id="reset-sub-panel" class="options-sub-panel">
-                             <div class="danger-zone">
-                                <h3 data-translate-key="resetGameTitle"></h3>
-                                <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
-                                <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
-                            </div>
+                        <h3 data-translate-key="favoriteGenresTitle"></h3>
+                        <div id="genre-selector" class="genre-selector"></div>
+                        <h3 data-translate-key="onThisDayFeature"></h3>
+                        <div class="toggle-switch-group">
+                            <label for="trivia-toggle-checkbox" data-translate-key="showOnThisDay"></label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="trivia-toggle-checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
-                </div>
-                <div id="info-panel" class="modal-panel">
-                    <p data-translate-key="aboutGameText"></p>
+                    <div id="language-panel" class="modal-panel">
+                        <div class="language-options">
+                            <button class="lang-btn" data-lang="en"><span>🇺🇸</span> <span data-translate-key="langEnglish"></span></button>
+                            <button class="lang-btn" data-lang="es"><span>🇪🇸</span> <span data-translate-key="langSpanish"></span></button>
+                            <button class="lang-btn" data-lang="pt"><span>🇧🇷</span> <span data-translate-key="langPortuguese"></span></button>
+                            <button class="lang-btn" data-lang="fr"><span>🇫🇷</span> <span data-translate-key="langFrench"></span></button>
+                        </div>
+                    </div>
+                    <div id="info-panel" class="modal-panel">
+                        <p data-translate-key="aboutGameText"></p>
+                    </div>
+                     <div id="reset-panel" class="modal-panel">
+                         <div class="danger-zone">
+                             <h3 data-translate-key="resetGameTitle"></h3>
+                            <button id="reset-game-btn" data-translate-key="resetGameButton"></button>
+                            <p id="reset-game-warning" data-translate-key="resetGameWarning"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1246,7 +1331,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.34</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.35</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -1285,7 +1370,7 @@
                 editPlayerNameInput: document.getElementById('edit-player-name-input'),
                 saveEditedPlayerNameBtn: document.getElementById('save-edited-player-name-btn'),
                 resetGameBtn: document.getElementById('reset-game-btn'),
-                optionsPanel: document.getElementById('options-panel'),
+                triviaToggleCheckbox: document.getElementById('trivia-toggle-checkbox'),
                 footer: document.getElementById('footer'),
                 credits: document.getElementById('credits'),
                 triviaPopup: document.getElementById('trivia-popup'),
@@ -1338,7 +1423,8 @@
                     pauseResumeTitle: "Pausar/Reanudar",
                     toggleSoundTitle: "Activar/Desactivar Sonido",
                     menuTitle: "Menú",
-                    highScoresTitle: "Meores Tiempos",
+                    highScoresTitle: "Mejores Tiempos",
+                    preferencesTitle: "Preferencias",
                     languageTitle: "Idioma",
                     optionsTitle: "Opciones",
                     aboutTitle: "Acerca de",
@@ -1392,7 +1478,7 @@
                     saveNameButton: "Guardar",
                     playerNameLabel: "Jugador:",
                     editPlayerNameTitle: "Cambiar nombre de jugador",
-                    resetGameTitle: "Resetear Puzzletunes",
+                    resetGameTitle: "Resetear",
                     resetGameButton: "Resetear Juego",
                     resetGameWarning: "Esto eliminará todos tus récords, tiempo total y nombre de jugador. Esta acción no se puede deshacer.",
                     resetConfirm: "¿Estás seguro de que quieres resetear el juego?",
@@ -1402,6 +1488,8 @@
                     randomModeButton: "Modo Aleatorio",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Siguiente...",
+                    onThisDayFeature: "Función 'Un día como hoy'",
+                    showOnThisDay: "Mostrar al inicio",
                 },
                 en: {
                     pageTitle: "Puzzletunes",
@@ -1409,6 +1497,7 @@
                     toggleSoundTitle: "Toggle Sound",
                     menuTitle: "Menu",
                     highScoresTitle: "High Scores",
+                    preferencesTitle: "Preferences",
                     languageTitle: "Language",
                     optionsTitle: "Options",
                     aboutTitle: "About",
@@ -1462,7 +1551,7 @@
                     saveNameButton: "Save",
                     playerNameLabel: "Player:",
                     editPlayerNameTitle: "Change player name",
-                    resetGameTitle: "Reset Puzzletunes",
+                    resetGameTitle: "Reset",
                     resetGameButton: "Reset Game",
                     resetGameWarning: "This will delete all your records, total playtime, and player name. This action cannot be undone.",
                     resetConfirm: "Are you sure you want to reset the game?",
@@ -1472,6 +1561,8 @@
                     randomModeButton: "Random Mode",
                     artistModeButton: "Artist Mode",
                     nextAlbumButton: "Next...",
+                    onThisDayFeature: "'On This Day' Feature",
+                    showOnThisDay: "Show on startup",
                 },
                 pt: {
                     pageTitle: "Puzzletunes",
@@ -1479,6 +1570,7 @@
                     toggleSoundTitle: "Ativar/Desativar Som",
                     menuTitle: "Menu",
                     highScoresTitle: "Melhores Tempos",
+                    preferencesTitle: "Preferências",
                     languageTitle: "Idioma",
                     optionsTitle: "Opções",
                     aboutTitle: "Sobre",
@@ -1532,7 +1624,7 @@
                     saveNameButton: "Salvar",
                     playerNameLabel: "Jogador:",
                     editPlayerNameTitle: "Mudar nome de jogador",
-                    resetGameTitle: "Resetar Puzzletunes",
+                    resetGameTitle: "Resetar",
                     resetGameButton: "Resetar Jogo",
                     resetGameWarning: "Isso excluirá todos os seus recordes, tempo total e nome de jogador. Esta ação não pode ser desfeita.",
                     resetConfirm: "Você tem certeza que quer resetar o jogo?",
@@ -1542,6 +1634,8 @@
                     randomModeButton: "Modo Aleatório",
                     artistModeButton: "Modo Artista",
                     nextAlbumButton: "Próximo...",
+                    onThisDayFeature: "Função 'Neste Dia'",
+                    showOnThisDay: "Mostrar ao iniciar",
                 },
                 fr: {
                     pageTitle: "Puzzletunes",
@@ -1549,6 +1643,7 @@
                     toggleSoundTitle: "Activer/Désactiver le son",
                     menuTitle: "Menu",
                     highScoresTitle: "Meilleurs Scores",
+                    preferencesTitle: "Préférences",
                     languageTitle: "Langue",
                     optionsTitle: "Options",
                     aboutTitle: "À propos",
@@ -1602,7 +1697,7 @@
                     saveNameButton: "Enregistrer",
                     playerNameLabel: "Joueur :",
                     editPlayerNameTitle: "Changer le nom du joueur",
-                    resetGameTitle: "Réinitialiser Puzzletunes",
+                    resetGameTitle: "Réinitialiser",
                     resetGameButton: "Réinitialiser le jeu",
                     resetGameWarning: "Ceci supprimera tous vos records, votre temps de jeu total et votre nom de joueur. Cette action est irréversible.",
                     resetConfirm: "Êtes-vous sûr de vouloir réinitialiser le jeu ?",
@@ -1612,6 +1707,8 @@
                     randomModeButton: "Mode Aléatoire",
                     artistModeButton: "Mode Artiste",
                     nextAlbumButton: "Suivant...",
+                    onThisDayFeature: "Fonction 'Un jour comme aujourd'hui'",
+                    showOnThisDay: "Afficher au démarrage",
                 }
             };
 
@@ -1628,6 +1725,15 @@
                     return true;
                 }
                 return false;
+            }
+
+            function getShowTriviaSetting() {
+                const setting = localStorage.getItem('puzzletunesShowTrivia');
+                return setting === null ? true : setting === 'true';
+            }
+
+            function setShowTriviaSetting(value) {
+                localStorage.setItem('puzzletunesShowTrivia', value);
             }
 
             function updatePlayerNameDisplay() {
@@ -2380,8 +2486,10 @@
                     }
 
                     totalPlaytimeEl.innerHTML = `⏰ ${getTranslatedString('totalPlaytimeText', { time: formattedTime })}`;
+                    totalPlaytimeEl.style.display = 'block';
                 } else {
                     totalPlaytimeEl.innerHTML = '';
+                    totalPlaytimeEl.style.display = 'none';
                 }
 
                 elements.highScoresList.innerHTML = highScores.map((item, index) => {
@@ -3151,7 +3259,7 @@
             async function setupIdleAnimation() {
                 state.isIdle = true;
                 const allArtworks = await fetchRandomArtworks(10);
-                if (!state.isIdle || !allArtworks || allArtworks.length < 10) {
+                if (!state.isIdle || !allArtworks || !allArtworks.length < 10) {
                     showOverlay(getTranslatedString('startMessage'));
                     renderStaticTitle();
                     return;
@@ -3178,20 +3286,23 @@
             }
             
             async function initializeWelcomeScreen() {
-                const today = new Date();
-                const month = (today.getMonth() + 1).toString().padStart(2, '0');
-                const day = today.getDate().toString().padStart(2, '0');
-                const todayKey = `${month}-${day}`;
-                
-                const eventsForToday = window.triviaData && window.triviaData[todayKey] && window.triviaData[todayKey].length > 0
-                    ? window.triviaData[todayKey]
-                    : null;
+                if (getShowTriviaSetting()) {
+                    const today = new Date();
+                    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                    const day = today.getDate().toString().padStart(2, '0');
+                    const todayKey = `${month}-${day}`;
+                    
+                    const eventsForToday = window.triviaData && window.triviaData[todayKey] && window.triviaData[todayKey].length > 0
+                        ? window.triviaData[todayKey]
+                        : null;
 
-                if (eventsForToday) {
-                    await setupThemedWelcome(eventsForToday);
-                } else {
-                    await setupIdleAnimation();
+                    if (eventsForToday) {
+                        await setupThemedWelcome(eventsForToday);
+                        return;
+                    }
                 }
+                // Fallback if trivia is disabled or no event for today
+                await setupIdleAnimation();
             }
 
 
@@ -3233,14 +3344,14 @@
                            boardState[p.currentIndex] = p.originalIndex;
                         });
                         renderBoard(proxiedImageUrl, boardState);
-
+                        
+                        // Resume paused game correctly
+                        state.isPaused = true;
+                        updateUI();
                         startTimer();
-                        elements.puzzleContainer.classList.add('animated-gradient-border');
+                        showOverlay(getTranslatedString('paused'));
                         
                         updateButtonAndTextLogic();
-
-                        updateUI();
-                        showOverlay(getTranslatedString('paused'));
                         updateTrackText();
                         updateTrackLinks(state.currentAlbum);
                         if (state.currentAlbum.previewUrl) {
@@ -3274,26 +3385,20 @@
 
             function switchTab(tabName) {
                 const modal = elements.menuModal;
-                modal.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+                modal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
                 modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${tabName}-panel`));
                 
                 let titleKey;
-                if(tabName === 'records') titleKey = 'highScoresTitle';
-                else if (tabName === 'language') titleKey = 'languageTitle';
-                else if (tabName === 'options') titleKey = 'optionsTitle';
-                else if (tabName === 'info') titleKey = 'aboutTitle';
+                switch(tabName) {
+                    case 'records': titleKey = 'highScoresTitle'; break;
+                    case 'preferences': titleKey = 'preferencesTitle'; break;
+                    case 'language': titleKey = 'languageTitle'; break;
+                    case 'info': titleKey = 'aboutTitle'; break;
+                    case 'reset': titleKey = 'resetGameTitle'; break;
+                    default: titleKey = 'menuTitle';
+                }
                 elements.modalTitle.textContent = getTranslatedString(titleKey);
                 elements.modalTitle.dataset.translateKey = titleKey;
-
-                if (tabName === 'options') {
-                    switchSubTab('player');
-                }
-            }
-
-            function switchSubTab(subTabName) {
-                const optionsPanel = elements.optionsPanel;
-                optionsPanel.querySelectorAll('.options-sub-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.subTab === subTabName));
-                optionsPanel.querySelectorAll('.options-sub-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${subTabName}-sub-panel`));
             }
 
             function resetGameFactory() {
@@ -3361,11 +3466,7 @@
                 function handleNextAlbumClick() {
                     if (state.gameMode !== 'artist' || state.artistAlbumQueue.length === 0) return;
 
-                    // This button should be hidden on the last item, so this click shouldn't happen.
-                    // But as a safeguard, we check.
-                    if (state.currentAlbumIndex >= state.artistAlbumQueue.length - 1) {
-                        return;
-                    }
+                    if (state.currentAlbumIndex >= state.artistAlbumQueue.length - 1) return;
                     
                     state.currentAlbumIndex++;
                     
@@ -3394,14 +3495,11 @@
             }
             
             elements.menuModal.addEventListener('click', (e) => {
-                const tabBtn = e.target.closest('.tab-btn');
-                if (tabBtn) switchTab(tabBtn.dataset.tab);
+                const navBtn = e.target.closest('.nav-btn');
+                if (navBtn) switchTab(navBtn.dataset.tab);
 
                 const langBtn = e.target.closest('.lang-btn');
                 if(langBtn) setLanguage(langBtn.dataset.lang);
-
-                const subTabBtn = e.target.closest('.options-sub-tab-btn');
-                if (subTabBtn) switchSubTab(subTabBtn.dataset.subTab);
             });
             
             elements.playerNameForm.addEventListener('submit', (e) => {
@@ -3425,19 +3523,23 @@
                 }
             });
 
+            elements.triviaToggleCheckbox.addEventListener('change', (e) => {
+                setShowTriviaSetting(e.target.checked);
+            });
+
             elements.resetGameBtn.addEventListener('click', resetGameFactory);
 
             elements.pauseBtn.addEventListener('click', () => {
                 if (!state.gameInProgress) return;
                 state.isPaused = !state.isPaused;
                 if (state.isPaused) {
-                    stopTimer();
-                    elements.audioPlayer.pause();
                     showOverlay(getTranslatedString('paused'));
                     elements.puzzleContainer.classList.remove('animated-gradient-border');
+                    if(elements.audioPlayer && !elements.audioPlayer.paused) {
+                        elements.audioPlayer.pause();
+                    }
                 } else {
                     hideOverlay();
-                    startTimer();
                     elements.puzzleContainer.classList.add('animated-gradient-border');
                     if (!state.isMuted && elements.audioPlayer.src) {
                         elements.audioPlayer.play().catch(e => console.error("Error on resume:", e));
@@ -3467,6 +3569,7 @@
                 renderHighScores();
                 renderGenreSelector();
                 updatePlayerNameDisplay();
+                elements.triviaToggleCheckbox.checked = getShowTriviaSetting();
                 switchTab('records');
                 elements.menuModal.classList.add('visible');
             });
