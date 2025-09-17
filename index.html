@@ -1317,7 +1317,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.40</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.41</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3168,31 +3168,21 @@
             
             async function setupThemedWelcome(eventsForToday) {
                 state.isIdle = true;
+
+                // --- Parte 1: Mostrar el texto de la efeméride inmediatamente ---
                 const today = new Date().toISOString().slice(0, 10);
                 let lastTriviaState = { date: '', index: -1 };
                 try {
                     const stored = localStorage.getItem('puzzletunesLastTrivia');
                     if (stored) lastTriviaState = JSON.parse(stored);
                 } catch (e) {}
-                
-                const nextIndex = (lastTriviaState.date === today) 
-                    ? (lastTriviaState.index + 1) % eventsForToday.length 
+
+                const nextIndex = (lastTriviaState.date === today)
+                    ? (lastTriviaState.index + 1) % eventsForToday.length
                     : 0;
                 localStorage.setItem('puzzletunesLastTrivia', JSON.stringify({ date: today, index: nextIndex }));
-                
-                const event = eventsForToday[nextIndex];
-                
-                // First, fetch artworks. This is the critical step.
-                const artworks = await fetchArtworksForArtist(event.artist);
-                
-                // If the game is no longer idle (e.g., user clicked New Game) or no artworks were found,
-                // fall back to the generic idle animation.
-                if (!state.isIdle || artworks.length === 0) {
-                    await setupIdleAnimation();
-                    return;
-                }
 
-                // If we get here, we have artworks and can create the full themed experience.
+                const event = eventsForToday[nextIndex];
                 const lang = localStorage.getItem('puzzletunesLanguage') || 'es';
                 const descriptionKey = `description_${lang}`;
                 let description = event[descriptionKey] || event.description_es;
@@ -3210,31 +3200,56 @@
                     default: triviaSentence = `Un día como hoy, en ${event.year}, ${description}`; break;
                 }
 
-                // Now, show the popup with the image included.
                 elements.triviaPopupText.textContent = triviaSentence;
-                elements.triviaPopupImage.src = artworks[0];
+                elements.triviaPopupImage.src = ""; // Asegurarse de que esté oculta inicialmente
                 elements.triviaPopupImage.alt = `Imagen de ${event.artist}`;
                 elements.triviaPopup.classList.add('visible');
                 document.body.addEventListener('click', () => {
-                     elements.triviaPopup.classList.remove('visible');
+                    elements.triviaPopup.classList.remove('visible');
                 }, { once: true });
-                
-                // Set up the themed background and idle puzzle animation.
+
+                // --- Parte 2: Preparar la animación de inactividad ---
                 elements.puzzleContainer.classList.add('idle-mode');
                 const callToAction = document.createElement('div');
                 callToAction.className = 'idle-call-to-action';
                 callToAction.id = 'idle-cta';
                 elements.puzzleContainer.appendChild(callToAction);
                 updateButtonAndTextLogic();
-                const backgroundLayers = elements.idleCollage.children;
-                artworks.forEach((url, i) => {
-                    if (backgroundLayers[i]) {
-                        backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
-                    }
-                });
-                elements.idleCollage.classList.add('visible');
                 animateTitle();
-                ghostSolverLoop(artworks);
+
+                // --- Parte 3: Buscar las portadas como una mejora ---
+                const artworks = await fetchArtworksForArtist(event.artist);
+
+                if (!state.isIdle) return; // El usuario puede haber iniciado un juego mientras buscábamos
+
+                if (artworks && artworks.length > 0) {
+                    // --- Mejora temática ---
+                    elements.triviaPopupImage.src = artworks[0]; // Ahora mostrar la imagen
+                    const backgroundLayers = elements.idleCollage.children;
+                    artworks.forEach((url, i) => {
+                        if (backgroundLayers[i]) {
+                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                        }
+                    });
+                    elements.idleCollage.classList.add('visible');
+                    ghostSolverLoop(artworks);
+                } else {
+                    // --- Fallback a aleatorio ---
+                    console.warn(`No se encontraron portadas para '${event.artist}', usando animación de inactividad aleatoria.`);
+                    const randomArtworks = await fetchRandomArtworks(10);
+                    if (!state.isIdle || !randomArtworks || randomArtworks.length < 1) {
+                        showOverlay(getTranslatedString('startMessage'));
+                        return;
+                    }
+                    const backgroundLayers = elements.idleCollage.children;
+                    randomArtworks.forEach((url, i) => {
+                        if (backgroundLayers[i]) {
+                            backgroundLayers[i].style.backgroundImage = `url('${url.replace('300x300', '600x600')}')`;
+                        }
+                    });
+                    elements.idleCollage.classList.add('visible');
+                    ghostSolverLoop(randomArtworks);
+                }
             }
 
 
