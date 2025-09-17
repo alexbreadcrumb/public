@@ -592,7 +592,7 @@
             }
         }
         
-        /* --- NEW MODERN MODAL STYLES --- */
+        /* --- MODERN RESPONSIVE MODAL STYLES --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -611,12 +611,11 @@
         }
         .modal-content {
             background-color: var(--surface);
-            padding: 0;
             border-radius: 16px;
             width: 90%;
             max-width: 700px;
-            height: 70vh;
-            max-height: 600px;
+            height: 80vh;
+            max-height: 650px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -647,19 +646,15 @@
         }
 
         .modal-body {
-            display: flex;
             flex-grow: 1;
             overflow: hidden;
         }
-        
-        .modal-nav {
-            width: 200px;
-            flex-shrink: 0;
-            background-color: var(--surface-light);
-            padding: 1rem 0.5rem;
-            border-right: 1px solid var(--surface);
+
+        /* Accordion Styles (Mobile First) */
+        .modal-body {
+            overflow-y: auto;
+            padding: 0.5rem;
         }
-        
         .nav-btn {
             display: flex;
             align-items: center;
@@ -675,6 +670,7 @@
             color: var(--on-surface-secondary);
             transition: all 0.2s ease;
             font-weight: 500;
+            position: relative;
         }
         .nav-btn svg {
             width: 24px;
@@ -695,16 +691,65 @@
             fill: var(--primary);
         }
         
-        .modal-panels {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
+        .nav-btn::after {
+            content: '▼';
+            position: absolute;
+            right: 1rem;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
         }
+        .nav-btn.active::after {
+            transform: rotate(180deg);
+        }
+
         .modal-panel {
-            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            padding: 0 1.5rem;
         }
         .modal-panel.active {
-            display: block;
+            max-height: 70vh; /* Large enough value */
+            padding: 1.5rem;
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+            .modal-content {
+                height: 70vh;
+                max-height: 600px;
+            }
+            .modal-body {
+                display: flex;
+                overflow: hidden;
+                padding: 0;
+            }
+            .modal-nav {
+                width: 200px;
+                flex-shrink: 0;
+                background-color: var(--surface-light);
+                padding: 1rem 0.5rem;
+                border-right: 1px solid var(--surface);
+                display: block; /* Explicitly set */
+            }
+            .nav-btn::after {
+                display: none; /* Hide chevron on desktop */
+            }
+            .modal-panels {
+                flex-grow: 1;
+                overflow-y: auto;
+                padding: 1.5rem;
+                display: block; /* Explicitly set */
+            }
+            .modal-panel {
+                display: none; /* Desktop uses JS to toggle */
+                max-height: none; /* Reset accordion property */
+                padding: 0; /* Reset accordion property */
+            }
+            .modal-panel.active {
+                display: block;
+                padding: 0; /* Reset accordion property */
+            }
         }
         
         .modal-panel h3 {
@@ -1331,7 +1376,7 @@
     
     <footer id="footer">
         <div id="footer-title">Puzzletunes</div>
-        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.35</div>
+        <div id="credits"><span data-translate-key="gameBy"></span> Ale Fernández PY-2025 - v2.36</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -3385,8 +3430,28 @@
 
             function switchTab(tabName) {
                 const modal = elements.menuModal;
-                modal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
-                modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${tabName}-panel`));
+                const clickedButton = modal.querySelector(`.nav-btn[data-tab="${tabName}"]`);
+                const targetPanel = modal.querySelector(`#${tabName}-panel`);
+
+                // Accordion logic for mobile
+                if (isMobileDevice()) {
+                    const isAlreadyActive = clickedButton.classList.contains('active');
+                    
+                    // Deactivate all first
+                    modal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                    modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.remove('active'));
+
+                    if (!isAlreadyActive) {
+                        clickedButton.classList.add('active');
+                        targetPanel.classList.add('active');
+                    }
+                } else { // Standard tab logic for desktop
+                    modal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                    modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.remove('active'));
+                    
+                    clickedButton.classList.add('active');
+                    targetPanel.classList.add('active');
+                }
                 
                 let titleKey;
                 switch(tabName) {
@@ -3570,7 +3635,13 @@
                 renderGenreSelector();
                 updatePlayerNameDisplay();
                 elements.triviaToggleCheckbox.checked = getShowTriviaSetting();
-                switchTab('records');
+                
+                // Set initial state for accordion/tabs
+                const initialTab = 'records';
+                const modal = elements.menuModal;
+                modal.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === initialTab));
+                modal.querySelectorAll('.modal-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${initialTab}-panel`));
+
                 elements.menuModal.classList.add('visible');
             });
             elements.closeMenuBtn.addEventListener('click', () => elements.menuModal.classList.remove('visible'));
